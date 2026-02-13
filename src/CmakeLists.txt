@@ -1,0 +1,47 @@
+# Опция для ImGui (если не пробрасывать из верхнего CMake, можно задать и здесь)
+option(SIM_WITH_IMGUI "Build with ImGui debug UI" ON)
+
+# Исполняемый файл
+add_executable(Simulation
+    main.cpp
+
+    app/app.cpp
+    app/app.h
+
+    common/Config.h
+
+    data/particleData.h
+
+    gui/userInterface.cpp
+    gui/userInterface.h
+
+    render/renderer.cpp
+    render/renderer.h
+
+    sim/engine.cpp
+    sim/engine.h
+    sim/constraints.h
+)
+
+# Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)
+target_link_libraries(Simulation
+    PRIVATE
+        glfw               # glfw3::glfw может называться просто glfw 
+        glad::glad         # загрузчик OpenGL 
+        glm::glm           # математика для рендера 
+        Eigen3::Eigen      # математика для физики 
+        OpenGL::GL         # сам OpenGL 
+)
+
+if(SIM_WITH_IMGUI)
+    target_link_libraries(Simulation PRIVATE imgui::imgui)
+    target_compile_definitions(Simulation PRIVATE SIM_WITH_IMGUI=1)
+endif()
+
+target_compile_features(Simulation PRIVATE cxx_std_20)
+
+# Общие include-пути, чтобы можно было писать #include "app/app.h" и т.п.
+target_include_directories(Simulation
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
