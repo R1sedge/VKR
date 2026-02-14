@@ -1,14 +1,15 @@
 #include <iostream>
 #include <windows.h>
-#include "data/ParticleData.h"
+#include "render/renderer.h"
 
 int main() {
-    // ������� ���� � ������� (Windows)
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    
+    Renderer renderer = Renderer(1280, 720);
 
-    system("pause");  // ����� ���� �� ���������
+    renderer.mainLoop();
+    
+    std::cout << "main() finished";
     return 0;
 }

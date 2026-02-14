@@ -1,0 +1,1 @@
+python C:\Users\R1sed\PycharmProjects\RandomTasks\source_code_parser\combine_src.py
