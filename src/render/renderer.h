@@ -21,7 +21,9 @@ public:
 	void mainLoop();
 
 	void setTriangleColor(float r, float g, float b, float a);
-	void setModelMatrix(float offsetX);
+	void setModelMatrix();
+	void setOrthoProjection(float left, float right, float bottom, float top);
+	void updateProjection();
 
 private:
 	void renderFrame();

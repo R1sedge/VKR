@@ -1,4 +1,6 @@
 #include "renderer.h"
+#include "common/Config.h"
+
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
@@ -33,6 +35,9 @@ Renderer::Renderer(int width, int height):windowWidth(width), windowHeight(heigh
 
 	initGL();
 	initShaders();
+
+	updateProjection();
+
 	initGeometry();
 	setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
 }	
@@ -78,6 +83,8 @@ void Renderer::onResize(int width, int height)
 	windowWidth = width;
 	windowHeight = height;
 
+	updateProjection();
+
 	// Настраиваем viewport под новый размер буфера кадра
 	glViewport(0, 0, width, height);
 }
@@ -110,7 +117,7 @@ void Renderer::initShaders()
 	if (!success)
 	{
 		GLchar infoLog[512];
-		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
 		throw std::runtime_error(infoLog);
 	}
 
@@ -160,10 +167,14 @@ GLuint Renderer::compileFragmentShader(const std::string fragmentSource)
 void Renderer::initGeometry()
 {
 	float vertices[] = {
-        -0.5f, -0.5f, 0.0f,  // левая нижняя
-         0.5f, -0.5f, 0.0f,  // правая нижняя
-         0.0f,  0.5f, 0.0f   // верхняя
-    };
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.5f,  0.5f, 0.0f,
+
+    -0.5f, -0.5f, 0.0f,
+     0.5f,  0.5f, 0.0f,
+    -0.5f,  0.5f, 0.0f
+};
 
 	// Генерируем и настраиваем VAO и VBO
 	glGenVertexArrays(1, &vao);
@@ -200,11 +211,10 @@ void Renderer::renderFrame()
 	float green = 0.4f + 0.4f * std::sin(time);
 	setTriangleColor(0.2f, green, 0.8f, 1.0f);
 
-	float offsetX = 0.5f * std::sin(time);
-	setModelMatrix(offsetX);
+	setModelMatrix();
 
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Renderer::setTriangleColor(float r, float g, float b, float a)
@@ -214,7 +224,7 @@ void Renderer::setTriangleColor(float r, float g, float b, float a)
 	if (loc != -1) glUniform4f(loc, r, g, b, a);
 }
 
-void Renderer::setModelMatrix(float offsetX)
+void Renderer::setModelMatrix()
 {
 	glUseProgram(shaderProgram);
 
@@ -222,11 +232,33 @@ void Renderer::setModelMatrix(float offsetX)
         1, 0, 0, 0,   // колонка 0
         0, 1, 0, 0,   // колонка 1
         0, 0, 1, 0,   // колонка 2
-        offsetX, 0, 0, 1  // колонка 3 (translation)
+        0, 0, 0, 1  // колонка 3 (translation)
     };
 
 	GLint loc = glGetUniformLocation(shaderProgram, "uModel");
-	if (loc !=- 1) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+	if (loc != -1) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+}
+
+void Renderer::setOrthoProjection(float left, float right, float bottom, float top)
+{
+	glUseProgram(shaderProgram);
+	float proj[16] = {
+        2.0f / (right - left),  		 0,                                0, 0,
+        0,                      		 2.0f / (top - bottom),            0, 0,
+        0,                      		 0,                               -1, 0,
+       -(right + left) / (right - left), -(top + bottom) / (top - bottom), 0, 1
+    };
+
+	GLint loc = glGetUniformLocation(shaderProgram, "uProjection");
+	if (loc != -1) glUniformMatrix4fv(loc, 1, GL_FALSE, proj);
+}
+
+void Renderer::updateProjection()
+{
+	float halfWorldW = 	windowWidth / (2 * Config::pixelsPerUnits);
+	float halfWorldH = 	windowHeight / (2 * Config::pixelsPerUnits);
+
+	setOrthoProjection(-halfWorldW, +halfWorldW, -halfWorldH, +halfWorldH);
 }
 
 void Renderer::mainLoop()
