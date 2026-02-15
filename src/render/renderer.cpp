@@ -28,17 +28,17 @@ Renderer::Renderer(int width, int height):windowWidth(width), windowHeight(heigh
 	if (!gladLoadGL()) 
 		throw std::runtime_error("GLAD init failed");
 
-	glfwSetWindowUserPointer(window, this); // ������������ ��������� �� ��������� ������ 
+	glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
 	initGL();
 	initShaders();
-	//initGeometry();
+	initGeometry();
 }	
 
 void Renderer::centerWindow()
 {
-	// ������������� ����
+	// Центрирование окна
 	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
 	if (primaryMonitor)
 	{
@@ -46,7 +46,7 @@ void Renderer::centerWindow()
 		if (videoMode)
 		{
 			int monitorX, monitorY;
-			glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY); // ������� ������ �������� ���� ������
+			glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY); // Позиция левого верхнего края экрана
 
 			int windowPosX = monitorX + (videoMode->width - windowWidth) / 2;
 			int windowPosY = monitorY + (videoMode->height - windowHeight) / 2;
@@ -65,19 +65,19 @@ void Renderer::initGL()
 
 void Renderer::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-	// ������ ��������� �� Renderer, ������� �� �������� � user pointer
-	auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // ����� �.�. ������ ������ �������� ����� ������
+	// Достаём указатель на Renderer, который мы положили в user pointer
+	auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // Нужно т.к. нельзя просто передать метод класса
 	if (renderer)
 		renderer->onResize(width, height);
 }
 
 void Renderer::onResize(int width, int height) 
 {
-	// ��������� �������� ������ ����.
+	// Обновляем хранимый размер окна.
 	windowWidth = width;
 	windowHeight = height;
 
-	// ����������� viewport ��� ����� ������ ������ �����
+	// Настраиваем viewport под новый размер буфера кадра
 	glViewport(0, 0, width, height);
 }
 
@@ -158,15 +158,43 @@ GLuint Renderer::compileFragmentShader(const std::string fragmentSource)
 
 void Renderer::initGeometry()
 {
-	
+	float vertices[] = {
+        -0.5f, -0.5f, 0.0f,  // левая нижняя
+         0.5f, -0.5f, 0.0f,  // правая нижняя
+         0.0f,  0.5f, 0.0f   // верхняя
+    };
+
+	// Генерируем и настраиваем VAO и VBO
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Описываем формат атрибута позиции (location = 0)
+	glVertexAttribPointer(
+		0,                      // location в шейдере
+        3,                      // по 3 компоненты (x,y,z)
+        GL_FLOAT,
+        GL_FALSE,
+        3 * sizeof(float),      // шаг между вершинами
+        (void*)0                // смещение от начала
+	);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
 }
 
 void Renderer::renderFrame()
 {
-	glClearColor(0.5f, 0.5f, 0.9f, 1.0f);
+	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(shaderProgram);
+	glBindVertexArray(vao);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void Renderer::mainLoop()

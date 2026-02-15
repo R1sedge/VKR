@@ -1,5 +1,5 @@
 #pragma once
-#include <glad/glad.h> // ��� ����� glfw
+#include <glad/glad.h> // до импорта glfw
 #include <GLFW/glfw3.h>
 #include <string>
 
