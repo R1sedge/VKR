@@ -21,7 +21,7 @@ public:
 	void mainLoop();
 
 	void setTriangleColor(float r, float g, float b, float a);
-	void setModelMatrix();
+	void setModelMatrix(float x, float y, float radius);
 	void setOrthoProjection(float left, float right, float bottom, float top);
 	void updateProjection();
 	void setCircleRadius(float normalisedRadius);

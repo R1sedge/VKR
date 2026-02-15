@@ -8,9 +8,10 @@ add_executable(Simulation
     app/app.cpp
     app/app.h
 
-    common/Config.h
+    common/config.h
 
     data/particleData.h
+    data/particleData.cpp
 
     gui/userInterface.cpp
     gui/userInterface.h

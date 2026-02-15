@@ -1,5 +1,5 @@
 #include "renderer.h"
-#include "common/Config.h"
+#include "common/config.h"
 
 #include <stdexcept>
 #include <fstream>
@@ -211,7 +211,7 @@ void Renderer::renderFrame()
 	float green = 0.4f + 0.4f * std::sin(time);
 	setTriangleColor(0.2f, green, 0.8f, 1.0f);
 
-	setModelMatrix();
+	setModelMatrix(0.0f, 0.0f, Config::particleRadius);
 	setCircleRadius(1.0f);
 
 	glBindVertexArray(vao);
@@ -232,15 +232,16 @@ void Renderer::setCircleRadius(float normalisedRadius)
 	if (loc != -1) glUniform1f(loc, normalisedRadius);
 }
 
-void Renderer::setModelMatrix()
+void Renderer::setModelMatrix(float x, float y, float radius)
 {
 	glUseProgram(shaderProgram);
+	float s = radius;
 
 	float model[16] = {
-        1, 0, 0, 0,   // колонка 0
-        0, 1, 0, 0,   // колонка 1
+        s, 0, 0, 0,   // scale x
+        0, s, 0, 0,   // scale y
         0, 0, 1, 0,   // колонка 2
-        0, 0, 0, 1  // колонка 3 (translation)
+        x, y, 0, 1  // колонка 3 (translation)
     };
 
 	GLint loc = glGetUniformLocation(shaderProgram, "uModel");
