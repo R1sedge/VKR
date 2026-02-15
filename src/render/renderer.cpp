@@ -167,13 +167,13 @@ GLuint Renderer::compileFragmentShader(const std::string fragmentSource)
 void Renderer::initGeometry()
 {
 	float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.5f,  0.5f, 0.0f,
+    -1.0f, -1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,
 
-    -0.5f, -0.5f, 0.0f,
-     0.5f,  0.5f, 0.0f,
-    -0.5f,  0.5f, 0.0f
+    -1.0f, -1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f, 0.0f
 };
 
 	// Генерируем и настраиваем VAO и VBO
@@ -212,6 +212,7 @@ void Renderer::renderFrame()
 	setTriangleColor(0.2f, green, 0.8f, 1.0f);
 
 	setModelMatrix();
+	setCircleRadius(1.0f);
 
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -222,6 +223,13 @@ void Renderer::setTriangleColor(float r, float g, float b, float a)
 	glUseProgram(shaderProgram);
 	GLint loc = glGetUniformLocation(shaderProgram, "uColor"); // Поиск переменной по имени
 	if (loc != -1) glUniform4f(loc, r, g, b, a);
+}
+
+void Renderer::setCircleRadius(float normalisedRadius)
+{
+	glUseProgram(shaderProgram);
+	GLint loc = glGetUniformLocation(shaderProgram, "uRadius");
+	if (loc != -1) glUniform1f(loc, normalisedRadius);
 }
 
 void Renderer::setModelMatrix()

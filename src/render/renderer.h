@@ -24,6 +24,7 @@ public:
 	void setModelMatrix();
 	void setOrthoProjection(float left, float right, float bottom, float top);
 	void updateProjection();
+	void setCircleRadius(float normalisedRadius);
 
 private:
 	void renderFrame();
