@@ -1,6 +1,7 @@
 #pragma once
-#include <glad/glad.h> // Это перед glfw
+#include <glad/glad.h> // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ glfw
 #include <GLFW/glfw3.h>
+#include <string>
 
 
 class Renderer
@@ -9,6 +10,10 @@ private:
 	int windowWidth;
 	int windowHeight;
 	GLFWwindow* window;
+
+	unsigned int shaderProgram = 0;
+	unsigned int vbo = 0;
+	unsigned int vao = 0;
 
 public:
 	Renderer(int width, int height);
@@ -22,6 +27,10 @@ private:
 
 	void centerWindow();
 	void initGL();
+
+	std::string readShaderFile(const char* filePath);
+	GLuint compileVertexShader(const std::string vertexSource);
+	GLuint compileFragmentShader(const std::string fragmentSource);
 	void initShaders();
 	void initGeometry();
 };

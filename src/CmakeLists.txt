@@ -45,3 +45,10 @@ target_include_directories(Simulation
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# Копирование шейдеров к .exe
+add_custom_command(TARGET Simulation POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/shaders"
+    "$<TARGET_FILE_DIR:Simulation>/shaders"
+)

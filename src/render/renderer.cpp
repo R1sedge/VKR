@@ -1,5 +1,9 @@
 #include "renderer.h"
 #include <stdexcept>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 
 Renderer::Renderer(int width, int height):windowWidth(width), windowHeight(height)
 {
@@ -24,17 +28,17 @@ Renderer::Renderer(int width, int height):windowWidth(width), windowHeight(heigh
 	if (!gladLoadGL()) 
 		throw std::runtime_error("GLAD init failed");
 
-	glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
+	glfwSetWindowUserPointer(window, this); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
 	initGL();
-	//initShaders();
+	initShaders();
 	//initGeometry();
 }	
 
 void Renderer::centerWindow()
 {
-	// Центрирование окна
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
 	if (primaryMonitor)
 	{
@@ -42,7 +46,7 @@ void Renderer::centerWindow()
 		if (videoMode)
 		{
 			int monitorX, monitorY;
-			glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY); // Позиция левого верхнего края экрана
+			glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 
 			int windowPosX = monitorX + (videoMode->width - windowWidth) / 2;
 			int windowPosY = monitorY + (videoMode->height - windowHeight) / 2;
@@ -61,26 +65,108 @@ void Renderer::initGL()
 
 void Renderer::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-	// Достаём указатель на Renderer, который мы положили в user pointer
-	auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // Нужно т.к. нельзя просто передать метод класса
+	// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ Renderer, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ user pointer
+	auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // пїЅпїЅпїЅпїЅпїЅ пїЅ.пїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	if (renderer)
 		renderer->onResize(width, height);
 }
 
 void Renderer::onResize(int width, int height) 
 {
-	// Обновляем хранимый размер окна.
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
 	windowWidth = width;
 	windowHeight = height;
 
-	// Настраиваем viewport под новый размер буфера кадра
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ viewport пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 	glViewport(0, 0, width, height);
+}
+
+std::string Renderer::readShaderFile(const char* filePath)
+{
+	std::ifstream file(filePath);
+	if (!file.is_open())
+		throw std::runtime_error(std::string("Cannot open shader file") + filePath);
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
+
+void Renderer::initShaders()
+{
+	std::string vertexSource = readShaderFile("shaders/basic.vert");
+	std::string fragmentSource = readShaderFile("shaders/basic.frag");
+
+	GLuint vertex = compileVertexShader(vertexSource);
+	GLuint fragment = compileFragmentShader(fragmentSource);
+
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertex);
+	glAttachShader(shaderProgram, fragment);
+	glLinkProgram(shaderProgram);
+	 
+	GLint success;
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		GLchar infoLog[512];
+		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
+		throw std::runtime_error(infoLog);
+	}
+
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+
+}
+
+GLuint Renderer::compileVertexShader(const std::string vertexSource)
+{
+	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+	const char* src = vertexSource.c_str();
+
+	glShaderSource(vertex, 1, &src, nullptr);
+	glCompileShader(vertex);
+
+	GLint success;
+	glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		GLchar infoLog[512];
+		glGetShaderInfoLog(vertex, 512, NULL, infoLog);
+		throw std::runtime_error(infoLog);
+	}
+	return vertex;
+}
+
+GLuint Renderer::compileFragmentShader(const std::string fragmentSource)
+{
+	GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	const char* src = fragmentSource.c_str();
+
+	glShaderSource(fragment, 1, &src, nullptr);
+	glCompileShader(fragment);
+
+	GLint success;
+	glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		GLchar infoLog[512];
+		glGetShaderInfoLog(fragment, 512, NULL, infoLog);
+		throw std::runtime_error(infoLog);
+	}
+	return fragment;
+}
+
+void Renderer::initGeometry()
+{
+	
 }
 
 void Renderer::renderFrame()
 {
 	glClearColor(0.5f, 0.5f, 0.9f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	glUseProgram(shaderProgram);
 }
 
 void Renderer::mainLoop()
