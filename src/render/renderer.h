@@ -21,6 +21,7 @@ public:
 	void mainLoop();
 
 	void setTriangleColor(float r, float g, float b, float a);
+	void setModelMatrix(float offsetX);
 
 private:
 	void renderFrame();

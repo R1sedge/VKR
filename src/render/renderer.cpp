@@ -194,6 +194,15 @@ void Renderer::renderFrame()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(shaderProgram);
+
+	float time = float(glfwGetTime());
+
+	float green = 0.4f + 0.4f * std::sin(time);
+	setTriangleColor(0.2f, green, 0.8f, 1.0f);
+
+	float offsetX = 0.5f * std::sin(time);
+	setModelMatrix(offsetX);
+
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -203,6 +212,21 @@ void Renderer::setTriangleColor(float r, float g, float b, float a)
 	glUseProgram(shaderProgram);
 	GLint loc = glGetUniformLocation(shaderProgram, "uColor"); // Поиск переменной по имени
 	if (loc != -1) glUniform4f(loc, r, g, b, a);
+}
+
+void Renderer::setModelMatrix(float offsetX)
+{
+	glUseProgram(shaderProgram);
+
+	float model[16] = {
+        1, 0, 0, 0,   // колонка 0
+        0, 1, 0, 0,   // колонка 1
+        0, 0, 1, 0,   // колонка 2
+        offsetX, 0, 0, 1  // колонка 3 (translation)
+    };
+
+	GLint loc = glGetUniformLocation(shaderProgram, "uModel");
+	if (loc !=- 1) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
 }
 
 void Renderer::mainLoop()
