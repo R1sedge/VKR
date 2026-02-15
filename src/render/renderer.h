@@ -19,9 +19,12 @@ public:
 	Renderer(int width, int height);
 
 	void mainLoop();
-	void renderFrame();
+
+	void setTriangleColor(float r, float g, float b, float a);
 
 private:
+	void renderFrame();
+
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 	void onResize(int width, int height);
 
