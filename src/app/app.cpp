@@ -87,6 +87,8 @@ void App::mainLoop()
         if (frameTime > maxFrameTime) 
             frameTime = maxFrameTime;
 
+        m_gui.setFrameTiming(frameTime);
+
         if (!m_paused)
         {
             m_accumulator += frameTime;
@@ -107,7 +109,6 @@ void App::mainLoop()
         }
 
         render();
-
         m_gui.render();
 
         glfwSwapBuffers(m_window);

@@ -35,6 +35,30 @@ bool UserInterface::initialize(GLFWwindow* window)
     return true;
 }
 
+void UserInterface::setFrameTiming(double frameTimeSeconds)
+{
+    float ms = (float)(frameTimeSeconds * 1000);
+    float fps;
+    if (frameTimeSeconds > 0.0)
+        fps = 1 / frameTimeSeconds;
+    else
+        fps = 0.0f;
+
+    // Кольцевой буфер
+    frameTimes[histoyIndex] = ms;
+    histoyIndex = (histoyIndex + 1) % historySize;
+    if(historyCount < historySize)
+        historyCount++;
+
+    // Сглаженные значения
+    float sumMs = 0.0f;
+    for (int i = 0; i < historyCount; ++i)
+        sumMs += frameTimes[i];
+    
+    avgFrameMs = (historyCount > 0) ? (sumMs / historyCount) : ms;
+    avgFps = (historyCount > 0) ? (1000.0f / avgFrameMs) : fps;
+}
+
 void UserInterface::render()
 {
     if (!initialized)
@@ -45,10 +69,20 @@ void UserInterface::render()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Debug window");
-    ImGui::Text("Hello, frow ImGui!");
+    ImGui::Begin("Simulation");
+
+    ImGui::Text("Frame: %.3f ms", avgFrameMs);
+    ImGui::Text("FPS:   %.1f", avgFps);
+
+    ImGui::Separator();
+
+    ImGui::Checkbox("Paused", &paused);
+    if (ImGui::Button("Step once"))
+        stepOnce = true;
+
     ImGui::End();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
