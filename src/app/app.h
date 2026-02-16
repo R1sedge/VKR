@@ -5,7 +5,7 @@
 
 #include "render/renderer.h"
 #include "sim/engine.h"
-// #include "gui/guiLayer.h"
+#include "gui/userInterface.h"
 // #include "input/inputManager.h"
 
 
@@ -29,7 +29,7 @@ private:
     GLFWwindow*    m_window = nullptr;
     Renderer       m_renderer;
     //Simulation2D   m_sim;
-    //GuiLayer       m_gui;
+    UserInterface  m_gui;
     //InputManager   m_input;
 
     bool m_runnig = false;

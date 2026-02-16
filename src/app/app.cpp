@@ -6,7 +6,8 @@
 #include "common/config.h"
 
 App::App(): 
-    m_renderer(Config::windowWidth, Config::windowHeight, nullptr)
+    m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
+    m_gui()
     {}
 
 App::~App() = default;
@@ -45,8 +46,7 @@ bool App::initialize()
     }
 
     m_renderer.setWindow(m_window);
-    //m_gui =  std::make_unique<Guilayer>(m_window);
-    //m_input =  std::make_unique<InputManager>(m_window);
+    m_gui.initialize(m_window);
 
    m_runnig = true;
    return true;
@@ -107,6 +107,8 @@ void App::mainLoop()
         }
 
         render();
+
+        m_gui.render();
 
         glfwSwapBuffers(m_window);
         glfwPollEvents();

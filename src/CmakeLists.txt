@@ -1,6 +1,3 @@
-# Опция для ImGui (если не пробрасывать из верхнего CMake, можно задать и здесь)
-option(SIM_WITH_IMGUI "Build with ImGui debug UI" ON)
-
 # Исполняемый файл
 add_executable(Simulation
     main.cpp
@@ -34,10 +31,10 @@ target_link_libraries(Simulation
         OpenGL::GL         # сам OpenGL 
 )
 
-if(SIM_WITH_IMGUI)
-    target_link_libraries(Simulation PRIVATE imgui::imgui)
-    target_compile_definitions(Simulation PRIVATE SIM_WITH_IMGUI=1)
-endif()
+
+target_link_libraries(Simulation PRIVATE imgui::imgui)
+target_compile_definitions(Simulation PRIVATE SIM_WITH_IMGUI=1)
+
 
 target_compile_features(Simulation PRIVATE cxx_std_20)
 
