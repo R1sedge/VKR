@@ -7,29 +7,10 @@
 #include <iostream>
 
 
-Renderer::Renderer(int width, int height):windowWidth(width), windowHeight(height)
+Renderer::Renderer(int width, int height, GLFWwindow* window):windowWidth(width), windowHeight(height), window(window)
 {
-	if (!glfwInit())
-		throw std::runtime_error("GLFW init failed");
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	window = glfwCreateWindow(windowWidth, windowHeight, "Simulation", nullptr, nullptr);
-	if (!window)
-	{
-		glfwTerminate();
-		throw std::runtime_error("Window creation failed");
-	}
-
 	centerWindow();
-	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1); // v-sync
-
-	if (!gladLoadGL()) 
-		throw std::runtime_error("GLAD init failed");
-
+	
 	glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 

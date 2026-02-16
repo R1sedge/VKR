@@ -3,6 +3,8 @@
 namespace Config
 {
     // RENDERING / CAMERA
+    inline int windowWidth = 1280;
+    inline int windowHeight = 720;
     inline constexpr float pixelsPerUnits = 100.0f; // 1 единица физ. коорд. = 100px
 
     // SIMULATION DEFAULTS

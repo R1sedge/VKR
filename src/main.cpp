@@ -1,15 +1,20 @@
 #include <iostream>
 #include <windows.h>
-#include "render/renderer.h"
+#include "app/app.h"
 
 int main() {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    Renderer renderer = Renderer(1280, 720);
+    App app;
+    if (!app.initialize())
+    {
+        std::cerr << "Не получилось инициализировать App\n";
+        return EXIT_FAILURE;
+    }
 
-    renderer.mainLoop();
-    
-    std::cout << "main() finished";
-    return 0;
+    app.run();
+    app.shutDown();
+
+    return EXIT_SUCCESS;
 }

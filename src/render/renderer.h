@@ -16,7 +16,7 @@ private:
 	unsigned int vao = 0;
 
 public:
-	Renderer(int width, int height);
+	Renderer(int width, int height, GLFWwindow* window);
 
 	void mainLoop();
 
