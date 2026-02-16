@@ -46,7 +46,9 @@ bool App::initialize()
     }
 
     m_renderer.setWindow(m_window);
+
     m_gui.initialize(m_window);
+    m_gui.setSimulationDt(Config::dt);
 
    m_runnig = true;
    return true;
@@ -89,7 +91,9 @@ void App::mainLoop()
 
         m_gui.setFrameTiming(frameTime);
 
-        if (!m_paused)
+        bool paused = m_gui.isPaused();
+
+        if (!paused)
         {
             m_accumulator += frameTime;
 
@@ -101,10 +105,9 @@ void App::mainLoop()
         }
         else
         {
-            if (m_stepOnce)
+            if (m_gui.consumeStepOnce())
             {
                 update(dt);
-                m_stepOnce = false;
             }
         }
 
@@ -118,10 +121,11 @@ void App::mainLoop()
 
 void App::update(float dt)
 {
-   //m_sim->step(dt);
+    
 }
 
 void App::render()
-{
+{  
+    
     m_renderer.renderFrame();
 }

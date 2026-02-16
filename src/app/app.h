@@ -33,8 +33,8 @@ private:
     //InputManager   m_input;
 
     bool m_runnig = false;
-    bool m_paused = false;
-    bool m_stepOnce = false;
+
+    int frameCount = 0;
 
     double m_accumulator = 0.0;
     double m_previousTime = 0.0;

@@ -71,8 +71,9 @@ void UserInterface::render()
 
     ImGui::Begin("Simulation");
 
-    ImGui::Text("Frame: %.3f ms", avgFrameMs);
-    ImGui::Text("FPS:   %.1f", avgFps);
+    ImGui::Text("Frame:  %.3f ms", avgFrameMs);
+    ImGui::Text("FPS:    %.1f", avgFps);
+    ImGui::Text("Sim dt: %.4f s", simDt);
 
     ImGui::Separator();
 

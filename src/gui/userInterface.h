@@ -14,9 +14,11 @@ public:
     void render();
 
     void setFrameTiming(double frameTimeSeconds);
+    void setSimulationDt(float dt) {simDt = dt;}
 
     bool isPaused() const {return paused;}
-    bool consumeStepOnce()
+    // Возвращает true один раз после нажатия кнопки и сразу сбрасывает флаг
+    bool consumeStepOnce() 
     {
         bool v = stepOnce;
         stepOnce = false;
@@ -26,9 +28,10 @@ public:
 private:
     bool initialized = false;
 
-    // Сглаженные метрики
+    // Метрики
     float avgFrameMs = 0.0f;
     float avgFps = 0.0f;
+    float simDt = 0.0f;
 
     // История
     static constexpr int historySize = 60;
