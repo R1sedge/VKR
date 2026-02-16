@@ -18,7 +18,8 @@ private:
 public:
 	Renderer(int width, int height, GLFWwindow* window);
 
-	void mainLoop();
+	void setWindow(GLFWwindow* window);
+	void renderFrame();
 
 	void setTriangleColor(float r, float g, float b, float a);
 	void setModelMatrix(float x, float y, float radius);
@@ -27,8 +28,6 @@ public:
 	void setCircleRadius(float normalisedRadius);
 
 private:
-	void renderFrame();
-
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 	void onResize(int width, int height);
 

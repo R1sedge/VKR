@@ -3,19 +3,13 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include "render/renderer.h"
-#include "sim/engine.h"
 #include "common/config.h"
 
-App::App() = default;
+App::App(): 
+    m_renderer(Config::windowWidth, Config::windowHeight, nullptr)
+    {}
 
-App::~App()
-{
-    shutDown();
-}
+App::~App() = default;
 
 bool App::initialize()
 {
@@ -50,8 +44,7 @@ bool App::initialize()
         return false;
     }
 
-    m_renderer = std::make_unique<Renderer>(Config::windowWidth, Config::windowHeight, m_window);
-    m_sim = std::make_unique<Simulation2D>();
+    m_renderer.setWindow(m_window);
     //m_gui =  std::make_unique<Guilayer>(m_window);
     //m_input =  std::make_unique<InputManager>(m_window);
 
@@ -61,11 +54,6 @@ bool App::initialize()
 
  void App::shutDown()
  {
-    m_renderer.reset();
-    m_sim.reset();
-    m_gui.reset();
-    m_input.reset();
-
     if (m_window)
     {
         glfwDestroyWindow(m_window);
@@ -84,15 +72,53 @@ bool App::initialize()
 
 void App::mainLoop()
 {
-    
+    const double dt = Config::dt;
+    const double maxFrameTime = 0.25;
+
+    m_previousTime = glfwGetTime();
+    m_accumulator = 0.0;
+
+    while (m_runnig && !glfwWindowShouldClose(m_window))
+    {
+        double currentTime = glfwGetTime();
+        double frameTime = currentTime - m_previousTime;
+        m_previousTime = currentTime;
+
+        if (frameTime > maxFrameTime) 
+            frameTime = maxFrameTime;
+
+        if (!m_paused)
+        {
+            m_accumulator += frameTime;
+
+            while (m_accumulator >= dt)
+            {
+                update(dt);
+                m_accumulator -= dt;
+            }
+        }
+        else
+        {
+            if (m_stepOnce)
+            {
+                update(dt);
+                m_stepOnce = false;
+            }
+        }
+
+        render();
+
+        glfwSwapBuffers(m_window);
+        glfwPollEvents();
+    }
 }
 
 void App::update(float dt)
 {
-
+   //m_sim->step(dt);
 }
 
 void App::render()
 {
-
+    m_renderer.renderFrame();
 }

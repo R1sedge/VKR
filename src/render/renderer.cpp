@@ -9,19 +9,28 @@
 
 Renderer::Renderer(int width, int height, GLFWwindow* window):windowWidth(width), windowHeight(height), window(window)
 {
-	centerWindow();
 	
-	glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
-	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
-	initGL();
-	initShaders();
-
-	updateProjection();
-
-	initGeometry();
-	setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
 }	
+
+void Renderer::setWindow(GLFWwindow* wnd)
+{
+	window = wnd;
+	if (window)
+	{
+		centerWindow();
+	
+		glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
+		glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+		initGL();
+		initShaders();
+
+		updateProjection();
+
+		initGeometry();
+		setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
+	}
+}
 
 void Renderer::centerWindow()
 {
@@ -249,16 +258,4 @@ void Renderer::updateProjection()
 	float halfWorldH = 	windowHeight / (2 * Config::pixelsPerUnits);
 
 	setOrthoProjection(-halfWorldW, +halfWorldW, -halfWorldH, +halfWorldH);
-}
-
-void Renderer::mainLoop()
-{
-	while(!glfwWindowShouldClose(window))
-	{
-		renderFrame();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
-	glfwDestroyWindow(window);
-	glfwTerminate();
 }
