@@ -7,7 +7,8 @@
 
 App::App(): 
     m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
-    m_gui()
+    m_gui(),
+    m_sim()
     {}
 
 App::~App() = default;
@@ -50,8 +51,14 @@ bool App::initialize()
     m_gui.initialize(m_window);
     m_gui.setSimulationDt(Config::dt);
 
-   m_runnig = true;
-   return true;
+    float halfWorldW = Config::windowWidth / (2.0f * Config::pixelsPerUnits);
+    float halfWorldH = Config::windowHeight / (2.0f * Config::pixelsPerUnits);
+
+    m_sim.setWorldBounds(-halfWorldW, halfWorldW, 
+                         -halfWorldH, halfWorldH);
+
+    m_runnig = true;
+    return true;
 }
 
  void App::shutDown()
@@ -121,11 +128,10 @@ void App::mainLoop()
 
 void App::update(float dt)
 {
-    
+    m_sim.update(dt);
 }
 
 void App::render()
 {  
-    
     m_renderer.renderFrame();
 }

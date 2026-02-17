@@ -28,7 +28,7 @@ private:
 private:
     GLFWwindow*    m_window = nullptr;
     Renderer       m_renderer;
-    //Simulation2D   m_sim;
+    Simulation2D   m_sim;
     UserInterface  m_gui;
     //InputManager   m_input;
 
