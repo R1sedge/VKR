@@ -12,6 +12,8 @@ public:
 
     void setWorldBounds(float left, float right, float bottom, float top);
 
+    const Particles2D& getParticles() const {return particles;}
+
 private:
     Particles2D particles;
 

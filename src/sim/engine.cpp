@@ -10,8 +10,8 @@ Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f)
 
     for (int i = 0; i < n; ++i)
     {
-        float fx = -2.0f + 4.0f * (float(i) / float(n - 1)); // [-2, 2]
-        float fy = 0.0f + 1.0f * (float(i) / float(n - 1));  // [0, 1]
+        float fx = -4.0f + 8.0f * (float(i) / float(n - 1)); // [-4, 4]
+        float fy = -1.0f + 2.0f * (float(i) / float(n - 1));  // [-1, 1]
 
         particles.x[i]  = fx;
         particles.y[i]  = fy;
@@ -55,7 +55,7 @@ void Simulation2D::integrate(float dt)
         float vx = x - px;
         float vy = y - py;
 
-        float invMass = 1.0f / particles.mass[i];
+        float invMass = (particles.mass[i] > 0.0f) ? (1.0f / particles.mass[i]) : 0.0f;
 
         vx += gx * dt * dt * invMass;
         vy += gy * dt * dt * invMass;

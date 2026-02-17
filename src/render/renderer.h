@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#include "data/particleData.h"
 
 class Renderer
 {
@@ -19,7 +20,7 @@ public:
 	Renderer(int width, int height, GLFWwindow* window);
 
 	void setWindow(GLFWwindow* window);
-	void renderFrame();
+	void renderFrame(const Particles2D& particles);
 
 	void setTriangleColor(float r, float g, float b, float a);
 	void setModelMatrix(float x, float y, float radius);

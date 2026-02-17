@@ -189,23 +189,27 @@ void Renderer::initGeometry()
 	glBindVertexArray(0);
 }
 
-void Renderer::renderFrame()
+void Renderer::renderFrame(const Particles2D& particles)
 {
 	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(shaderProgram);
+	glBindVertexArray(vao);
 
-	float time = float(glfwGetTime());
-
-	float green = 0.4f + 0.4f * std::sin(time);
-	setTriangleColor(0.2f, green, 0.8f, 1.0f);
-
-	setModelMatrix(0.0f, 0.0f, Config::particleRadius);
+	setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
 	setCircleRadius(1.0f);
 
-	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	float radius = Config::particleRadius;
+
+	for (int i = 0; i < particles.count; ++i)
+    {
+		float x = particles.x[i];
+        float y = particles.y[i];
+		
+		setModelMatrix(x, y, radius);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
 }
 
 void Renderer::setTriangleColor(float r, float g, float b, float a)

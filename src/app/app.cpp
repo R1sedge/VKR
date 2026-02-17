@@ -133,5 +133,5 @@ void App::update(float dt)
 
 void App::render()
 {  
-    m_renderer.renderFrame();
+    m_renderer.renderFrame(m_sim.getParticles());
 }

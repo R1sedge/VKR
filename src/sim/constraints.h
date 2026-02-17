@@ -37,7 +37,7 @@ public:
             if (x < left + radius) x = left + radius;
             if (x > right - radius) x = right - radius;
             if (y < bottom + radius) y = bottom + radius;
-            if (y < top - radius) y = top - radius;
+            if (y > top - radius) y = top - radius;
         }
     }
 
