@@ -12,4 +12,6 @@ namespace Config
     inline float gravityY = -9.81f;               // Гравитация по y
     inline constexpr float particleRadius = 0.05f; // В world units (при ppu=100 это 5px)
 
+    // PBD SOLVING PARAMS
+    inline constexpr int subSteps = 4;
 }

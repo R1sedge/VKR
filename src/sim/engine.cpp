@@ -36,8 +36,12 @@ void Simulation2D::update(float dt)
     if (particles.count == 0)
         return;
 
-    integrate(dt);
-    solveConstraints();
+    integrate(dt); // Предсказание позиции
+
+    for (int iter = 0; iter < subSteps; ++iter)
+        solveConstraints(); 
+
+    finalize(dt);
 }
 
 void Simulation2D::integrate(float dt)
@@ -55,10 +59,8 @@ void Simulation2D::integrate(float dt)
         float vx = x - px;
         float vy = y - py;
 
-        float invMass = (particles.mass[i] > 0.0f) ? (1.0f / particles.mass[i]) : 0.0f;
-
-        vx += gx * dt * dt * invMass;
-        vy += gy * dt * dt * invMass;
+        vx += gx * dt * dt;
+        vy += gy * dt * dt;
 
         float nx = x + vx;
         float ny = y + vy;
@@ -67,9 +69,25 @@ void Simulation2D::integrate(float dt)
         particles.py[i] = y;
         particles.x[i]  = nx;
         particles.y[i]  = ny;
+    }
+}
 
-        particles.vx[i] = vx / dt;
-        particles.vy[i] = vy / dt;
+void Simulation2D::finalize(float dt)
+{
+    const float invDt = 1.0f / dt;
+    const float damp = velocityDamping;
+
+    for (int i = 0; i < particles.count; ++i)
+    {
+        float vx = (particles.x[i] - particles.px[i]) * invDt;
+        float vy = (particles.y[i] - particles.py[i]) * invDt;
+
+        // Опционально damping
+        vx *= (1 - damp);
+        vy *= (1 - damp);
+
+        particles.vx[i] = vx;
+        particles.vy[i] = vy;
     }
 }
 
