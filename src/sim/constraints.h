@@ -34,10 +34,14 @@ public:
             float& x = particles.x[i];
             float& y = particles.y[i];
 
-            if (x < left + radius) x = left + radius;
-            if (x > right - radius) x = right - radius;
-            if (y < bottom + radius) y = bottom + radius;
-            if (y > top - radius) y = top - radius;
+            if (x < left + radius)
+                x = left + radius;
+            if (x > right - radius) 
+                x = right - radius;
+            if (y < bottom + radius)
+                y = bottom + radius;
+            if (y > top - radius) 
+                y = top - radius;
         }
     }
 

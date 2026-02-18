@@ -27,8 +27,9 @@ void Renderer::setWindow(GLFWwindow* wnd)
 
 		updateProjection();
 
+		setMaxSpeed(8.0f);
+
 		initGeometry();
-		setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
 	}
 }
 
@@ -166,7 +167,7 @@ void Renderer::initGeometry()
     -1.0f,  1.0f, 0.0f
 };
 
-	// Генерируем и настраиваем VAO и VBO
+	// Генерируем и настраиваем VAO и VBO для quad
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 
@@ -176,6 +177,7 @@ void Renderer::initGeometry()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Описываем формат атрибута позиции (location = 0)
+	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
 		0,                      // location в шейдере
         3,                      // по 3 компоненты (x,y,z)
@@ -184,7 +186,23 @@ void Renderer::initGeometry()
         3 * sizeof(float),      // шаг между вершинами
         (void*)0                // смещение от начала
 	);
-	glEnableVertexAttribArray(0);
+	
+
+	// instance
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STREAM_DRAW);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1,                      // location в шейдере
+        4,                      // по4 компоненты (x, y, radius, speed)
+        GL_FLOAT,
+        GL_FALSE,
+        4 * sizeof(float),      
+        (void*)0                
+	);
+	glVertexAttribDivisor(1, 1);
 
 	glBindVertexArray(0);
 }
@@ -194,29 +212,42 @@ void Renderer::renderFrame(const Particles2D& particles)
 	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUseProgram(shaderProgram);
-	glBindVertexArray(vao);
+	int n = particles.count;
+    if (n == 0)
+        return;
 
-	setTriangleColor(0.2f, 0.4f, 0.8f, 1.0f);
+	glUseProgram(shaderProgram);
+	
 	setCircleRadius(1.0f);
 
+	// Собираем данные
+	std::vector<float> instanceData;
+	instanceData.resize(n * 4);
+
 	float radius = Config::particleRadius;
-
-	for (int i = 0; i < particles.count; ++i)
+	for (int i = 0; i < n; ++i)
     {
-		float x = particles.x[i];
-        float y = particles.y[i];
-		
-		setModelMatrix(x, y, radius);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-	}
-}
+		float vx = particles.vx[i];
+		float vy = particles.vy[i];
+		float speed = std::sqrt(vx * vx + vy * vy);
 
-void Renderer::setTriangleColor(float r, float g, float b, float a)
-{
-	glUseProgram(shaderProgram);
-	GLint loc = glGetUniformLocation(shaderProgram, "uColor"); // Поиск переменной по имени
-	if (loc != -1) glUniform4f(loc, r, g, b, a);
+		instanceData[4 * i + 0] = particles.x[i];
+		instanceData[4 * i + 1] = particles.y[i];
+		instanceData[4 * i + 2] = radius;
+		instanceData[4 * i + 3] = speed;
+	}
+
+	// Переносим данные в InstanceVBO
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, 
+				 instanceData.size() * sizeof(float),
+				 instanceData.data(),
+				 GL_STREAM_DRAW);
+
+	// Рисуем
+	glBindVertexArray(vao);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, n);
+
 }
 
 void Renderer::setCircleRadius(float normalisedRadius)
@@ -226,20 +257,12 @@ void Renderer::setCircleRadius(float normalisedRadius)
 	if (loc != -1) glUniform1f(loc, normalisedRadius);
 }
 
-void Renderer::setModelMatrix(float x, float y, float radius)
+void Renderer::setMaxSpeed(float maxSpeed)
 {
-	glUseProgram(shaderProgram);
-	float s = radius;
-
-	float model[16] = {
-        s, 0, 0, 0,   // scale x
-        0, s, 0, 0,   // scale y
-        0, 0, 1, 0,   // колонка 2
-        x, y, 0, 1  // колонка 3 (translation)
-    };
-
-	GLint loc = glGetUniformLocation(shaderProgram, "uModel");
-	if (loc != -1) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+		glUseProgram(shaderProgram);
+		GLint loc = glGetUniformLocation(shaderProgram, "uMaxSpeed");
+		if (loc != -1)
+			glUniform1f(loc, maxSpeed);
 }
 
 void Renderer::setOrthoProjection(float left, float right, float bottom, float top)

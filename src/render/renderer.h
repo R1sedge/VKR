@@ -14,6 +14,7 @@ private:
 
 	unsigned int shaderProgram = 0;
 	unsigned int vbo = 0;
+	unsigned int instanceVBO = 0;
 	unsigned int vao = 0;
 
 public:
@@ -22,11 +23,10 @@ public:
 	void setWindow(GLFWwindow* window);
 	void renderFrame(const Particles2D& particles);
 
-	void setTriangleColor(float r, float g, float b, float a);
-	void setModelMatrix(float x, float y, float radius);
 	void setOrthoProjection(float left, float right, float bottom, float top);
 	void updateProjection();
 	void setCircleRadius(float normalisedRadius);
+	void setMaxSpeed(float maxSpeed);
 
 private:
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
