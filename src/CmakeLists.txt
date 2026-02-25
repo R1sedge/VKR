@@ -18,7 +18,17 @@ add_executable(Simulation
 
     sim/engine.cpp
     sim/engine.h
-    sim/constraints.h
+    sim/structs.h
+
+    sim/collisions/pairsGrid.cpp
+    sim/collisions/pairsGrid.h
+    sim/collisions/pairsNaive.cpp
+    sim/collisions/pairsNaive.h
+
+    sim/constraints/boxBounds.cpp
+    sim/constraints/boxBounds.h
+    sim/constraints/circleCollision.cpp
+    sim/constraints/circleCollision.h
 )
 
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)

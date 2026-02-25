@@ -1,29 +1,39 @@
 #include "engine.h"
 #include "common/config.h"
+#include "collisions/pairsNaive.h"
 
-Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f)
+Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
+    circleCollision(Config::particleRadius)
 {
-    // Временно
-    int n = 100;
+    const float r = Config::particleRadius;
+    const float step = r * 2.1f; // небольшой зазор между частицами
+    const int cols = 25;
+    const int rows = 10;
+    const int n = cols * rows;
+
     particles.resize(n);
     particles.count = n;
 
-    for (int i = 0; i < n; ++i)
+    collisionPairs.reserve(n * 4);
+
+   for (int row = 0; row < rows; ++row)
     {
-        float fx = -4.0f + 8.0f * (float(i) / float(n - 1)); // [-4, 4]
-        float fy = -1.0f + 2.0f * (float(i) / float(n - 1));  // [-1, 1]
+        for (int col = 0; col < cols; ++col)
+        {
+            int idx = row * cols + col;
 
-        particles.x[i]  = fx;
-        particles.y[i]  = fy;
-        particles.px[i] = fx; // Verlet: начальная prev = current
-        particles.py[i] = fy;
+            float fx = (col - cols / 2) * step;
+            float fy = (row - rows / 2) * step + 1.5f; // чуть выше центра
 
-        particles.vx[i] = 0.0f;
-        particles.vy[i] = 0.0f;
-        particles.mass[i] = 1.0f; // пока одинаковая масса
+            particles.x[idx]    = fx;
+            particles.y[idx]    = fy;
+            particles.px[idx]   = fx; // Verlet: p_prev = p_current
+            particles.py[idx]   = fy;
+            particles.vx[idx]   = 0.0f;
+            particles.vy[idx]   = 0.0f;
+            particles.mass[idx] = 1.0f;
+        }
     }
-
-    constraints.push_back(&boxConstraint);
 }
 
 void Simulation2D::setWorldBounds(float left, float right, float bottom, float top)
@@ -38,10 +48,10 @@ void Simulation2D::update(float dt)
 
     integrate(dt); // Предсказание позиции
 
-    for (int iter = 0; iter < subSteps; ++iter)
-        solveConstraints(); 
+    for (int iter = 0; iter < iterations; ++iter)
+        solveConstraints(); // Гаусс-Зейдель сходимость
 
-    finalize(dt);
+    finalize(dt); // Обновление скоростей
 }
 
 void Simulation2D::integrate(float dt)
@@ -93,6 +103,9 @@ void Simulation2D::finalize(float dt)
 
 void Simulation2D::solveConstraints()
 {
-    for (IConstraint2D* c : constraints)
-        c->project(particles);
+    collisionPairs.clear();
+    findPairsNaive(particles, Config::particleRadius, collisionPairs);
+
+    circleCollision.project(particles, collisionPairs);
+    boxConstraint.project(particles);
 }
