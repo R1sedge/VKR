@@ -100,6 +100,13 @@ void App::mainLoop()
 
         bool paused = m_gui.isPaused();
 
+        if (m_gui.consumeReset())
+        {
+            m_sim.reset();
+            m_accumulator = 0.0;
+            m_previousTime = currentTime;
+        }
+
         if (!paused)
         {
             m_accumulator += frameTime;

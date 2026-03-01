@@ -14,16 +14,27 @@ public:
     void render();
 
     void setFrameTiming(double frameTimeSeconds);
-    void setSimulationDt(float dt) {simDt = dt;}
+    void setSimulationDt(float dt) { simDt = dt; }
 
-    bool isPaused() const {return paused;}
+    bool isPaused() const { return paused; }
     // Возвращает true один раз после нажатия кнопки и сразу сбрасывает флаг
     bool consumeStepOnce() 
     {
-        bool v = stepOnce;
+        bool f = stepOnce;
         stepOnce = false;
-        return v;
+        return f;
     }
+
+    void setPaused(bool f) { paused = f; }
+    void togglePaused() { paused = !paused; }
+
+    void requestReset() { resetRequested = true; }
+    bool consumeReset() {
+        bool f = resetRequested;
+        resetRequested = false;
+        return f;
+    }
+    
 
 private:
     bool initialized = false;
@@ -42,4 +53,5 @@ private:
     // Управление
     bool paused = false;
     bool stepOnce = false;
+    bool resetRequested = false;
 };

@@ -5,8 +5,14 @@
 Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
     circleCollision(Config::particleRadius)
 {
+    reset();
+}
+
+void Simulation2D::reset()
+{
     const float r = Config::particleRadius;
     const float step = r * 2.1f; // небольшой зазор между частицами
+
     const int cols = 25;
     const int rows = 10;
     const int n = cols * rows;
@@ -14,7 +20,8 @@ Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
     particles.resize(n);
     particles.count = n;
 
-    collisionPairs.reserve(n * 4);
+    collisionPairs.reserve(n * 4); // Верхняя оценка числа пар
+    collisionPairs.clear();
 
    for (int row = 0; row < rows; ++row)
     {
@@ -29,8 +36,10 @@ Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
             particles.y[idx]    = fy;
             particles.px[idx]   = fx; // Verlet: p_prev = p_current
             particles.py[idx]   = fy;
+
             particles.vx[idx]   = 0.0f;
             particles.vy[idx]   = 0.0f;
+            
             particles.mass[idx] = 1.0f;
         }
     }

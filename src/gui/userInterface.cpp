@@ -78,8 +78,9 @@ void UserInterface::render()
     ImGui::Separator();
 
     ImGui::Checkbox("Paused", &paused);
-    if (ImGui::Button("Step once"))
-        stepOnce = true;
+    if (ImGui::Button("Step once")) stepOnce = true;
+    ImGui::SameLine();
+    if (ImGui::Button("Reset (R)")) resetRequested = true;
 
     ImGui::End();
 

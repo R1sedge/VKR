@@ -16,6 +16,9 @@ add_executable(Simulation
     render/renderer.cpp
     render/renderer.h
 
+    input/inputManager.cpp
+    input/inputManager.h
+
     sim/engine.cpp
     sim/engine.h
     sim/structs.h

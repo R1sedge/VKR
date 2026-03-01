@@ -19,6 +19,8 @@ public:
 
     const Particles2D& getParticles() const {return particles;}
 
+    void reset();
+
 private:
     int iterations = 4;    
     float velocityDamping = 0.0f;
