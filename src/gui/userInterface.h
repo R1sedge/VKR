@@ -1,7 +1,8 @@
 #pragma once
-
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+struct AppState;
+struct AppCommands;
 
 class UserInterface
 {
@@ -11,30 +12,12 @@ public:
 
     bool initialize(GLFWwindow* window);
 
-    void render();
+    void beginFrame();
+    void buildUI(const AppState& state, AppCommands& commands);
+    void endFrame();
 
     void setFrameTiming(double frameTimeSeconds);
-    void setSimulationDt(float dt) { simDt = dt; }
-
-    bool isPaused() const { return paused; }
-    // Возвращает true один раз после нажатия кнопки и сразу сбрасывает флаг
-    bool consumeStepOnce() 
-    {
-        bool f = stepOnce;
-        stepOnce = false;
-        return f;
-    }
-
-    void setPaused(bool f) { paused = f; }
-    void togglePaused() { paused = !paused; }
-
-    void requestReset() { resetRequested = true; }
-    bool consumeReset() {
-        bool f = resetRequested;
-        resetRequested = false;
-        return f;
-    }
-    
+    void setSimulationDt(float dt) { simDt = dt; } 
 
 private:
     bool initialized = false;
@@ -49,9 +32,4 @@ private:
     float frameTimes[historySize] = {0.0f};
     int histoyIndex = 0;
     int historyCount = 0;
-
-    // Управление
-    bool paused = false;
-    bool stepOnce = false;
-    bool resetRequested = false;
 };

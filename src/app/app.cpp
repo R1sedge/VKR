@@ -8,7 +8,9 @@
 App::App(): 
     m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
     m_gui(),
-    m_sim()
+    m_sim(),
+    m_input(),
+    m_state()
     {}
 
 App::~App() = default;
@@ -47,6 +49,7 @@ bool App::initialize()
     }
 
     m_renderer.setWindow(m_window);
+    m_input.setWindow(m_window);
 
     m_gui.initialize(m_window);
     m_gui.setSimulationDt(Config::dt);
@@ -88,7 +91,10 @@ void App::mainLoop()
     m_accumulator = 0.0;
 
     while (m_runnig && !glfwWindowShouldClose(m_window))
-    {
+    {   
+        glfwPollEvents();
+        m_input.update();
+
         double currentTime = glfwGetTime();
         double frameTime = currentTime - m_previousTime;
         m_previousTime = currentTime;
@@ -98,38 +104,45 @@ void App::mainLoop()
 
         m_gui.setFrameTiming(frameTime);
 
-        bool paused = m_gui.isPaused();
+        AppCommands cmd;
+        
+        m_gui.beginFrame();
 
-        if (m_gui.consumeReset())
+        if (m_input.justPressed(GLFW_KEY_SPACE)) cmd.togglePause = true;
+        if (m_input.justPressed(GLFW_KEY_R)) cmd.reset = true;
+
+        m_gui.buildUI(m_state, cmd);
+
+        // applyCommands (cmd):
+        if (cmd.togglePause) m_state.paused = !m_state.paused;
+        if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
+
+        if (cmd.reset)
         {
             m_sim.reset();
-            m_accumulator = 0.0;
+            m_accumulator = 0.0f;
             m_previousTime = currentTime;
         }
 
-        if (!paused)
+        if (!m_state.paused)
         {
             m_accumulator += frameTime;
-
-            while (m_accumulator >= dt)
-            {
+            while (m_accumulator >= dt) 
+            { 
                 update(dt);
                 m_accumulator -= dt;
             }
         }
         else
         {
-            if (m_gui.consumeStepOnce())
-            {
+            if (cmd.stepOnce) 
                 update(dt);
-            }
         }
 
         render();
-        m_gui.render();
+        m_gui.endFrame();
 
         glfwSwapBuffers(m_window);
-        glfwPollEvents();
     }
 }
 

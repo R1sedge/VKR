@@ -1,4 +1,6 @@
 #include "userInterface.h"
+#include "app/appState.h"
+#include "app/appCommands.h"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -59,32 +61,44 @@ void UserInterface::setFrameTiming(double frameTimeSeconds)
     avgFps = (historyCount > 0) ? (1000.0f / avgFrameMs) : fps;
 }
 
-void UserInterface::render()
-{
-    if (!initialized)
-        return;
 
+void UserInterface::beginFrame()
+{   
+    if (!initialized) return;
     // Начинаем новый ImGui кадр
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+}
+
+void UserInterface::buildUI(const AppState& state, AppCommands& commands)
+{
+    if (!initialized) return;
 
     ImGui::Begin("Simulation");
 
     ImGui::Text("Frame:  %.3f ms", avgFrameMs);
     ImGui::Text("FPS:    %.1f", avgFps);
     ImGui::Text("Sim dt: %.4f s", simDt);
-
     ImGui::Separator();
 
-    ImGui::Checkbox("Paused", &paused);
-    if (ImGui::Button("Step once")) stepOnce = true;
+    bool pausedLocal = state.paused;
+    if (ImGui::Checkbox("Paused", &pausedLocal))
+    {
+        commands.hasSetPaused = true;
+        commands.setPausedValue = pausedLocal;
+    }
+
+    if (ImGui::Button("Step once")) commands.stepOnce = true;
     ImGui::SameLine();
-    if (ImGui::Button("Reset (R)")) resetRequested = true;
+    if (ImGui::Button("Reset (R)")) commands.reset = true;
 
     ImGui::End();
+}
 
+void UserInterface::endFrame()
+{
+    if (!initialized) return;
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-

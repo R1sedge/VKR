@@ -6,7 +6,9 @@
 #include "render/renderer.h"
 #include "sim/engine.h"
 #include "gui/userInterface.h"
-// #include "input/inputManager.h"
+#include "input/inputManager.h"
+#include "app/appState.h"
+#include "app/appCommands.h"
 
 
 class App
@@ -30,7 +32,8 @@ private:
     Renderer       m_renderer;
     Simulation2D   m_sim;
     UserInterface  m_gui;
-    //InputManager   m_input;
+    InputManager   m_input;
+    AppState       m_state;
 
     bool m_runnig = false;
 
