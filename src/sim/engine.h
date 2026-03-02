@@ -4,6 +4,7 @@
 #include "sim/constraints/circleCollision.h"
 #include <vector>
 #include "structs.h"
+#include "collisions/pairsGrid.h"
 
 class Simulation2D
 {
@@ -14,12 +15,15 @@ public:
 
     void setWorldBounds(float left, float right, float bottom, float top);
     void setIterations(int iter) { iterations = iter; }
+    void configureGrid(float left, float right, float bottom, float top, float cellSize);
 
     void setVelocityDamping(float d) { velocityDamping = d; }
 
     const Particles2D& getParticles() const {return particles;}
 
     void reset();
+
+    bool useGrid = true; // Потом прокинем в чекбокс в ui
 
 private:
     int iterations = 4;    
@@ -30,6 +34,8 @@ private:
     CircleCollisionConstraint2D circleCollision;
 
     std::vector<CollisionPair> collisionPairs;
+
+    UniformGrid2D grid;
 
     void integrate(float dt);
     void solveConstraints();

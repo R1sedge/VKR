@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "common/config.h"
 #include "collisions/pairsNaive.h"
+#include "collisions/pairsGrid.h"
 
 Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
     circleCollision(Config::particleRadius)
@@ -13,8 +14,8 @@ void Simulation2D::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.1f; // небольшой зазор между частицами
 
-    const int cols = 25;
-    const int rows = 10;
+    const int cols = 50;
+    const int rows = 40;
     const int n = cols * rows;
 
     particles.resize(n);
@@ -48,6 +49,14 @@ void Simulation2D::reset()
 void Simulation2D::setWorldBounds(float left, float right, float bottom, float top)
 {
     boxConstraint.setBounds(left, right, bottom, top);
+
+    const float cellSize = 2.0f * Config::particleRadius;
+    configureGrid(left, right, bottom, top, cellSize);
+}
+
+void Simulation2D::configureGrid(float left, float right, float bottom, float top, float cellSize)
+{
+    grid.rebuild(left, right, bottom, top, cellSize);
 }
 
 void Simulation2D::update(float dt)
@@ -113,7 +122,15 @@ void Simulation2D::finalize(float dt)
 void Simulation2D::solveConstraints()
 {
     collisionPairs.clear();
-    findPairsNaive(particles, Config::particleRadius, collisionPairs);
+    if (useGrid)
+    {
+        grid.build(particles); 
+        grid.findPairs(particles, Config::particleRadius, collisionPairs); 
+    }
+    else
+    {
+        findPairsNaive(particles, Config::particleRadius, collisionPairs);
+    }
 
     circleCollision.project(particles, collisionPairs);
     boxConstraint.project(particles);
