@@ -14,8 +14,8 @@ void Simulation2D::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.1f; // небольшой зазор между частицами
 
-    const int cols = 50;
-    const int rows = 40;
+    const int cols = 150;
+    const int rows = 16;
     const int n = cols * rows;
 
     particles.resize(n);

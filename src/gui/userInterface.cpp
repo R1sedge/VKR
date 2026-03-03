@@ -47,8 +47,8 @@ void UserInterface::setFrameTiming(double frameTimeSeconds)
         fps = 0.0f;
 
     // Кольцевой буфер
-    frameTimes[histoyIndex] = ms;
-    histoyIndex = (histoyIndex + 1) % historySize;
+    frameTimes[historyIndex] = ms;
+    historyIndex = (historyIndex + 1) % historySize;
     if(historyCount < historySize)
         historyCount++;
 
@@ -61,6 +61,35 @@ void UserInterface::setFrameTiming(double frameTimeSeconds)
     avgFps = (historyCount > 0) ? (1000.0f / avgFrameMs) : fps;
 }
 
+void UserInterface::setPhysicsTiming(double seconds)
+{
+    float ms = (float)(seconds * 1000);
+
+    // Кольцевой буфер
+    physicsFrameTimes[historyIndex] = ms;
+
+    // Сглаженные значения
+    float sumMs = 0.0f;
+    for (int i = 0; i < historyCount; ++i) // Можно немного оптимизировать
+        sumMs += physicsFrameTimes[i];
+    
+    avgPhysicsMs = (historyCount > 0) ? (sumMs / historyCount) : ms;
+}
+
+void UserInterface::setRenderTiming(double seconds)
+{
+    float ms = (float)(seconds * 1000);
+
+    // Кольцевой буфер
+    renderFrameTimes[historyIndex] = ms;
+
+    // Сглаженные значения
+    float sumMs = 0.0f;
+    for (int i = 0; i < historyCount; ++i)
+        sumMs += renderFrameTimes[i];
+    
+    avgRenderMs = (historyCount > 0) ? (sumMs / historyCount) : ms;
+}
 
 void UserInterface::beginFrame()
 {   
@@ -77,8 +106,13 @@ void UserInterface::buildUI(const AppState& state, AppCommands& commands)
 
     ImGui::Begin("Simulation");
 
-    ImGui::Text("Frame:  %.3f ms", avgFrameMs);
     ImGui::Text("FPS:    %.1f", avgFps);
+    ImGui::Separator();
+
+    ImGui::Text("Frame:  %.3f ms", avgFrameMs);
+    ImGui::Text("Physics:  %.3f ms", avgPhysicsMs);
+    ImGui::Text("Render:  %.3f ms", avgRenderMs);
+    
     ImGui::Text("Sim dt: %.4f s", simDt);
     ImGui::Separator();
 

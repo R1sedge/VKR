@@ -124,6 +124,7 @@ void App::mainLoop()
             m_previousTime = currentTime;
         }
 
+        double startPhysicsTime = glfwGetTime();
         if (!m_state.paused)
         {
             m_accumulator += frameTime;
@@ -138,8 +139,15 @@ void App::mainLoop()
             if (cmd.stepOnce) 
                 update(dt);
         }
+        double endPhysicsTime = glfwGetTime();
 
+        double startRenderTime = glfwGetTime();
         render();
+        double endRenderTime = glfwGetTime();
+
+        m_gui.setPhysicsTiming(endPhysicsTime - startPhysicsTime);
+        m_gui.setRenderTiming(endRenderTime - startRenderTime);
+        
         m_gui.endFrame();
 
         glfwSwapBuffers(m_window);

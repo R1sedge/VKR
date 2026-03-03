@@ -17,6 +17,9 @@ public:
     void endFrame();
 
     void setFrameTiming(double frameTimeSeconds);
+    void setPhysicsTiming(double seconds);
+    void setRenderTiming(double seconds);
+
     void setSimulationDt(float dt) { simDt = dt; } 
 
 private:
@@ -24,12 +27,19 @@ private:
 
     // Метрики
     float avgFrameMs = 0.0f;
+    float avgPhysicsMs = 0.0f;
+    float avgRenderMs = 0.0f;
+
     float avgFps = 0.0f;
     float simDt = 0.0f;
 
     // История
     static constexpr int historySize = 60;
+
     float frameTimes[historySize] = {0.0f};
-    int histoyIndex = 0;
+    float physicsFrameTimes[historySize] = {0.0f};
+    float renderFrameTimes[historySize] = {0.0f};
+
+    int historyIndex = 0;
     int historyCount = 0;
 };
