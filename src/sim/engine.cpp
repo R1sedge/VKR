@@ -19,9 +19,7 @@ void Simulation2D::reset()
     const int n = cols * rows;
 
     particles.resize(n);
-    particles.count = n;
-
-    collisionPairs.reserve(n * 4); // Верхняя оценка числа пар
+    collisionPairs.reserve(n * 8); // Верхняя оценка числа пар
     collisionPairs.clear();
 
    for (int row = 0; row < rows; ++row)
@@ -44,6 +42,7 @@ void Simulation2D::reset()
             particles.mass[idx] = 1.0f;
         }
     }
+    particles.clearDerived();
 }
 
 void Simulation2D::setWorldBounds(float left, float right, float bottom, float top)
@@ -64,15 +63,31 @@ void Simulation2D::update(float dt)
     if (particles.count == 0)
         return;
 
-    integrate(dt); // Предсказание позиции
+    beginStep();
+    predictPositions(dt);
+    
+    buildNeighbors();
 
     for (int iter = 0; iter < iterations; ++iter)
-        solveConstraints(); // Гаусс-Зейдель сходимость
+    {
+        solveSolidConstraints();
 
-    finalize(dt); // Обновление скоростей
+        computeDensity();
+        computeLambda();
+        computeDeltaPositions();
+        applyDeltaPositions();
+
+        boxConstraint.project(particles); // Чтобы все частицы оставались внутри границ
+    }
+    finalizeVelocities(dt); // Обновление скоростей
 }
 
-void Simulation2D::integrate(float dt)
+void Simulation2D::beginStep()
+{
+    particles.clearDerived();
+}
+
+void Simulation2D::predictPositions(float dt)
 {
     const float gx = 0.0f;
     const float gy = Config::gravityY;
@@ -90,17 +105,44 @@ void Simulation2D::integrate(float dt)
         vx += gx * dt * dt;
         vy += gy * dt * dt;
 
-        float nx = x + vx;
-        float ny = y + vy;
-
         particles.px[i] = x;
         particles.py[i] = y;
-        particles.x[i]  = nx;
-        particles.y[i]  = ny;
+
+        particles.x[i]  = x + vx;
+        particles.y[i]  = y + vy;
     }
 }
 
-void Simulation2D::finalize(float dt)
+void Simulation2D::buildCollisionPairs()
+{
+    collisionPairs.clear();
+
+    if (useGrid)
+    {
+        grid.build(particles); 
+        grid.findPairs(particles, Config::particleRadius, collisionPairs); 
+    }
+    else
+    {
+        findPairsNaive(particles, Config::particleRadius, collisionPairs);
+    }
+}
+
+void Simulation2D::buildNeighbors()
+{
+    // Пока заглушка.
+    // Для PBF здесь будет отдельный neighbor list по support radius h,
+    // причём строиться он должен один раз перед solver-итерациями.
+}
+
+void Simulation2D::solveSolidConstraints()
+{
+    buildCollisionPairs();
+    circleCollision.project(particles, collisionPairs);
+    boxConstraint.project(particles);
+}
+
+void Simulation2D::finalizeVelocities(float dt)
 {
     const float invDt = 1.0f / dt;
     const float damp = velocityDamping;
@@ -111,27 +153,30 @@ void Simulation2D::finalize(float dt)
         float vy = (particles.y[i] - particles.py[i]) * invDt;
 
         // Опционально damping
-        vx *= (1 - damp);
-        vy *= (1 - damp);
+        vx *= (1.0f - damp);
+        vy *= (1.0f - damp);
 
         particles.vx[i] = vx;
         particles.vy[i] = vy;
     }
 }
 
-void Simulation2D::solveConstraints()
+void Simulation2D::computeDensity()
 {
-    collisionPairs.clear();
-    if (useGrid)
-    {
-        grid.build(particles); 
-        grid.findPairs(particles, Config::particleRadius, collisionPairs); 
-    }
-    else
-    {
-        findPairsNaive(particles, Config::particleRadius, collisionPairs);
-    }
 
-    circleCollision.project(particles, collisionPairs);
-    boxConstraint.project(particles);
+}
+
+void Simulation2D::computeLambda()
+{
+    
+}
+
+void Simulation2D::computeDeltaPositions()
+{
+    
+}
+
+void Simulation2D::applyDeltaPositions()
+{
+    
 }

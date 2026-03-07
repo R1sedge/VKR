@@ -1,9 +1,10 @@
 #pragma once
+#include <vector>
+
 #include "data/particleData.h"
 #include "sim/constraints/boxBounds.h"
 #include "sim/constraints/circleCollision.h"
-#include <vector>
-#include "structs.h"
+#include "sim/structs.h"
 #include "collisions/pairsGrid.h"
 
 class Simulation2D
@@ -16,7 +17,6 @@ public:
     void setWorldBounds(float left, float right, float bottom, float top);
     void setIterations(int iter) { iterations = iter; }
     void configureGrid(float left, float right, float bottom, float top, float cellSize);
-
     void setVelocityDamping(float d) { velocityDamping = d; }
 
     const Particles2D& getParticles() const {return particles;}
@@ -30,15 +30,25 @@ private:
     float velocityDamping = 0.0f;
 
     Particles2D particles;
+
     BoxBoundsConstraint2D boxConstraint;
     CircleCollisionConstraint2D circleCollision;
 
     std::vector<CollisionPair> collisionPairs;
-
     UniformGrid2D grid;
 
-    void integrate(float dt);
-    void solveConstraints();
-    void finalize(float dt);
+private:
+    // общие PBD/PBF стадии
+    void beginStep();
+    void predictPositions(float dt);
+    void buildCollisionPairs();
+    void buildNeighbors();
+    void solveSolidConstraints();
+    void finalizeVelocities(float dt);
 
+    // PBF стадии
+    void computeDensity();
+    void computeLambda();
+    void computeDeltaPositions();
+    void applyDeltaPositions();
 };
