@@ -1,7 +1,5 @@
 #include "engine.h"
-#include "common/config.h"
 #include "collisions/pairsNaive.h"
-#include "collisions/pairsGrid.h"
 
 Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
     circleCollision(Config::particleRadius)

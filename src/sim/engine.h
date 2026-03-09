@@ -26,7 +26,7 @@ public:
     bool useGrid = true; // Потом прокинем в чекбокс в ui
 
 private:
-    int iterations = 4;    
+    int iterations = Config::iterations;    
     float velocityDamping = 0.0f;
 
     Particles2D particles;

@@ -23,6 +23,8 @@ add_executable(Simulation
     sim/engine.h
     sim/structs.h
 
+    sim/fluid/sphKernels.h
+
     sim/collisions/pairsGrid.cpp
     sim/collisions/pairsGrid.h
     sim/collisions/pairsNaive.cpp
