@@ -12,8 +12,8 @@ void Simulation2D::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.1f; // небольшой зазор между частицами
 
-    const int cols = 100;
-    const int rows = 25;
+    const int cols = 156;
+    const int rows = 30;
     const int n = cols * rows;
 
     particles.resize(n);
@@ -27,7 +27,7 @@ void Simulation2D::reset()
             int idx = row * cols + col;
 
             float fx = (col - cols / 2) * step;
-            float fy = (row - rows / 2) * step - 0.f;
+            float fy = (row - rows / 2) * step - 1.0f;
 
             particles.x[idx]    = fx;
             particles.y[idx]    = fy;
@@ -72,6 +72,8 @@ void Simulation2D::update(float dt)
         computeLambda();
         computeDeltaPositions();
         applyDeltaPositions();
+
+        buildBroadphase();
         buildCollisionPairs();
 
         circleCollision.project(particles, collisionPairs);
@@ -88,7 +90,7 @@ void Simulation2D::beginStep()
 
 void Simulation2D::predictPositions(float dt)
 {
-    const float gx = 0.0f;
+    const float gx = Config::gravityX;
     const float gy = Config::gravityY;
     const float damp = 1.0f - velocityDamping;
 
@@ -108,14 +110,21 @@ void Simulation2D::predictPositions(float dt)
     }
 }
 
+void Simulation2D::buildBroadphase()
+{
+    if (!useGrid)
+        return;
+
+    grid.build(particles);
+}
+
 void Simulation2D::buildCollisionPairs()
 {
     collisionPairs.clear();
 
     if (useGrid)
     {
-        grid.build(particles); 
-        grid.findPairs(particles, Config::particleRadius, collisionPairs); 
+        grid.findPairs(particles, Config::particleRadius, collisionPairs);
     }
     else
     {
@@ -126,15 +135,6 @@ void Simulation2D::buildCollisionPairs()
 void Simulation2D::buildNeighbors()
 {
     // Пока заглушка.
-    // Для PBF здесь будет отдельный neighbor list по support radius h,
-    // причём строиться он должен один раз перед solver-итерациями.
-}
-
-void Simulation2D::solveSolidConstraints()
-{
-    buildCollisionPairs();
-    circleCollision.project(particles, collisionPairs);
-    boxConstraint.project(particles);
 }
 
 void Simulation2D::finalizeVelocities(float dt)

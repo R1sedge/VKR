@@ -1,6 +1,28 @@
 #include "pairsGrid.h"
+
 #include "cmath"
 #include <algorithm>
+
+int UniformGrid2D::clampCellX(float x) const
+{
+    int cx = static_cast<int>(std::floor((x - left) / cellSize));
+    if (cx < 0) return 0;
+    if (cx >= cellsX) return cellsX - 1;
+    return cx;
+}
+
+int UniformGrid2D::clampCellY(float y) const
+{
+    int cy = static_cast<int>(std::floor((y - bottom) / cellSize));
+    if (cy < 0) return 0;
+    if (cy >= cellsY) return cellsY - 1;
+    return cy;
+}
+
+int UniformGrid2D::cellIndex(int cx, int cy) const
+{
+    return cy * cellsX + cx;
+}
 
 void UniformGrid2D::rebuild(float l, float r, float b, float t, float cs)
 {
@@ -11,30 +33,58 @@ void UniformGrid2D::rebuild(float l, float r, float b, float t, float cs)
 
     cellSize = cs;
 
-    cellsX = int(std::floor((r - l)  / cs)) + 1;
-    cellsY = int(std::floor((t - b)  / cs)) + 1;
+    cellsX = static_cast<int>(std::floor((right - left) / cellSize)) + 1;
+    cellsY = static_cast<int>(std::floor((top - bottom) / cellSize)) + 1;
+    totalCells = cellsX * cellsY;
 
-    grid.assign(cellsY, std::vector<std::vector<int>>(cellsX));
+    cellCounts.assign(totalCells, 0);
+    cellStarts.assign(totalCells, 0);
+    cellEnds.assign(totalCells, 0);
+    scatterCursor.assign(totalCells, 0);
+
+    particleCell.clear();
+    sortedParticleIds.clear();
 }
 
 void UniformGrid2D::build(const Particles2D& p)
 {
-    for (int y = 0; y < cellsY; ++y)
-        for (int x = 0; x < cellsX; ++x)
-        grid[y][x].clear();
+    int n = p.count;
 
-    for(int i = 0; i < p.count; ++i)
+    particleCell.resize(n);
+    sortedParticleIds.resize(n);
+
+    if (totalCells == 0)
+        return;
+
+    std::fill(cellCounts.begin(), cellCounts.end(), 0);
+
+    // 1) Считаем, сколько частиц попадает в каждую ячейку
+    for (int i = 0; i < n; ++i)
     {
-        int xid = int(std::floor((p.x[i] - left) / cellSize));
-        int yid = int(std::floor((p.y[i] - bottom) / cellSize));
+        const int cx = clampCellX(p.x[i]);
+        const int cy = clampCellY(p.y[i]);
+        const int cell = cellIndex(cx, cy);
 
-        if (xid < 0) xid = 0;
-        else if (xid >= cellsX) xid = cellsX - 1;
+        particleCell[i] = cell;
+        ++cellCounts[cell];
+    }
 
-        if (yid < 0) yid = 0;
-        else if (yid >= cellsY) yid = cellsY - 1;
+    // 2) Prefix sum -> диапазоны ячеек в sortedParticleIds
+    int offset = 0;
+    for (int cell = 0; cell < totalCells; ++cell)
+    {
+        cellStarts[cell] = offset;
+        scatterCursor[cell] = offset;
+        offset += cellCounts[cell];
+        cellEnds[cell] = offset;
+    }
 
-        grid[yid][xid].push_back(i);
+    // 3) Scatter индексов частиц в непрерывный массив
+    for (int i = 0; i < n; ++i)
+    {
+        const int cell = particleCell[i];
+        const int dst = scatterCursor[cell]++;
+        sortedParticleIds[dst] = i;
     }
 }
 
@@ -43,31 +93,73 @@ void UniformGrid2D::findPairs(const Particles2D& p, float radius, std::vector<Co
     const float minDist = 2.0f * radius;
     const float minDist2 = minDist * minDist;
 
+    if (totalCells == 0)
+        return;
+
+    // half-stencil: текущая ячейка + 4 "вперёд" соседа
+    static constexpr int neighborOffsets[4][2] = {
+        { 1,  0},
+        { 0,  1},
+        { 1,  1},
+        {-1,  1}
+    };
+
     for (int cy = 0; cy < cellsY; ++cy)
-    for (int cx = 0; cx < cellsX; ++cx)
     {
-        for (int idx1 : grid[cy][cx])
+        for (int cx = 0; cx < cellsX; ++cx)
         {
-            for (int sy = -1; sy <= 1; ++sy)
-            for (int sx = -1; sx <= 1; ++sx)
+            const int cell = cellIndex(cx, cy);
+            const int beginA = cellStarts[cell];
+            const int endA = cellEnds[cell];
+
+            // Пары внутри той же ячейки
+            for (int a = beginA; a < endA; ++a)
             {
-                int ny = cy + sy;
-                int nx = cx + sx;
+                const int i = sortedParticleIds[a];
+
+                for (int b = a + 1; b < endA; ++b)
+                {
+                    const int j = sortedParticleIds[b];
+
+                    const float dx = p.x[i] - p.x[j];
+                    const float dy = p.y[i] - p.y[j];
+                    const float dist2 = dx * dx + dy * dy;
+
+                    if (dist2 < minDist2)
+                        out.push_back({i, j});
+                }
+            }
+
+            // Пары с частью соседних ячеек, чтобы не было дублей
+            for (const auto& off : neighborOffsets)
+            {
+                const int nx = cx + off[0];
+                const int ny = cy + off[1];
+
                 if (nx < 0 || nx >= cellsX || ny < 0 || ny >= cellsY)
                     continue;
 
-                for (int idx2 : grid[ny][nx])
-                {
-                    if (idx2 <= idx1) continue; // чтобы не было дублей и self-pair
+                const int neighborCell = cellIndex(nx, ny);
+                const int beginB = cellStarts[neighborCell];
+                const int endB = cellEnds[neighborCell];
 
-                    float dx = p.x[idx1] - p.x[idx2];
-                    float dy = p.y[idx1] - p.y[idx2];
-                    float dist2 = dx*dx + dy*dy;
-                    if (dist2 < minDist2)
-                        out.push_back({idx1, idx2});
+                for (int a = beginA; a < endA; ++a)
+                {
+                    const int i = sortedParticleIds[a];
+
+                    for (int b = beginB; b < endB; ++b)
+                    {
+                        const int j = sortedParticleIds[b];
+
+                        const float dx = p.x[i] - p.x[j];
+                        const float dy = p.y[i] - p.y[j];
+                        const float dist2 = dx * dx + dy * dy;
+
+                        if (dist2 < minDist2)
+                            out.push_back({i, j});
+                    }
                 }
             }
         }
     }
-
 }

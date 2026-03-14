@@ -8,9 +8,10 @@ namespace Config
     inline constexpr float pixelsPerUnits = 100.0f; // 1 единица физ. коорд. = 100px
 
     // SIMULATION DEFAULTS
-    inline constexpr float dt = 1.0f / 100.0f;     // Шаг симуляции
+    inline constexpr float dt = 1.0f / 144.0f;     // Шаг симуляции
+    inline float gravityX = 0.0f;                // Гравитация по x
     inline float gravityY = -9.81f;                // Гравитация по y
-    inline constexpr float particleRadius = 0.05f; // В world units 
+    inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы
     inline constexpr float restDensity = 1000.0f;  // Плотность воды

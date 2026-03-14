@@ -41,9 +41,11 @@ private:
     // общие PBD/PBF стадии
     void beginStep();
     void predictPositions(float dt);
+        
+    void buildBroadphase();
     void buildCollisionPairs();
     void buildNeighbors();
-    void solveSolidConstraints();
+
     void finalizeVelocities(float dt);
 
     // PBF стадии
