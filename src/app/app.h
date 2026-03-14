@@ -39,6 +39,5 @@ private:
 
     int frameCount = 0;
 
-    double m_accumulator = 0.0;
     double m_previousTime = 0.0;
 };

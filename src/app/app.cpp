@@ -88,7 +88,6 @@ void App::mainLoop()
     const double maxFrameTime = 0.25;
 
     m_previousTime = glfwGetTime();
-    m_accumulator = 0.0;
 
     while (m_runnig && !glfwWindowShouldClose(m_window))
     {   
@@ -120,24 +119,13 @@ void App::mainLoop()
         if (cmd.reset)
         {
             m_sim.reset();
-            m_accumulator = 0.0f;
             m_previousTime = currentTime;
         }
 
         double startPhysicsTime = glfwGetTime();
-        if (!m_state.paused)
+        if (!m_state.paused || cmd.stepOnce)
         {
-            m_accumulator += frameTime;
-            while (m_accumulator >= dt) 
-            { 
-                update(dt);
-                m_accumulator -= dt;
-            }
-        }
-        else
-        {
-            if (cmd.stepOnce) 
-                update(dt);
+           update(dt);
         }
         double endPhysicsTime = glfwGetTime();
 

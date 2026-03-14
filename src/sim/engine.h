@@ -27,7 +27,7 @@ public:
 
 private:
     int iterations = Config::iterations;    
-    float velocityDamping = 0.0f;
+    float velocityDamping = 0.005f;
 
     Particles2D particles;
 

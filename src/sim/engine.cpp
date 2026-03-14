@@ -12,12 +12,12 @@ void Simulation2D::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.1f; // небольшой зазор между частицами
 
-    const int cols = 125;
-    const int rows = 16;
+    const int cols = 100;
+    const int rows = 25;
     const int n = cols * rows;
 
     particles.resize(n);
-    collisionPairs.reserve(n * 8); // Верхняя оценка числа пар
+    collisionPairs.reserve(n * 16); // Верхняя оценка числа пар
     collisionPairs.clear();
 
    for (int row = 0; row < rows; ++row)
@@ -27,11 +27,11 @@ void Simulation2D::reset()
             int idx = row * cols + col;
 
             float fx = (col - cols / 2) * step;
-            float fy = (row - rows / 2) * step + 1.5f; // чуть выше центра
+            float fy = (row - rows / 2) * step - 0.f;
 
             particles.x[idx]    = fx;
             particles.y[idx]    = fy;
-            particles.px[idx]   = fx; // Verlet: p_prev = p_current
+            particles.px[idx]   = fx;
             particles.py[idx]   = fy;
 
             particles.vx[idx]   = 0.0f;
@@ -68,15 +68,16 @@ void Simulation2D::update(float dt)
 
     for (int iter = 0; iter < iterations; ++iter)
     {
-        solveSolidConstraints();
-
         computeDensity();
         computeLambda();
         computeDeltaPositions();
         applyDeltaPositions();
+        buildCollisionPairs();
 
+        circleCollision.project(particles, collisionPairs);
         boxConstraint.project(particles); // Чтобы все частицы оставались внутри границ
     }
+
     finalizeVelocities(dt); // Обновление скоростей
 }
 
@@ -89,25 +90,21 @@ void Simulation2D::predictPositions(float dt)
 {
     const float gx = 0.0f;
     const float gy = Config::gravityY;
+    const float damp = 1.0f - velocityDamping;
 
     for (int i = 0; i < particles.count; ++i)
     {
-        float x  = particles.x[i];
-        float y  = particles.y[i];
-        float px = particles.px[i];
-        float py = particles.py[i];
+        particles.vx[i] += gx * dt;
+        particles.vy[i] += gy * dt;
 
-        float vx = x - px;
-        float vy = y - py;
+        particles.vx[i] *= damp;
+        particles.vy[i] *= damp;
 
-        vx += gx * dt * dt;
-        vy += gy * dt * dt;
+        particles.px[i] = particles.x[i];
+        particles.py[i] = particles.y[i];
 
-        particles.px[i] = x;
-        particles.py[i] = y;
-
-        particles.x[i]  = x + vx;
-        particles.y[i]  = y + vy;
+        particles.x[i] += particles.vx[i] * dt;
+        particles.y[i] += particles.vy[i] * dt;
     }
 }
 
@@ -143,19 +140,11 @@ void Simulation2D::solveSolidConstraints()
 void Simulation2D::finalizeVelocities(float dt)
 {
     const float invDt = 1.0f / dt;
-    const float damp = velocityDamping;
 
     for (int i = 0; i < particles.count; ++i)
     {
-        float vx = (particles.x[i] - particles.px[i]) * invDt;
-        float vy = (particles.y[i] - particles.py[i]) * invDt;
-
-        // Опционально damping
-        vx *= (1.0f - damp);
-        vy *= (1.0f - damp);
-
-        particles.vx[i] = vx;
-        particles.vy[i] = vy;
+        particles.vx[i] = (particles.x[i] - particles.px[i]) * invDt;
+        particles.vy[i] = (particles.y[i] - particles.py[i]) * invDt;
     }
 }
 
