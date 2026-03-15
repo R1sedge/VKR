@@ -48,6 +48,9 @@ add_executable(Simulation
     simCUDA/cudaParticles.cuh
     simCUDA/simulationBackendCUDA.cpp
     simCUDA/simulationBackendCUDA.h
+
+    simCUDA/constraints/cudaKernelsBounds.cuh
+    simCUDA/constraints/cudaKernelsBounds.cu
 )
 
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)

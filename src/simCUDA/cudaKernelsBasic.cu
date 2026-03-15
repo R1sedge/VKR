@@ -55,6 +55,23 @@ namespace
         x[i] += vx[i] * dt;
         y[i] += vy[i] * dt;
     }
+    
+    __global__ void updateVelocitiesKernel(
+        int n,
+        const float* x,
+        const float* y,
+        const float* px,
+        const float* py,
+        float* vx,
+        float* vy,
+        float invDt)
+    {
+        const int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n) return;
+
+        vx[i] = (x[i] - px[i]) * invDt;
+        vy[i] = (y[i] - py[i]) * invDt;
+    }
 }
 
 void launchClearDerived(DeviceParticles2D& dp)
@@ -85,6 +102,23 @@ void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy,
         dt,
         gx, gy,
         velocityDamping);
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
+void launchUpdateVelocities(DeviceParticles2D& dp, float dt)
+{
+    if (dp.count <= 0 || dt <= 0.0f)
+        return;
+
+    const float invDt = 1.0f / dt;
+
+    updateVelocitiesKernel<<<gridSize(dp.count), BLOCK_SIZE>>>(
+        dp.count,
+        dp.x, dp.y,
+        dp.px, dp.py,
+        dp.vx, dp.vy,
+        invDt);
 
     CUDA_CHECK(cudaGetLastError());
 }

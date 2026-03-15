@@ -22,10 +22,10 @@ private:
     Particles2D m_particles;
     DeviceParticles2D m_deviceParticles;
 
-    float m_left = -1.0f;
-    float m_right = 1.0f;
-    float m_bottom = -1.0f;
-    float m_top = 1.0f;
+    float m_left = -3.0f;
+    float m_right = 3.0f;
+    float m_bottom = -3.0f;
+    float m_top = 3.0f;
 
-    float m_velocityDamping = 0.005f;
+    float m_velocityDamping = 0.001f;
 };

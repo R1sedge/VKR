@@ -26,7 +26,7 @@ namespace
         CUDA_CHECK(cudaMemcpy(dst, src.data(), sizeof(float) * count, cudaMemcpyHostToDevice));
     }
 
-    void copyDeviceToHost(std::vector<float>& dst, float* src, int count)
+    void copyDeviceToHost(std::vector<float>& dst, const float* src, int count)
     {
         CUDA_CHECK(cudaMemcpy(dst.data(), src, sizeof(float) * count, cudaMemcpyDeviceToHost));
     }

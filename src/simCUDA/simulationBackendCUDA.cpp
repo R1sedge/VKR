@@ -5,7 +5,9 @@
 #include "common/Config.h"
 #include "simCUDA/cudaCheck.h"
 #include "simCUDA/cudaKernelsBasic.cuh"
+#include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/cudaParticles.cuh"
+
 
 
 SimulationBackendCUDA::SimulationBackendCUDA()
@@ -66,12 +68,23 @@ void SimulationBackendCUDA::update(float dt)
         return;
 
     launchClearDerived(m_deviceParticles);
+
     launchPredictPositions(
         m_deviceParticles,
         dt,
         Config::gravityX,
         Config::gravityY,
         m_velocityDamping);
+
+    launchProjectBounds(
+        m_deviceParticles,
+        m_left,
+        m_right,
+        m_bottom,
+        m_top,
+        Config::particleRadius);
+    
+    launchUpdateVelocities(m_deviceParticles, dt);
 
     CUDA_CHECK(cudaDeviceSynchronize());
     syncDeviceToHost();
