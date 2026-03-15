@@ -15,7 +15,7 @@ namespace Config
 
     // PBF константы
     inline constexpr float restDensity = 1000.0f;  // Плотность воды
-    inline constexpr float smoothingRadius = 0.1f; // Радиус ядра сглаживания
+    inline constexpr float smoothingRadius = 0.12f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 1e-6f;        // Регуляризация для lambda
 
     // Настройки PBD решателя

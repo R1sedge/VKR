@@ -1,6 +1,9 @@
 #include "engine.h"
 #include "collisions/pairsNaive.h"
 
+#include <cmath>
+#include <algorithm>
+
 Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
     circleCollision(Config::particleRadius)
 {
@@ -64,6 +67,7 @@ void Simulation2D::update(float dt)
     beginStep();
     predictPositions(dt);
     
+    buildBroadphase();
     buildNeighbors();
 
     for (int iter = 0; iter < iterations; ++iter)
@@ -112,29 +116,118 @@ void Simulation2D::predictPositions(float dt)
 
 void Simulation2D::buildBroadphase()
 {
-    if (!useGrid)
-        return;
-
     grid.build(particles);
 }
 
 void Simulation2D::buildCollisionPairs()
 {
     collisionPairs.clear();
-
-    if (useGrid)
-    {
-        grid.findPairs(particles, Config::particleRadius, collisionPairs);
-    }
-    else
-    {
-        findPairsNaive(particles, Config::particleRadius, collisionPairs);
-    }
+    grid.findPairs(particles, Config::particleRadius, collisionPairs);
 }
 
 void Simulation2D::buildNeighbors()
 {
-    // Пока заглушка.
+    const int n = particles.count;
+    neighborOffsets.assign(n + 1, 0);
+    neighborIds.clear();
+
+    if (n == 0)
+        return;
+    
+    const float h = Config::smoothingRadius;
+    const float h2 = h * h;
+
+    if (grid.totalCells == 0 || grid.cellSize <= 0.0f)
+        return;
+
+    const int searchRadiusCells = std::max(1, static_cast<int>(std::ceil(h / grid.cellSize)) - 1);
+
+    std::vector<int> counts(n, 0);
+
+    for (int i = 0; i < n; ++i)
+    {
+        const int cell = grid.particleCell[i];
+        const int cx = cell % grid.cellsX;
+        const int cy = cell / grid.cellsX;
+
+        int count = 0;
+
+        const int minCy = std::max(0, cy - searchRadiusCells);
+        const int maxCy = std::min(grid.cellsY - 1, cy + searchRadiusCells);
+        const int minCx = std::max(0, cx - searchRadiusCells);
+        const int maxCx = std::min(grid.cellsX - 1, cx + searchRadiusCells);
+
+        for (int ny = minCy; ny <= maxCy; ++ny)
+        {
+            for (int nx = minCx; nx <= maxCx; ++nx)
+            {
+                const int neighborCell = ny * grid.cellsX + nx;
+                const int begin = grid.cellStarts[neighborCell];
+                const int end   = grid.cellEnds[neighborCell];
+
+                for (int k = begin; k < end; ++k)
+                {
+                    const int j = grid.sortedParticleIds[k];
+                    if (j == i) continue;
+
+                    const float dx = particles.x[i] - particles.x[j];
+                    const float dy = particles.y[i] - particles.y[j];
+                    const float dist2 = dx * dx + dy * dy;
+
+                    if (dist2 < h2)
+                        ++count;
+                }
+            }
+        }
+        counts[i] = count;
+    }
+
+    // Preffix-sum 
+    int offset = 0;
+    for (int i = 0; i < n; ++i)
+    {
+        neighborOffsets[i] = offset;
+        offset += counts[i];
+    }
+    neighborOffsets[n] = offset;
+
+    neighborIds.resize(offset);
+    std::vector<int> cursor = neighborOffsets;
+
+    for (int i = 0; i < n; ++i)
+    {
+        const int cell = grid.particleCell[i];
+        const int cx = cell % grid.cellsX;
+        const int cy = cell / grid.cellsX;
+
+        const int minCy = std::max(0, cy - searchRadiusCells);
+        const int maxCy = std::min(grid.cellsY - 1, cy + searchRadiusCells);
+        const int minCx = std::max(0, cx - searchRadiusCells);
+        const int maxCx = std::min(grid.cellsX - 1, cx + searchRadiusCells);
+
+        for (int ny = minCy; ny <= maxCy; ++ny)
+        {
+            for (int nx = minCx; nx <= maxCx; ++nx)
+            {
+                const int neighborCell = ny * grid.cellsX + nx;
+                const int begin = grid.cellStarts[neighborCell];
+                const int end   = grid.cellEnds[neighborCell];
+
+                for (int k = begin; k < end; ++k)
+                {
+                    const int j = grid.sortedParticleIds[k];
+                    if (j == i) continue;
+
+                    const float dx = particles.x[i] - particles.x[j];
+                    const float dy = particles.y[i] - particles.y[j];
+                    const float dist2 = dx * dx + dy * dy;
+
+                    if (dist2 < h2)
+                        neighborIds[cursor[i]++] = j;
+                }
+            }
+        }
+    }
 }
 
 void Simulation2D::finalizeVelocities(float dt)

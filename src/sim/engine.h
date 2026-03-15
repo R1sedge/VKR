@@ -21,9 +21,10 @@ public:
 
     const Particles2D& getParticles() const {return particles;}
 
-    void reset();
+    const std::vector<int>& getNeighborOffsets() const { return neighborOffsets; }
+    const std::vector<int>& getNeighborIds() const { return neighborIds; }
 
-    bool useGrid = true; // Потом прокинем в чекбокс в ui
+    void reset();
 
 private:
     int iterations = Config::iterations;    
@@ -36,6 +37,11 @@ private:
 
     std::vector<CollisionPair> collisionPairs;
     UniformGrid2D grid;
+
+    // CSR Список соседей для PBF:
+    // Соседи частицы i в промежутке [neighborOffsets[i], neighborOffsets[i + 1])
+    std::vector<int> neighborOffsets;
+    std::vector<int> neighborIds;
 
 private:
     // общие PBD/PBF стадии
