@@ -31,10 +31,10 @@ add_executable(Simulation
 
     simCPU/fluid/sphKernels.h
 
-    simCPU/collisions/pairsGrid.cpp
-    simCPU/collisions/pairsGrid.h
-    simCPU/collisions/pairsNaive.cpp
-    simCPU/collisions/pairsNaive.h
+    simCPU/neighborSearch/pairsGrid.cpp
+    simCPU/neighborSearch/pairsGrid.h
+    simCPU/neighborSearch/pairsNaive.cpp
+    simCPU/neighborSearch/pairsNaive.h
 
     simCPU/constraints/boxBounds.cpp
     simCPU/constraints/boxBounds.h
@@ -51,6 +51,9 @@ add_executable(Simulation
 
     simCUDA/constraints/cudaKernelsBounds.cuh
     simCUDA/constraints/cudaKernelsBounds.cu
+
+    simCUDA/neighborSearch/neighborsNaive.cuh
+    simCUDA/neighborSearch/neighborsNaive.cu
 )
 
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)

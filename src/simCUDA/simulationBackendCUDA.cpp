@@ -6,6 +6,7 @@
 #include "simCUDA/cudaCheck.h"
 #include "simCUDA/cudaKernelsBasic.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
+#include "simCUDA/neighborSearch/neighborsNaive.cuh"
 #include "simCUDA/cudaParticles.cuh"
 
 
@@ -84,6 +85,11 @@ void SimulationBackendCUDA::update(float dt)
         m_top,
         Config::particleRadius);
     
+    buildNeighborsNaiveCUDA(
+        m_deviceParticles,
+        m_neighbors,
+        Config::smoothingRadius);
+
     launchUpdateVelocities(m_deviceParticles, dt);
 
     CUDA_CHECK(cudaDeviceSynchronize());

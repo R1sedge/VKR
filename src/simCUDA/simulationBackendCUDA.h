@@ -2,6 +2,7 @@
 
 #include "sim/simulationBackend.h"
 #include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/neighborSearch/neighborsNaive.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl
 {
@@ -21,6 +22,7 @@ private:
 private:
     Particles2D m_particles;
     DeviceParticles2D m_deviceParticles;
+    DeviceNeighborList m_neighbors;
 
     float m_left = -3.0f;
     float m_right = 3.0f;

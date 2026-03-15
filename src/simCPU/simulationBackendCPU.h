@@ -2,9 +2,10 @@
 
 #include <vector>
 
+#include "common/Config.h"
 #include "sim/simulationBackend.h"
 #include "sim/structs.h"
-#include "simCPU/collisions/pairsGrid.h"
+#include "simCPU/neighborSearch/pairsGrid.h"
 #include "simCPU/constraints/boxBounds.h"
 #include "simCPU/constraints/circleCollision.h"
 
@@ -28,7 +29,7 @@ public:
 
 private:
     int iterations = Config::iterations;
-    float velocityDamping = 0.005f;
+    float velocityDamping = 0.003f;
 
     Particles2D particles;
     BoxBoundsConstraint2D boxConstraint;

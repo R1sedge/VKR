@@ -1,6 +1,6 @@
 #include "simulationBackendCPU.h"
 
-#include "simCPU/collisions/pairsNaive.h"
+#include "simCPU/neighborSearch/pairsNaive.h"
 #include "simCPU/fluid/sphKernels.h"
 
 #include <algorithm>
