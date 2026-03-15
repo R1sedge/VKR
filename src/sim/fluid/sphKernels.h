@@ -1,12 +1,11 @@
 #pragma once
 
-#define _USE_MATH_DEFINES 
-#include <cmath>
-
 #include "common/config.h"
 
 namespace SPH
 { 
+    inline constexpr float kPi = 3.14159265358979323846f;
+
     // Poly6 ядро для плотности
     inline float poly6(float r, float h = Config::smoothingRadius)
     {
@@ -19,7 +18,7 @@ namespace SPH
         const float h9 = h8 * h;
 
         // Константа для 2D случая
-        const float k = 4.0f / (static_cast<float>(M_PI) * h8);
+        const float k = 4.0f / (kPi * h8);
 
         const float x = h2 - r * r;
         return k * x * x * x;
@@ -33,7 +32,7 @@ namespace SPH
         
         // Константа для 2D случая
         const float h5 = h * h * h * h * h;
-        const float k = -5.0f / (static_cast<float>(M_PI) * h5);
+        const float k = -5.0f / (kPi * h5);
 
         const float x = (h - r);
 
