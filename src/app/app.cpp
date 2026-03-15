@@ -59,8 +59,8 @@ bool App::initialize()
     float halfWorldW = Config::windowWidth / (2.0f * Config::pixelsPerUnits);
     float halfWorldH = Config::windowHeight / (2.0f * Config::pixelsPerUnits);
 
-    m_sim.setWorldBounds(-halfWorldW, halfWorldW, 
-                         -halfWorldH, halfWorldH);
+    m_sim.setWorldBounds(-halfWorldW - Config::particleRadius * 2.0f, halfWorldW + Config::particleRadius * 2.0f, 
+                         -halfWorldH - Config::particleRadius * 2.0f, halfWorldH+ Config::particleRadius * 2.0f);
 
     m_runnig = true;
     return true;

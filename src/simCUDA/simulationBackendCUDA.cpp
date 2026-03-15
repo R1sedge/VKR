@@ -1,20 +1,70 @@
 #include "simulationBackendCUDA.h"
 
-#include <stdexcept>
+#include "common/Config.h"
+
+SimulationBackendCUDA::SimulationBackendCUDA()
+{
+    reset();
+}
+
+SimulationBackendCUDA::~SimulationBackendCUDA()
+{
+    freeDeviceParticles(m_deviceParticles);
+}
+
+void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top)
+{
+    m_left = left;
+    m_right = right;
+    m_bottom = bottom;
+    m_top = top;
+}
 
 void SimulationBackendCUDA::reset()
 {
-    throw std::runtime_error("CUDA backend is not implemented yet");
+    const float r = Config::particleRadius;
+    const float step = r * 2.5f;
+
+    const int cols = 50;
+    const int rows = 50;
+    const int n = cols * rows;
+
+    m_particles.resize(n);
+
+    for (int row = 0; row < rows; ++row)
+    {
+        for (int col = 0; col < cols; ++col)
+        {
+            const int idx = row * cols + col;
+
+            const float fx = (col - cols / 2) * step;
+            const float fy = (row - rows / 2) * step;
+
+            m_particles.x[idx] = fx;
+            m_particles.y[idx] = fy;
+            m_particles.px[idx] = fx;
+            m_particles.py[idx] = fy;
+            m_particles.vx[idx] = 0.0f;
+            m_particles.vy[idx] = 0.0f;
+            m_particles.mass[idx] = 1.0f;
+        }
+    }
+
+    m_particles.clearDerived();
+    uploadParticlesToDevice(m_particles, m_deviceParticles);
 }
 
 void SimulationBackendCUDA::update(float)
 {
-    throw std::runtime_error("CUDA backend is not implemented yet");
+    if (m_deviceParticles.count <= 0)
+        return;
+
+    syncDeviceToHost();
 }
 
-void SimulationBackendCUDA::setWorldBounds(float, float, float, float)
+void SimulationBackendCUDA::syncDeviceToHost()
 {
-    throw std::runtime_error("CUDA backend is not implemented yet");
+    downloadParticlesFromDevice(m_deviceParticles, m_particles);
 }
 
 const Particles2D& SimulationBackendCUDA::getParticles() const
