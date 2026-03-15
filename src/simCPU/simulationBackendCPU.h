@@ -1,37 +1,36 @@
 #pragma once
+
 #include <vector>
 
-#include "data/particleData.h"
-#include "sim/constraints/boxBounds.h"
-#include "sim/constraints/circleCollision.h"
+#include "sim/simulationBackend.h"
 #include "sim/structs.h"
-#include "collisions/pairsGrid.h"
+#include "simCPU/collisions/pairsGrid.h"
+#include "simCPU/constraints/boxBounds.h"
+#include "simCPU/constraints/circleCollision.h"
 
-class Simulation2D
+class SimulationBackendCPU final : public ISimulationBackendImpl
 {
 public:
-    Simulation2D();
+    SimulationBackendCPU();
 
-    void update(float dt);  
+    void reset() override;
+    void update(float dt) override;
+    void setWorldBounds(float left, float right, float bottom, float top) override;
 
-    void setWorldBounds(float left, float right, float bottom, float top);
+    const Particles2D& getParticles() const override { return particles; }
+
     void setIterations(int iter) { iterations = iter; }
     void configureGrid(float left, float right, float bottom, float top, float cellSize);
     void setVelocityDamping(float d) { velocityDamping = d; }
 
-    const Particles2D& getParticles() const {return particles;}
-
     const std::vector<int>& getNeighborOffsets() const { return neighborOffsets; }
     const std::vector<int>& getNeighborIds() const { return neighborIds; }
 
-    void reset();
-
 private:
-    int iterations = Config::iterations;    
+    int iterations = Config::iterations;
     float velocityDamping = 0.005f;
 
     Particles2D particles;
-
     BoxBoundsConstraint2D boxConstraint;
     CircleCollisionConstraint2D circleCollision;
 
@@ -44,10 +43,10 @@ private:
     std::vector<int> neighborIds;
 
 private:
-    // общие PBD/PBF стадии
+    // общие PBD/PBF стадии 
     void beginStep();
     void predictPositions(float dt);
-        
+
     void buildBroadphase();
     void buildCollisionPairs();
     void buildNeighbors();

@@ -4,8 +4,10 @@ add_executable(Simulation
 
     app/app.cpp
     app/app.h
+    app/appCommands.h
+    app/appState.h
 
-    common/config.h
+    common/Config.h
 
     data/particleData.h
     data/particleData.cpp
@@ -16,24 +18,36 @@ add_executable(Simulation
     render/renderer.cpp
     render/renderer.h
 
-    input/inputManager.cpp
-    input/inputManager.h
+    Input/inputManager.cpp
+    Input/inputManager.h
 
-    sim/engine.cpp
-    sim/engine.h
+    sim/simulationBackend.cpp
+    sim/simulationBackend.h
+    sim/simulationBackendType.h
     sim/structs.h
 
-    sim/fluid/sphKernels.h
+    simCPU/simulationBackendCPU.cpp
+    simCPU/simulationBackendCPU.h
 
-    sim/collisions/pairsGrid.cpp
-    sim/collisions/pairsGrid.h
-    sim/collisions/pairsNaive.cpp
-    sim/collisions/pairsNaive.h
+    simCPU/fluid/sphKernels.h
 
-    sim/constraints/boxBounds.cpp
-    sim/constraints/boxBounds.h
-    sim/constraints/circleCollision.cpp
-    sim/constraints/circleCollision.h
+    simCPU/collisions/pairsGrid.cpp
+    simCPU/collisions/pairsGrid.h
+    simCPU/collisions/pairsNaive.cpp
+    simCPU/collisions/pairsNaive.h
+
+    simCPU/constraints/boxBounds.cpp
+    simCPU/constraints/boxBounds.h
+    simCPU/constraints/circleCollision.cpp
+    simCPU/constraints/circleCollision.h
+
+    simCUDA/cudaCheck.h
+    simCUDA/cudaKernelsBasic.cu
+    simCUDA/cudaKernelsBasic.cuh
+    simCUDA/cudaParticles.cu
+    simCUDA/cudaParticles.cuh
+    simCUDA/simulationBackendCUDA.cpp
+    simCUDA/simulationBackendCUDA.h
 )
 
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)
@@ -43,15 +57,20 @@ target_link_libraries(Simulation
         glad::glad         # загрузчик OpenGL 
         glm::glm           # математика для рендера 
         Eigen3::Eigen      # математика для физики 
-        OpenGL::GL         # сам OpenGL 
+        OpenGL::GL         # сам OpenGL
+        imgui::imgui 
+        CUDA::cudart
 )
 
-
-target_link_libraries(Simulation PRIVATE imgui::imgui)
 target_compile_definitions(Simulation PRIVATE SIM_WITH_IMGUI=1)
 
-
 target_compile_features(Simulation PRIVATE cxx_std_20)
+
+set_target_properties(Simulation PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_STANDARD 17
+    CUDA_STANDARD_REQUIRED ON
+)
 
 # Общие include-пути, чтобы можно было писать #include "app/app.h" и т.п.
 target_include_directories(Simulation

@@ -5,13 +5,15 @@
 
 #include "common/config.h"
 
-App::App(): 
-    m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
-    m_gui(),
-    m_sim(),
-    m_input(),
-    m_state()
-    {}
+App::App()
+    : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
+      m_backendType(SimulationBackendType::CPU),
+      m_sim(m_backendType),
+      m_gui(),
+      m_input(),
+      m_state()
+{
+}
 
 App::~App() = default;
 

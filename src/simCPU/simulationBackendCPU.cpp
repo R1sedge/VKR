@@ -1,20 +1,22 @@
-#include "engine.h"
-#include "collisions/pairsNaive.h"
-#include "fluid/sphKernels.h"
+#include "simulationBackendCPU.h"
 
-#include <cmath>
+#include "simCPU/collisions/pairsNaive.h"
+#include "simCPU/fluid/sphKernels.h"
+
 #include <algorithm>
+#include <cmath>
 
-Simulation2D::Simulation2D() : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
-    circleCollision(Config::particleRadius)
+SimulationBackendCPU::SimulationBackendCPU()
+    : boxConstraint(0.0f, 0.0f, 0.0f, 0.0f),
+      circleCollision(Config::particleRadius)
 {
     reset();
 }
 
-void Simulation2D::reset()
+void SimulationBackendCPU::reset()
 {
     const float r = Config::particleRadius;
-    const float step = r * 2.1f; // небольшой зазор между частицами
+    const float step = r * 2.1f;
 
     const int cols = 50;
     const int rows = 50;
@@ -24,30 +26,29 @@ void Simulation2D::reset()
     collisionPairs.reserve(n * 16); // Верхняя оценка числа пар
     collisionPairs.clear();
 
-   for (int row = 0; row < rows; ++row)
+    for (int row = 0; row < rows; ++row)
     {
         for (int col = 0; col < cols; ++col)
         {
             int idx = row * cols + col;
 
             float fx = (col - cols / 2) * step;
-            float fy = (row - rows / 2) * step - 0.0f;
+            float fy = (row - rows / 2) * step;
 
-            particles.x[idx]    = fx;
-            particles.y[idx]    = fy;
-            particles.px[idx]   = fx;
-            particles.py[idx]   = fy;
-
-            particles.vx[idx]   = 0.0f;
-            particles.vy[idx]   = 0.0f;
-            
+            particles.x[idx] = fx;
+            particles.y[idx] = fy;
+            particles.px[idx] = fx;
+            particles.py[idx] = fy;
+            particles.vx[idx] = 0.0f;
+            particles.vy[idx] = 0.0f;
             particles.mass[idx] = 1.0f;
         }
     }
+
     particles.clearDerived();
 }
 
-void Simulation2D::setWorldBounds(float left, float right, float bottom, float top)
+void SimulationBackendCPU::setWorldBounds(float left, float right, float bottom, float top)
 {
     boxConstraint.setBounds(left, right, bottom, top);
 
@@ -55,19 +56,19 @@ void Simulation2D::setWorldBounds(float left, float right, float bottom, float t
     configureGrid(left, right, bottom, top, cellSize);
 }
 
-void Simulation2D::configureGrid(float left, float right, float bottom, float top, float cellSize)
+void SimulationBackendCPU::configureGrid(float left, float right, float bottom, float top, float cellSize)
 {
     grid.rebuild(left, right, bottom, top, cellSize);
 }
 
-void Simulation2D::update(float dt)
+void SimulationBackendCPU::update(float dt)
 {
     if (particles.count == 0)
         return;
 
     beginStep();
     predictPositions(dt);
-    
+
     buildBroadphase();
     buildNeighbors();
     buildCollisionPairs();
@@ -79,9 +80,6 @@ void Simulation2D::update(float dt)
         computeDeltaPositions();
         applyDeltaPositions();
 
-        //buildBroadphase();
-        
-
         circleCollision.project(particles, collisionPairs);
         boxConstraint.project(particles); // Чтобы все частицы оставались внутри границ
     }
@@ -89,12 +87,12 @@ void Simulation2D::update(float dt)
     finalizeVelocities(dt); // Обновление скоростей
 }
 
-void Simulation2D::beginStep()
+void SimulationBackendCPU::beginStep()
 {
     particles.clearDerived();
 }
 
-void Simulation2D::predictPositions(float dt)
+void SimulationBackendCPU::predictPositions(float dt)
 {
     const float gx = Config::gravityX;
     const float gy = Config::gravityY;
@@ -116,18 +114,18 @@ void Simulation2D::predictPositions(float dt)
     }
 }
 
-void Simulation2D::buildBroadphase()
+void SimulationBackendCPU::buildBroadphase()
 {
     grid.build(particles);
 }
 
-void Simulation2D::buildCollisionPairs()
+void SimulationBackendCPU::buildCollisionPairs()
 {
     collisionPairs.clear();
     grid.findPairs(particles, Config::particleRadius, collisionPairs);
 }
 
-void Simulation2D::buildNeighbors()
+void SimulationBackendCPU::buildNeighbors()
 {
     const int n = particles.count;
     neighborOffsets.assign(n + 1, 0);
@@ -232,7 +230,7 @@ void Simulation2D::buildNeighbors()
     }
 }
 
-void Simulation2D::finalizeVelocities(float dt)
+void SimulationBackendCPU::finalizeVelocities(float dt)
 {
     const float invDt = 1.0f / dt;
 
@@ -243,7 +241,7 @@ void Simulation2D::finalizeVelocities(float dt)
     }
 }
 
-void Simulation2D::computeDensity()
+void SimulationBackendCPU::computeDensity()
 {
     const int n = particles.count;
     if (n == 0)
@@ -275,7 +273,7 @@ void Simulation2D::computeDensity()
     }
 }
 
-void Simulation2D::computeLambda()
+void SimulationBackendCPU::computeLambda()
 {
     const int n = particles.count;
     if (n == 0)
@@ -333,7 +331,7 @@ void Simulation2D::computeLambda()
     }
 }
 
-void Simulation2D::computeDeltaPositions()
+void SimulationBackendCPU::computeDeltaPositions()
 {
     const int n = particles.count;
     if (n == 0)
@@ -380,7 +378,7 @@ void Simulation2D::computeDeltaPositions()
     }
 }
 
-void Simulation2D::applyDeltaPositions()
+void SimulationBackendCPU::applyDeltaPositions()
 {
     const int n = particles.count;
 
