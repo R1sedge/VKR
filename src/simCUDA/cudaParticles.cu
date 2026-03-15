@@ -21,12 +21,12 @@ namespace
         }
     }
 
-    void copyHostToDevice(float* dst, const std::vector<float> src, int count)
+    void copyHostToDevice(float* dst, const std::vector<float>& src, int count)
     {
         CUDA_CHECK(cudaMemcpy(dst, src.data(), sizeof(float) * count, cudaMemcpyHostToDevice));
     }
 
-    void copyDeviceToHost(std::vector<float> dst, float* src, int count)
+    void copyDeviceToHost(std::vector<float>& dst, float* src, int count)
     {
         CUDA_CHECK(cudaMemcpy(dst.data(), src, sizeof(float) * count, cudaMemcpyDeviceToHost));
     }

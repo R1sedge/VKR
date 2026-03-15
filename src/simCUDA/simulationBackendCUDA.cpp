@@ -1,6 +1,12 @@
 #include "simulationBackendCUDA.h"
 
+#include <cuda_runtime.h>
+
 #include "common/Config.h"
+#include "simCUDA/cudaCheck.h"
+#include "simCUDA/cudaKernelsBasic.cuh"
+#include "simCUDA/cudaParticles.cuh"
+
 
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
@@ -44,8 +50,8 @@ void SimulationBackendCUDA::reset()
             m_particles.y[idx] = fy;
             m_particles.px[idx] = fx;
             m_particles.py[idx] = fy;
-            m_particles.vx[idx] = 0.0f;
-            m_particles.vy[idx] = 0.0f;
+            m_particles.vx[idx] = 1.0f;
+            m_particles.vy[idx] = 1.0f;
             m_particles.mass[idx] = 1.0f;
         }
     }
@@ -54,11 +60,20 @@ void SimulationBackendCUDA::reset()
     uploadParticlesToDevice(m_particles, m_deviceParticles);
 }
 
-void SimulationBackendCUDA::update(float)
+void SimulationBackendCUDA::update(float dt)
 {
     if (m_deviceParticles.count <= 0)
         return;
 
+    launchClearDerived(m_deviceParticles);
+    launchPredictPositions(
+        m_deviceParticles,
+        dt,
+        Config::gravityX,
+        Config::gravityY,
+        m_velocityDamping);
+
+    CUDA_CHECK(cudaDeviceSynchronize());
     syncDeviceToHost();
 }
 

@@ -26,4 +26,6 @@ private:
     float m_right = 1.0f;
     float m_bottom = -1.0f;
     float m_top = 1.0f;
+
+    float m_velocityDamping = 0.005f;
 };
