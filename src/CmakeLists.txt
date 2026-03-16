@@ -48,6 +48,8 @@ add_executable(Simulation
     simCUDA/cudaParticles.cuh
     simCUDA/simulationBackendCUDA.cpp
     simCUDA/simulationBackendCUDA.h
+    simCUDA/cudaPbfDensity.cuh
+    simCUDA/cudaPbfDensity.cu
 
     simCUDA/constraints/cudaKernelsBounds.cuh
     simCUDA/constraints/cudaKernelsBounds.cu

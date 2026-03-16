@@ -16,7 +16,7 @@ SimulationBackendCPU::SimulationBackendCPU()
 void SimulationBackendCPU::reset()
 {
     const float r = Config::particleRadius;
-    const float step = r * 2.1f;
+    const float step = r * 2.5f;
 
     const int cols = 50;
     const int rows = 50;

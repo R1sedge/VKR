@@ -5,6 +5,7 @@
 #include "common/Config.h"
 #include "simCUDA/cudaCheck.h"
 #include "simCUDA/cudaKernelsBasic.cuh"
+#include "simCUDA/cudaPbfDensity.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/neighborSearch/neighborsNaive.cuh"
 #include "simCUDA/cudaParticles.cuh"
@@ -77,18 +78,23 @@ void SimulationBackendCUDA::update(float dt)
         Config::gravityY,
         m_velocityDamping);
 
-    launchProjectBounds(
+    buildNeighborsNaiveCUDA(
+        m_deviceParticles,
+        m_neighbors,
+        Config::smoothingRadius);
+
+    launchComputeDensity(
+        m_deviceParticles,
+        m_neighbors,
+        Config::smoothingRadius);
+    
+     launchProjectBounds(
         m_deviceParticles,
         m_left,
         m_right,
         m_bottom,
         m_top,
         Config::particleRadius);
-    
-    buildNeighborsNaiveCUDA(
-        m_deviceParticles,
-        m_neighbors,
-        Config::smoothingRadius);
 
     launchUpdateVelocities(m_deviceParticles, dt);
 
