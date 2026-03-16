@@ -42,14 +42,19 @@ add_executable(Simulation
     simCPU/constraints/circleCollision.h
 
     simCUDA/cudaCheck.h
-    simCUDA/cudaKernelsBasic.cu
-    simCUDA/cudaKernelsBasic.cuh
     simCUDA/cudaParticles.cu
     simCUDA/cudaParticles.cuh
     simCUDA/simulationBackendCUDA.cpp
     simCUDA/simulationBackendCUDA.h
-    simCUDA/cudaPbfDensity.cuh
-    simCUDA/cudaPbfDensity.cu
+
+    simCUDA/kernels/cudaKernelsBasic.cuh
+    simCUDA/kernels/cudaKernelsBasic.cu
+    simCUDA/kernels/cudaPbfDensity.cuh
+    simCUDA/kernels/cudaPbfDensity.cu
+    simCUda/kernels/cudaCollisionCheck.cuh
+    simCUda/kernels/cudaCollisionCheck.cu
+    simCUDA/kernels/cudaParticleCollisionProject.cuh
+    simCUDA/kernels/cudaParticleCollisionProject.cu
 
     simCUDA/constraints/cudaKernelsBounds.cuh
     simCUDA/constraints/cudaKernelsBounds.cu

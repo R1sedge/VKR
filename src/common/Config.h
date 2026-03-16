@@ -10,7 +10,7 @@ namespace Config
     // SIMULATION DEFAULTS
     inline constexpr float dt = 1.0f / 100.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                // Гравитация по x
-    inline float gravityY = -1.0f;                // Гравитация по y
+    inline float gravityY = -9.81f;                // Гравитация по y
     inline constexpr float particleRadius = 0.05f; // В world units 
 
     // PBF константы

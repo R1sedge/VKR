@@ -1,7 +1,9 @@
 #pragma once
 
+#include "common/Config.h"
 #include "sim/simulationBackend.h"
 #include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/kernels/cudaCollisionCheck.cuh"
 #include "simCUDA/neighborSearch/neighborsNaive.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl
@@ -20,9 +22,12 @@ private:
     void syncDeviceToHost();
 
 private:
+    int iterations = Config::iterations;
+
     Particles2D m_particles;
     DeviceParticles2D m_deviceParticles;
     DeviceNeighborList m_neighbors;
+    DeviceCollisionCheck m_collisionCheck;
 
     float m_left = -3.0f;
     float m_right = 3.0f;

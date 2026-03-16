@@ -1,4 +1,4 @@
-#include "simCUDA/cudaKernelsBasic.cuh"
+#include "simCUDA/kernels/cudaKernelsBasic.cuh"
 
 #include <cuda_runtime.h>
 

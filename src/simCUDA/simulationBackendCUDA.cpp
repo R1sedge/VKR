@@ -4,8 +4,9 @@
 
 #include "common/Config.h"
 #include "simCUDA/cudaCheck.h"
-#include "simCUDA/cudaKernelsBasic.cuh"
-#include "simCUDA/cudaPbfDensity.cuh"
+#include "simCUDA/kernels/cudaKernelsBasic.cuh"
+#include "simCUDA/kernels/cudaPbfDensity.cuh"
+#include "simCUDA/kernels/cudaParticleCollisionProject.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/neighborSearch/neighborsNaive.cuh"
 #include "simCUDA/cudaParticles.cuh"
@@ -19,6 +20,8 @@ SimulationBackendCUDA::SimulationBackendCUDA()
 
 SimulationBackendCUDA::~SimulationBackendCUDA()
 {
+    freeDeviceCollisionCheck(m_collisionCheck);
+    freeDeviceNeighborList(m_neighbors);
     freeDeviceParticles(m_deviceParticles);
 }
 
@@ -35,8 +38,8 @@ void SimulationBackendCUDA::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.5f;
 
-    const int cols = 50;
-    const int rows = 50;
+    const int cols = 30;
+    const int rows = 30;
     const int n = cols * rows;
 
     m_particles.resize(n);
@@ -54,8 +57,8 @@ void SimulationBackendCUDA::reset()
             m_particles.y[idx] = fy;
             m_particles.px[idx] = fx;
             m_particles.py[idx] = fy;
-            m_particles.vx[idx] = 1.0f;
-            m_particles.vy[idx] = 1.0f;
+            m_particles.vx[idx] = 0.0f;
+            m_particles.vy[idx] = 0.0f;
             m_particles.mass[idx] = 1.0f;
         }
     }
@@ -82,23 +85,38 @@ void SimulationBackendCUDA::update(float dt)
         m_deviceParticles,
         m_neighbors,
         Config::smoothingRadius);
-
-    launchComputeDensity(
-        m_deviceParticles,
-        m_neighbors,
-        Config::smoothingRadius);
     
-     launchProjectBounds(
-        m_deviceParticles,
-        m_left,
-        m_right,
-        m_bottom,
-        m_top,
-        Config::particleRadius);
+    for (int iter = 0; iter < iterations; ++iter)
+    {
+        launchCheckParticleCollisions(
+            m_deviceParticles,
+            m_neighbors,
+            m_collisionCheck,
+            Config::particleRadius);
+
+        launchComputeDensity(
+            m_deviceParticles,
+            m_neighbors,
+            Config::smoothingRadius);
+
+        launchProjectParticleCollisions(
+            m_deviceParticles,
+            m_neighbors,
+            Config::particleRadius);
+    
+        launchProjectBounds(
+            m_deviceParticles,
+            m_left,
+            m_right,
+            m_bottom,
+            m_top,
+            Config::particleRadius);
+    }
 
     launchUpdateVelocities(m_deviceParticles, dt);
 
     CUDA_CHECK(cudaDeviceSynchronize());
+
     syncDeviceToHost();
 }
 
