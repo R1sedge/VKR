@@ -64,9 +64,8 @@ namespace
 
             const float dx = xi  - x[j];
             const float dy = yi - y [j];
-            const float dist2 = dx * dx + dy * dy;
 
-            if (dist2 < h2)
+            if (dx * dx + dy * dy < h2)
                 ++count;
         }
 
@@ -84,46 +83,21 @@ namespace
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
 
-        const float xi = x[i];
-        const float yi = y[i];
+        float xi = x[i];
+        float yi = y[i];
 
         int write = offsets[i];
         for (int j = 0; j < n; ++j)
         {
             if (j == i) continue;
 
-            const float dx = xi - x[j];
-            const float dy = yi - y[j];
-            const float dist2 = dx * dx + dy * dy;
+            float dx = xi - x[j];
+            float dy = yi - y[j];
 
-            if (dist2 < h2)
+            if (dx * dx + dy * dy < h2)
                 ids[write++] = j;
         }
     }
-}
-
-void allocateDeviceNeighborList(DeviceNeighborList& nl, int particleCount)
-{
-    freeDeviceNeighborList(nl);
-
-    nl.particleCount = particleCount;
-
-    if (particleCount <= 0)
-        return;
-    
-    allocIntArray(nl.counts, particleCount);
-    allocIntArray(nl.offsets, particleCount + 1);
-}
-
-void freeDeviceNeighborList(DeviceNeighborList& nl)
-{
-    freeIntArray(nl.counts);
-    freeIntArray(nl.offsets);
-    freeIntArray(nl.ids);
-    
-    nl.particleCount = 0;
-    nl.idsCount = 0;
-    nl.idsCapacity = 0;
 }
 
 void buildNeighborsNaiveCUDA(

@@ -67,6 +67,10 @@ add_executable(Simulation
 
     simCUDA/neighborSearch/neighborsNaive.cuh
     simCUDA/neighborSearch/neighborsNaive.cu
+    simCUDA/neighborSearch/neighborsGrid.cuh
+    simCUDA/neighborSearch/neighborsGrid.cu
+    simCUDA/neighborSearch/deviceNeighborList.cuh
+    simCUDA/neighborSearch/deviceNeighborList.cu
 )
 
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)

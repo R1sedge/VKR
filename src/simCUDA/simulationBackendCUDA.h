@@ -4,7 +4,7 @@
 #include "sim/simulationBackend.h"
 #include "simCUDA/cudaParticles.cuh"
 #include "simCUDA/kernels/cudaCollisionCheck.cuh"
-#include "simCUDA/neighborSearch/neighborsNaive.cuh"
+#include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl
 {
@@ -26,8 +26,11 @@ private:
 
     Particles2D m_particles;
     DeviceParticles2D m_deviceParticles;
+
+    DeviceUniformGrid m_grid;
     DeviceNeighborList m_neighbors;
     DeviceCollisionCheck m_collisionCheck;
+    
 
     float m_left = -3.0f;
     float m_right = 3.0f;

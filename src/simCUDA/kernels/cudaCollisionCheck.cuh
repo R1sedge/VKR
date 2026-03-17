@@ -1,7 +1,7 @@
 #pragma once
 
 #include "simCUDA/cudaParticles.cuh"
-#include "simCUDA/neighborSearch/neighborsNaive.cuh"
+#include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 struct DeviceCollisionCheck
 {

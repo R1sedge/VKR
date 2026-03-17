@@ -10,7 +10,7 @@
 #include "simCUDA/kernels/cudaPbfLambda.cuh"
 #include "simCUDA/kernels/cudaPbfDeltaPositions.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
-#include "simCUDA/neighborSearch/neighborsNaive.cuh"
+#include "simCUDA/neighborSearch/neighborsGrid.cuh"
 #include "simCUDA/cudaParticles.cuh"
 
 
@@ -40,8 +40,8 @@ void SimulationBackendCUDA::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.5f;
 
-    const int cols = 150;
-    const int rows = 120;
+    const int cols = 400;
+    const int rows = 250;
     const int n = cols * rows;
 
     m_particles.resize(n);
@@ -83,17 +83,23 @@ void SimulationBackendCUDA::update(float dt)
         Config::gravityY,
         m_velocityDamping);
 
-    buildNeighborsNaiveCUDA(
-        m_deviceParticles,
-        m_neighbors,
-        Config::smoothingRadius);
+    buildNeighborsGridCUDA(
+        m_deviceParticles, 
+        m_neighbors, 
+        m_grid,
+        Config::smoothingRadius,
+        m_left, 
+        m_right, 
+        m_bottom,
+        m_top);
+
     
     for (int iter = 0; iter < iterations; ++iter)
     {
         launchCheckParticleCollisions(
-            m_deviceParticles,
-            m_neighbors,
-            m_collisionCheck,
+            m_deviceParticles, 
+            m_neighbors,                     
+            m_collisionCheck, 
             Config::particleRadius);
 
         launchComputeDensity(

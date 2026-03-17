@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simCUDA/neighborSearch/neighborsNaive.cuh"
+#include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 #include "simCUDA/cudaParticles.cuh"
 
 void launchComputeDensity(
