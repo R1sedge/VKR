@@ -2,5 +2,5 @@
 
 struct AppState
 {
-    bool paused = false;
+    bool paused =  true;
 };
