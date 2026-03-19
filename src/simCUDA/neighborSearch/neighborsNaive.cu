@@ -13,7 +13,6 @@ namespace
     {
         if (required <= nl.idsCapacity)
         {
-            nl.idsCapacity = required;
             return;
         }
 

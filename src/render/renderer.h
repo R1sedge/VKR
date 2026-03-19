@@ -26,7 +26,7 @@ public:
 	void renderFrame(const Particles2D& particles); // CPU rendering
 
 	// Interop rendering
-	void renderFrameInterop(int praticleCount);
+	void renderFrameInterop(int particleCount);
 	void ensureInstanceBufferSize(int n);
 	GLuint getInstanceVBO() const {return instanceVBO; }
 

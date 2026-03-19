@@ -36,6 +36,6 @@ void buildNeighborsGridCUDA(
     DeviceNeighborList& nl,
     DeviceUniformGrid& grid,
     float smoothingRadius,
-    float worldLeft, float worldBottom,
-    float worldRight, float worldTop
+    float worldLeft, float worldRight,
+    float worldBottom, float worldTop
 );

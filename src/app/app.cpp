@@ -56,6 +56,7 @@ bool App::initialize()
 
     m_gui.initialize(m_window);
     m_gui.setSimulationDt(Config::dt);
+    m_gui.setRestDensity(Config::restDensity);
 
     float halfWorldW = Config::windowWidth / (2.0f * Config::pixelsPerUnits);
     float halfWorldH = Config::windowHeight / (2.0f * Config::pixelsPerUnits);
@@ -63,7 +64,7 @@ bool App::initialize()
     m_sim.setWorldBounds(-halfWorldW - Config::particleRadius * 2.0f, halfWorldW + Config::particleRadius * 2.0f, 
                          -halfWorldH - Config::particleRadius * 2.0f, halfWorldH+ Config::particleRadius * 2.0f);
 
-    m_runnig = true;
+    m_running = true;
     
     if (m_backendType == SimulationBackendType::CUDA) 
     {
@@ -88,12 +89,12 @@ bool App::initialize()
     }
 
     glfwTerminate();
-    m_runnig=false;
+    m_running = false;
  }
 
  void App::run()
  {
-    if(!m_runnig) return;
+    if(!m_running) return;
     mainLoop();
  }
 
@@ -104,7 +105,7 @@ void App::mainLoop()
 
     m_previousTime = glfwGetTime();
 
-    while (m_runnig && !glfwWindowShouldClose(m_window))
+    while (m_running && !glfwWindowShouldClose(m_window))
     {   
         glfwPollEvents();
         m_input.update();
@@ -130,6 +131,9 @@ void App::mainLoop()
         // applyCommands (cmd):
         if (cmd.togglePause) m_state.paused = !m_state.paused;
         if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
+
+        if (cmd.hasSetRestDensity)
+            Config::restDensity = cmd.restDensityValue;
 
         if (cmd.reset) {
         m_sim.reset();

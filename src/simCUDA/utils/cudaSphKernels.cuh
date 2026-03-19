@@ -4,7 +4,7 @@ namespace CudaSPH
 {
     inline constexpr float kPi = 3.14159265358979323846f;
 
-    __device__ __forceinline__ float poly6(float r, float h)
+    __host__ __device__ __forceinline__ float poly6(float r, float h)
     {
         if (r < 0.0f || r > h) return 0.0f;
         const float h2 = h * h;

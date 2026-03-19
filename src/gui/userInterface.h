@@ -21,6 +21,7 @@ public:
     void setRenderTiming(double seconds);
 
     void setSimulationDt(float dt) { simDt = dt; } 
+    void setRestDensity(float rd) { currentRestDensity = rd; }
 
 private:
     bool initialized = false;
@@ -32,6 +33,9 @@ private:
 
     float avgFps = 0.0f;
     float simDt = 0.0f;
+
+    // Параметры физики
+    float currentRestDensity = 200.0f;
 
     // История
     static constexpr int historySize = 60;

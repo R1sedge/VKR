@@ -7,7 +7,7 @@
 
 namespace
 {
-    __global__ void clearDerivedKerlnel(
+    __global__ void clearDerivedKernel(
         int n,
         float* density,
         float* lambda,
@@ -73,7 +73,7 @@ void launchClearDerived(DeviceParticles2D& dp)
     if (dp.count <= 0)
     return;
 
-    clearDerivedKerlnel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
+    clearDerivedKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
         dp.density,
         dp.lambda,

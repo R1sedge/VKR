@@ -116,6 +116,17 @@ void UserInterface::buildUI(const AppState& state, AppCommands& commands)
     ImGui::Text("Sim dt: %.4f s", simDt);
     ImGui::Separator();
 
+    ImGui::Text("Fluid");
+    float rd = currentRestDensity;
+    if (ImGui::SliderFloat("Rest Density", &rd, 10.0f, 1000.0f, "%.1f"))
+    {
+        commands.hasSetRestDensity = true;
+        commands.restDensityValue = rd;
+        currentRestDensity = rd;
+    }
+    ImGui::Separator();
+
+
     bool pausedLocal = state.paused;
     if (ImGui::Checkbox("Paused", &pausedLocal))
     {

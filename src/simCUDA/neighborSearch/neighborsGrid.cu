@@ -234,13 +234,6 @@ void buildNeighborsGridCUDA(
     int cY  = (int)floorf((top - bottom) / cs) + 1;
     int tot = cX * cY;
 
-    grid.cellsX = cX; 
-    grid.cellsY = cY; 
-    grid.cellSize = cs;
-
-    grid.left = left;
-    grid.bottom = bottom;
-    
     if (grid.particleCapacity != n || grid.totalCells != tot)
         allocateDeviceUniformGrid(grid, n, tot);
 
@@ -309,9 +302,9 @@ void buildNeighborsGridCUDA(
 
     cub::DeviceScan::ExclusiveSum(dScanBuf, scanTmp, nl.counts, nl.offsets, n + 1);
 
-    CUDA_CHECK(cudaGetLastError());
     cudaFree(dScanBuf);
-
+    CUDA_CHECK(cudaGetLastError());
+    
     // totalIds = offsets[n] — читаем одно int с GPU
     int totalIds = 0;
     CUDA_CHECK(cudaMemcpy(&totalIds, nl.offsets + n, sizeof(int), cudaMemcpyDeviceToHost));

@@ -36,7 +36,7 @@ private:
     InputManager m_input;
     AppState m_state;
 
-    bool m_runnig = false;
+    bool m_running = false;
     int frameCount = 0;
     double m_previousTime = 0.0;
     bool m_interopEnabled = false;

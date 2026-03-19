@@ -1,4 +1,4 @@
-#include "simCUDa/kernels/cudaFillInstanceData.cuh"
+#include "simCUDA/kernels/cudaFillInstanceData.cuh"
 
 #include <cuda_runtime.h>
 #include <math.h>
