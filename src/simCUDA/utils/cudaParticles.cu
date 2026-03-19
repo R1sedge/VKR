@@ -3,24 +3,11 @@
 #include <cuda_runtime.h>
 #include <vector>
 
-#include "simCUDA/cudaCheck.h" 
+#include "simCUDA/utils/cudaCheck.h" 
+#include "simCUDA/utils/cudaMemUtils.cuh"
 
 namespace
 {
-    void allocFloatArray(float*& ptr, int count)
-    {
-        CUDA_CHECK(cudaMalloc(&ptr, sizeof(float) * count));
-    }
-
-    void freeFloatArray(float*& ptr)
-    {
-        if (ptr != nullptr)
-        {
-            CUDA_CHECK(cudaFree(ptr));
-            ptr = nullptr;
-        }
-    }
-
     void copyHostToDevice(float* dst, const std::vector<float>& src, int count)
     {
         CUDA_CHECK(cudaMemcpy(dst, src.data(), sizeof(float) * count, cudaMemcpyHostToDevice));
@@ -41,36 +28,36 @@ void allocateDeviceParticles(DeviceParticles2D& dp, int count)
     if(count <= 0)
         return;
     
-    allocFloatArray(dp.x, count);
-    allocFloatArray(dp.y, count);
-    allocFloatArray(dp.px, count);
-    allocFloatArray(dp.py, count);
+    CudaMem::allocFloatArray(dp.x, count);
+    CudaMem::allocFloatArray(dp.y, count);
+    CudaMem::allocFloatArray(dp.px, count);
+    CudaMem::allocFloatArray(dp.py, count);
 
-    allocFloatArray(dp.vx, count);
-    allocFloatArray(dp.vy, count);
+    CudaMem::allocFloatArray(dp.vx, count);
+    CudaMem::allocFloatArray(dp.vy, count);
 
-    allocFloatArray(dp.mass, count);
+    CudaMem::allocFloatArray(dp.mass, count);
 
-    allocFloatArray(dp.density, count);
-    allocFloatArray(dp.lambda, count);
-    allocFloatArray(dp.dx, count);
-    allocFloatArray(dp.dy, count);
+    CudaMem::allocFloatArray(dp.density, count);
+    CudaMem::allocFloatArray(dp.lambda, count);
+    CudaMem::allocFloatArray(dp.dx, count);
+    CudaMem::allocFloatArray(dp.dy, count);
 }
 
 void freeDeviceParticles(DeviceParticles2D& dp)
 {
-    freeFloatArray(dp.x);
-    freeFloatArray(dp.y);
-    freeFloatArray(dp.px);
-    freeFloatArray(dp.py);
-    freeFloatArray(dp.vx);
-    freeFloatArray(dp.vy);
-    freeFloatArray(dp.mass);
+    CudaMem::freeFloatArray(dp.x);
+    CudaMem::freeFloatArray(dp.y);
+    CudaMem::freeFloatArray(dp.px);
+    CudaMem::freeFloatArray(dp.py);
+    CudaMem::freeFloatArray(dp.vx);
+    CudaMem::freeFloatArray(dp.vy);
+    CudaMem::freeFloatArray(dp.mass);
 
-    freeFloatArray(dp.density);
-    freeFloatArray(dp.lambda);
-    freeFloatArray(dp.dx);
-    freeFloatArray(dp.dy);
+    CudaMem::freeFloatArray(dp.density);
+    CudaMem::freeFloatArray(dp.lambda);
+    CudaMem::freeFloatArray(dp.dx);
+    CudaMem::freeFloatArray(dp.dy);
 
     dp.count = 0;
 }

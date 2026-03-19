@@ -2,16 +2,10 @@
 
 #include <cuda_runtime.h>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
 namespace
 {
-    constexpr int BLOCK_SIZE = 256;
-
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
     __global__ void projectBoundsKernel(
         int n, 
         float* x,
@@ -43,7 +37,7 @@ void launchProjectBounds(
     if (dp.count <= 0)
         return;
 
-    projectBoundsKernel<<<gridSize(dp.count), BLOCK_SIZE>>>(
+    projectBoundsKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
         dp.x,
         dp.y,

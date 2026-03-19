@@ -11,13 +11,13 @@ namespace Config
     inline constexpr float dt = 1.0f / 60.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                // Гравитация по x
     inline float gravityY = -0.0f;                // Гравитация по y
-    inline constexpr float particleRadius = 0.01f; // В world units 
+    inline constexpr float particleRadius = 0.03f; // В world units 
 
     // PBF константы
-    inline constexpr float restDensity = 350.0f;  // Плотность воды
+    inline constexpr float restDensity = 50.0f;  // Плотность воды
     inline constexpr float smoothingRadius = particleRadius * 6.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 1e-6f;        // Регуляризация для lambda
 
     // Настройки PBD решателя
-    inline constexpr int iterations = 4;
+    inline constexpr int iterations = 6;
 }

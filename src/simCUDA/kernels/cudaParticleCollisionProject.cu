@@ -3,17 +3,11 @@
 #include <cuda_runtime.h>
 #include <math.h>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
 
 namespace
 {
-    constexpr int BLOCK_SIZE = 256;
-
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
     __global__ void accumulateParticleCollisionDeltaKernel(
         int n,
         const float* x,
@@ -98,7 +92,7 @@ void launchProjectParticleCollisions(
     const float minDist = 2.0f * particleRadius;
     const float eps = 1e-6f;
 
-    accumulateParticleCollisionDeltaKernel<<<gridSize(particles.count), BLOCK_SIZE>>>(
+    accumulateParticleCollisionDeltaKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,
@@ -111,7 +105,7 @@ void launchProjectParticleCollisions(
         eps);
     CUDA_CHECK(cudaGetLastError());
 
-    applyParticleCollisionDeltaKernel<<<gridSize(particles.count), BLOCK_SIZE>>>(
+    applyParticleCollisionDeltaKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,

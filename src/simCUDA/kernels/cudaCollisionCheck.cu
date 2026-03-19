@@ -2,31 +2,12 @@
 
 #include <cuda_runtime.h>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
+#include "simCUDA/utils/cudaMemUtils.cuh"
 
 namespace
 {
-    constexpr int BLOCK_SIZE = 256;
-
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
-    void allocIntArray(int*& ptr, int count)
-    {
-        CUDA_CHECK(cudaMalloc(&ptr, sizeof(int) * count));
-    }
-
-    void freeIntArray(int*& ptr)
-    {
-        if (ptr != nullptr)
-        {
-            CUDA_CHECK(cudaFree(ptr));
-            ptr = nullptr;
-        }
-    }
-
     __global__ void checkParticleCollisionsKernel(
         int n,
         const float* x,
@@ -82,16 +63,16 @@ void allocateDeviceCollisionCheck(DeviceCollisionCheck& cc, int particleCount)
     cc.particleCount = particleCount;
     if (particleCount <= 0) return;
 
-    allocIntArray(cc.particleFlags, particleCount);
-    allocIntArray(cc.particleCounts, particleCount);
-    allocIntArray(cc.pairCount, 1);
+    CudaMem::allocIntArray(cc.particleFlags, particleCount);
+    CudaMem::allocIntArray(cc.particleCounts, particleCount);
+    CudaMem::allocIntArray(cc.pairCount, 1);
 }
 
 void freeDeviceCollisionCheck(DeviceCollisionCheck& cc)
 {
-    freeIntArray(cc.particleFlags);
-    freeIntArray(cc.particleCounts);
-    freeIntArray(cc.pairCount);
+    CudaMem::freeIntArray(cc.particleFlags);
+    CudaMem::freeIntArray(cc.particleCounts);
+    CudaMem::freeIntArray(cc.pairCount);
 
     cc.particleCount = 0;
 }
@@ -122,7 +103,7 @@ void launchCheckParticleCollisions(
     const float minDist = 2.0f * particleRadius;
     const float minDist2 = minDist * minDist;
 
-    checkParticleCollisionsKernel<<<gridSize(n), BLOCK_SIZE>>>(
+    checkParticleCollisionsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
         n,
         particles.x,
         particles.y,

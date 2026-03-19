@@ -3,29 +3,12 @@
 #include <cuda_runtime.h>
 #include <math.h>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
+#include "simCUDA/utils/cudaSphKernels.cuh"
 
 namespace
 {
-    constexpr int BLOCK_SIZE = 256;
-
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
-    __device__ float spikyGradCoeffKernel(float r, float h)
-    {
-        if (r <= 0.0f || r > h)
-            return 0.0f;
-
-        const float kPi = 3.14159265358979323846f;
-        const float h5 = h * h * h * h * h;
-        const float k = -5.0f / (kPi * h5);
-        const float x = h - r;
-        return k * x * x;
-    }
-
     __global__ void computeDeltaPositionsKernel(
         int n,
         const float* x,
@@ -68,7 +51,7 @@ namespace
 
             const float r = sqrtf(r2);
             const float invR = 1.0f / r;
-            const float gradW = spikyGradCoeffKernel(r, h);
+            const float gradW = CudaSPH::spikyGradCoeff(r, h);
 
             const float coeff = (lambdaI + lambda[j]) * mass[j] * invRestDensity * gradW;
 
@@ -108,7 +91,7 @@ void launchComputeDeltaPositions(
     if (particles.count <= 0)
         return;
 
-    computeDeltaPositionsKernel<<<gridSize(particles.count), BLOCK_SIZE>>>(
+    computeDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,
@@ -131,7 +114,7 @@ void launchApplyDeltaPositions(
     if (particles.count <= 0)
         return;
 
-    applyDeltaPositionsKernel<<<gridSize(particles.count), BLOCK_SIZE>>>(
+    applyDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,

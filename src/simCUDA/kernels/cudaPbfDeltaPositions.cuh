@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void launchComputeDeltaPositions(

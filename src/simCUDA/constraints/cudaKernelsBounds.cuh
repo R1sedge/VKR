@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 
 void launchProjectBounds(
     DeviceParticles2D& dp,

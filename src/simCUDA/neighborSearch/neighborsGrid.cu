@@ -4,31 +4,12 @@
 #include <cuda_runtime.h>
 #include <vector>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
+#include "simCUDA/utils/cudaMemUtils.cuh"
 
 namespace 
 {
-    constexpr int BLOCK_SIZE = 256;
-    
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
-    void allocIntArray(int*& ptr, int count)
-    {
-        CUDA_CHECK(cudaMalloc(&ptr, sizeof(int) * count));
-    }
-
-     void freeIntArray(int*& ptr)
-    {
-        if (ptr != nullptr)
-        {
-            CUDA_CHECK(cudaFree(ptr));
-            ptr = nullptr;
-        }
-    }
-
     // Kernel 1: каждой частице ставим в соответствие ячейку
     __global__ void assignCellsKernel(
         int n, 
@@ -184,16 +165,16 @@ void allocateDeviceUniformGrid(DeviceUniformGrid& g, int n, int totalCells)
 
     if(n > 0)
     {
-        allocIntArray(g.particleCell, n);
-        allocIntArray(g.sortedIds, n);
-        allocIntArray(g.keysAlt, n);
-        allocIntArray(g.valsAlt, n);
+        CudaMem::allocIntArray(g.particleCell, n);
+        CudaMem::allocIntArray(g.sortedIds, n);
+        CudaMem::allocIntArray(g.keysAlt, n);
+        CudaMem::allocIntArray(g.valsAlt, n);
     }
 
     if(totalCells > 0)
     {
-        allocIntArray(g.cellStart, totalCells);
-        allocIntArray(g.cellEnd, totalCells);
+        CudaMem::allocIntArray(g.cellStart, totalCells);
+        CudaMem::allocIntArray(g.cellEnd, totalCells);
     }
 
     // Запрос размера temp-буфера CUB
@@ -210,14 +191,14 @@ void allocateDeviceUniformGrid(DeviceUniformGrid& g, int n, int totalCells)
 
 void freeDeviceUniformGrid(DeviceUniformGrid& g)
 {
-    freeIntArray(g.particleCell); 
-    freeIntArray(g.sortedIds);
+    CudaMem::freeIntArray(g.particleCell); 
+    CudaMem::freeIntArray(g.sortedIds);
 
-    freeIntArray(g.keysAlt);      
-    freeIntArray(g.valsAlt);
+    CudaMem::freeIntArray(g.keysAlt);      
+    CudaMem::freeIntArray(g.valsAlt);
 
-    freeIntArray(g.cellStart);    
-    freeIntArray(g.cellEnd);
+    CudaMem::freeIntArray(g.cellStart);    
+    CudaMem::freeIntArray(g.cellEnd);
 
     if (g.cubTemp)
     { 
@@ -270,7 +251,7 @@ void buildNeighborsGridCUDA(
     grid.bottom = bottom;
 
     // 1. Назначение ячеек 
-    assignCellsKernel<<<gridSize(n), BLOCK_SIZE>>>(
+    assignCellsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
         n, particles.x, particles.y,
         left, bottom, cs, cX, cY,
         grid.particleCell, grid.sortedIds);
@@ -294,7 +275,7 @@ void buildNeighborsGridCUDA(
     CUDA_CHECK(cudaMemset(grid.cellStart, 0xFF, sizeof(int) * tot)); // -1
     CUDA_CHECK(cudaMemset(grid.cellEnd,   0,    sizeof(int) * tot));
 
-    findCellBoundsKernel<<<gridSize(n), BLOCK_SIZE>>>(n, grid.particleCell, grid.cellStart, grid.cellEnd);
+    findCellBoundsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(n, grid.particleCell, grid.cellStart, grid.cellEnd);
 
     CUDA_CHECK(cudaGetLastError());
 
@@ -305,7 +286,7 @@ void buildNeighborsGridCUDA(
     const float h2 = h * h;
 
     // 5. Подсчёт соседей
-    countNeighborsKernel<<<gridSize(n),BLOCK_SIZE>>>(
+    countNeighborsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
         n,
         particles.x, particles.y,
         h2, 
@@ -338,17 +319,17 @@ void buildNeighborsGridCUDA(
     // 7. Рост буфера ids при необходимости
     if (totalIds > nl.idsCapacity)
     {
-        freeIntArray(nl.ids);
+        CudaMem::freeIntArray(nl.ids);
         nl.idsCapacity = totalIds;
 
         if (totalIds > 0) 
-            allocIntArray(nl.ids, totalIds);
+            CudaMem::allocIntArray(nl.ids, totalIds);
     }
     nl.idsCount = totalIds;
     if (totalIds == 0) return;
 
     // 8. Заполнение ids 
-    fillNeighborsKernel<<<gridSize(n), BLOCK_SIZE>>>(
+    fillNeighborsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
         n, 
         particles.x, 
         particles.y,

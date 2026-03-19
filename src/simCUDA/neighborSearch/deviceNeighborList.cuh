@@ -1,5 +1,5 @@
 #pragma once
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 
 struct DeviceNeighborList {
     int  particleCount = 0;

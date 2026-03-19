@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 #include "deviceNeighborList.cuh"
 
 void buildNeighborsNaiveCUDA(

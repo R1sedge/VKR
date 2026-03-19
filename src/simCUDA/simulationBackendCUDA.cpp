@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 
 #include "common/Config.h"
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
 #include "simCUDA/kernels/cudaKernelsBasic.cuh"
 #include "simCUDA/kernels/cudaPbfDensity.cuh"
 #include "simCUDA/kernels/cudaParticleCollisionProject.cuh"
@@ -11,7 +11,7 @@
 #include "simCUDA/kernels/cudaPbfDeltaPositions.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 
 
 
@@ -40,8 +40,8 @@ void SimulationBackendCUDA::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.5f;
 
-    const int cols = 400;
-    const int rows = 250;
+    const int cols = 125;
+    const int rows = 80;
     const int n = cols * rows;
 
     m_particles.resize(n);
@@ -122,7 +122,7 @@ void SimulationBackendCUDA::update(float dt)
 
         launchApplyDeltaPositions(
             m_deviceParticles,
-            0.001f);
+            0.005f);
     
         launchProjectParticleCollisions(
             m_deviceParticles,

@@ -2,17 +2,11 @@
 
 #include <cuda_runtime.h>
 
-#include "simCUDA/cudaCheck.h"
+#include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaUtils.cuh"
 
 namespace
 {
-    constexpr int BLOCK_SIZE = 256;
-
-    int gridSize(int n)
-    {
-        return (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    }
-
     __global__ void clearDerivedKerlnel(
         int n,
         float* density,
@@ -79,7 +73,7 @@ void launchClearDerived(DeviceParticles2D& dp)
     if (dp.count <= 0)
     return;
 
-    clearDerivedKerlnel<<<gridSize(dp.count), BLOCK_SIZE>>>(
+    clearDerivedKerlnel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
         dp.density,
         dp.lambda,
@@ -94,7 +88,7 @@ void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy,
     if (dp.count <= 0)
     return;
 
-    predictPositionKernel<<<gridSize(dp.count), BLOCK_SIZE>>>(
+    predictPositionKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
         dp.x, dp.y,
         dp.px, dp.py,
@@ -113,7 +107,7 @@ void launchUpdateVelocities(DeviceParticles2D& dp, float dt)
 
     const float invDt = 1.0f / dt;
 
-    updateVelocitiesKernel<<<gridSize(dp.count), BLOCK_SIZE>>>(
+    updateVelocitiesKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
         dp.x, dp.y,
         dp.px, dp.py,

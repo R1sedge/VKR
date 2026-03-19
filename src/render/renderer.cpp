@@ -27,7 +27,7 @@ void Renderer::setWindow(GLFWwindow* wnd)
 
 		updateProjection();
 
-		setMaxSpeed(0.3f); // Максимальная скорость для градиента цвета
+		setMaxSpeed(1.5f); // Максимальная скорость для градиента цвета
 
 		initGeometry();
 	}

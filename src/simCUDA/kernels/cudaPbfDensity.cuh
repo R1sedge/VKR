@@ -1,7 +1,7 @@
 #pragma once
 
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
-#include "simCUDA/cudaParticles.cuh"
+#include "simCUDA/utils/cudaParticles.cuh"
 
 void launchComputeDensity(
     const DeviceParticles2D& particles,
