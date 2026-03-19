@@ -286,3 +286,31 @@ void Renderer::updateProjection()
 
 	setOrthoProjection(-halfWorldW, +halfWorldW, -halfWorldH, +halfWorldH);
 }
+
+void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без перерегистрации (регистрация — в CUDA backend)
+{
+    if (n == lastInstanceCount) return;
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(n * 4 * sizeof(float)),
+                 nullptr, GL_STREAM_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    lastInstanceCount = n;
+}
+
+
+void Renderer::renderFrameInterop(int particleCount) // Рендерим без загрузки данных — CUDA уже заполнила VBO
+{
+    glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    if (particleCount <= 0) return;
+
+    glUseProgram(shaderProgram);
+    setCircleRadius(1.0f);
+
+    glBindVertexArray(vao);
+	
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, particleCount);
+    glBindVertexArray(0);
+}

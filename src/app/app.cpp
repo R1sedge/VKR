@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "common/config.h"
+#include "simCUDA/simulationBackendCUDA.h"
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
@@ -63,6 +64,18 @@ bool App::initialize()
                          -halfWorldH - Config::particleRadius * 2.0f, halfWorldH+ Config::particleRadius * 2.0f);
 
     m_runnig = true;
+    
+    if (m_backendType == SimulationBackendType::CUDA) 
+    {
+    int n = m_sim.getParticles().count;
+    m_renderer.ensureInstanceBufferSize(n);
+
+    auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
+    cudaBackend->setInteropVbo(m_renderer.getInstanceVBO());
+    cudaBackend->fillInteropBuffer();
+    m_interopEnabled = true;
+    }   
+
     return true;
 }
 
@@ -118,11 +131,17 @@ void App::mainLoop()
         if (cmd.togglePause) m_state.paused = !m_state.paused;
         if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
 
-        if (cmd.reset)
-        {
-            m_sim.reset();
-            m_previousTime = currentTime;
-        }
+        if (cmd.reset) {
+        m_sim.reset();
+        if (m_interopEnabled) {
+            int n = m_sim.getParticles().count;
+            auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
+            cudaBackend->unregisterInterop();          // снимаем старую регистрацию
+            m_renderer.ensureInstanceBufferSize(n); // ресайзим VBO
+            cudaBackend->setInteropVbo(m_renderer.getInstanceVBO()); // регистрируем заново
+            cudaBackend->fillInteropBuffer();
+    }
+}
 
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)
@@ -151,5 +170,11 @@ void App::update(float dt)
 
 void App::render()
 {  
-    m_renderer.renderFrame(m_sim.getParticles());
+    if (m_interopEnabled) {
+        // GPU-путь: данные уже в VBO, никакого memcpy
+        m_renderer.renderFrameInterop(m_sim.getParticles().count);
+    } else {
+        // CPU-путь: старый код
+        m_renderer.renderFrame(m_sim.getParticles());
+    }
 }

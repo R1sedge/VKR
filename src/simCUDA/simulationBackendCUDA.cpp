@@ -12,7 +12,7 @@
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 #include "simCUDA/utils/cudaParticles.cuh"
-
+#include "simCUDA/kernels/cudaFillInstanceData.cuh"
 
 
 SimulationBackendCUDA::SimulationBackendCUDA()
@@ -40,7 +40,7 @@ void SimulationBackendCUDA::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.5f;
 
-    const int cols = 125;
+    const int cols = 200;
     const int rows = 80;
     const int n = cols * rows;
 
@@ -67,6 +67,40 @@ void SimulationBackendCUDA::reset()
 
     m_particles.clearDerived();
     uploadParticlesToDevice(m_particles, m_deviceParticles);
+}
+
+void SimulationBackendCUDA::setInteropVbo(GLuint vboId) 
+{
+    // Снять старую регистрацию если была
+    unregisterInterop();
+    CUDA_CHECK(cudaGraphicsGLRegisterBuffer(
+        &m_vboResource,
+        vboId,
+        cudaGraphicsMapFlagsWriteDiscard));  // GPU пишет, GL читает
+}
+
+void SimulationBackendCUDA::unregisterInterop() 
+{
+    if (m_vboResource) 
+    {
+        cudaGraphicsUnregisterResource(m_vboResource);
+        m_vboResource = nullptr;
+    }
+}
+
+void SimulationBackendCUDA::fillInteropBuffer() 
+{
+    if (!m_vboResource || m_deviceParticles.count == 0) return;
+
+    float* d_ptr = nullptr;
+    size_t sz = 0;
+
+    CUDA_CHECK(cudaGraphicsMapResources(1, &m_vboResource, 0));
+    CUDA_CHECK(cudaGraphicsResourceGetMappedPointer(
+        (void**)&d_ptr, &sz, m_vboResource));
+        
+    launchFillInstanceData(m_deviceParticles, d_ptr, Config::particleRadius);
+    CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_vboResource, 0));
 }
 
 void SimulationBackendCUDA::update(float dt)
@@ -140,9 +174,26 @@ void SimulationBackendCUDA::update(float dt)
 
     launchUpdateVelocities(m_deviceParticles, dt);
 
-    CUDA_CHECK(cudaDeviceSynchronize());
+    // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
+    if (m_vboResource) 
+    {
+        float* d_ptr = nullptr;
+        size_t sz = 0;
 
-    syncDeviceToHost();
+        CUDA_CHECK(cudaGraphicsMapResources(1, &m_vboResource, 0));
+        CUDA_CHECK(cudaGraphicsResourceGetMappedPointer((void**)&d_ptr, &sz, m_vboResource));
+
+        launchFillInstanceData(m_deviceParticles, d_ptr, Config::particleRadius);
+
+        // cudaGraphicsUnmapResources сам синхронизирует стрим перед return
+        CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_vboResource, 0));
+    } 
+    else 
+    {
+        // Fallback: старый путь без interop
+        CUDA_CHECK(cudaDeviceSynchronize());
+        syncDeviceToHost();
+    }
 }
 
 void SimulationBackendCUDA::syncDeviceToHost()

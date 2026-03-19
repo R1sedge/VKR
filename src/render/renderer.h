@@ -17,11 +17,18 @@ private:
 	unsigned int instanceVBO = 0;
 	unsigned int vao = 0;
 
+	int lastInstanceCount = 0;
+
 public:
 	Renderer(int width, int height, GLFWwindow* window);
 
 	void setWindow(GLFWwindow* window);
-	void renderFrame(const Particles2D& particles);
+	void renderFrame(const Particles2D& particles); // CPU rendering
+
+	// Interop rendering
+	void renderFrameInterop(int praticleCount);
+	void ensureInstanceBufferSize(int n);
+	GLuint getInstanceVBO() const {return instanceVBO; }
 
 	void setOrthoProjection(float left, float right, float bottom, float top);
 	void updateProjection();

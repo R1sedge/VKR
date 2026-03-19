@@ -29,6 +29,7 @@ public:
     const Particles2D& getParticles() const;
 
     SimulationBackendType getType() const { return m_type; }
+    ISimulationBackendImpl* getImpl() { return m_impl.get(); }
 
 private:
     void createImplementation();

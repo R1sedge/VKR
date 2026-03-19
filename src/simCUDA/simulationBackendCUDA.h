@@ -1,5 +1,8 @@
 #pragma once
 
+#include <glad/glad.h>
+#include <cuda_gl_interop.h>
+
 #include "common/Config.h"
 #include "sim/simulationBackend.h"
 #include "simCUDA/utils/cudaParticles.cuh"
@@ -18,6 +21,11 @@ public:
 
     const Particles2D& getParticles() const override;
 
+    // Interop
+    void setInteropVbo(GLuint vboId);    // вызывается после ensureInstanceBufferSize
+    void unregisterInterop();
+    void fillInteropBuffer();
+
 private:
     void syncDeviceToHost();
 
@@ -31,6 +39,7 @@ private:
     DeviceNeighborList m_neighbors;
     DeviceCollisionCheck m_collisionCheck;
     
+    cudaGraphicsResource_t m_vboResource = nullptr;
 
     float m_left = -3.0f;
     float m_right = 3.0f;

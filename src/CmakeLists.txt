@@ -66,6 +66,8 @@ add_executable(Simulation
     simCUDA/kernels/cudaParticleCollisionProject.cuh
     simCUDA/kernels/cudaParticleCollisionProject.cu
 
+    simCUDA/kernels/cudaFillInstanceData.cu
+
     simCUDA/constraints/cudaKernelsBounds.cuh
     simCUDA/constraints/cudaKernelsBounds.cu
 
