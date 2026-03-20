@@ -3,16 +3,24 @@
 #include <cuda_runtime.h>
 
 #include "common/Config.h"
+
 #include "simCUDA/utils/cudaCheck.h"
+#include "simCUDA/utils/cudaParticles.cuh"
+#include "simCUDA/utils/cudaSphKernels.cuh"
+
+#include "simCUDA/kernels/cudaFillInstanceData.cuh"
 #include "simCUDA/kernels/cudaKernelsBasic.cuh"
+
 #include "simCUDA/pbf/cudaPbfDensity.cuh"
-#include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 #include "simCUDA/pbf/cudaPbfLambda.cuh"
 #include "simCUDA/pbf/cudaPbfDeltaPositions.cuh"
+
+#include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
+
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
-#include "simCUDA/utils/cudaParticles.cuh"
-#include "simCUDA/kernels/cudaFillInstanceData.cuh"
+
+
 
 
 SimulationBackendCUDA::SimulationBackendCUDA()
@@ -27,12 +35,16 @@ SimulationBackendCUDA::~SimulationBackendCUDA()
     freeDeviceParticles(m_deviceParticles);
 }
 
-void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top)
+void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top) //TODO Надо переименовать метод
 {
     m_left = left;
     m_right = right;
     m_bottom = bottom;
     m_top = top;
+
+    // считаем один раз, т.к. h и deltaQ — константы
+    const float dq = Config::artificialPressureDeltaQ * Config::smoothingRadius;
+    m_cachedWDeltaQ = CudaSPH::poly6(dq, Config::smoothingRadius);
 }
 
 void SimulationBackendCUDA::reset()
@@ -40,8 +52,8 @@ void SimulationBackendCUDA::reset()
     const float r = Config::particleRadius;
     const float step = r * 2.5f;
 
-    const int cols = 200;
-    const int rows = 80;
+    const int cols = 60;
+    const int rows = 60;
     const int n = cols * rows;
 
     m_particles.resize(n);
@@ -53,7 +65,7 @@ void SimulationBackendCUDA::reset()
             const int idx = row * cols + col;
 
             const float fx = (col - cols / 2) * step;
-            const float fy = (row - rows / 2) * step;
+            const float fy = (row - rows / 2) * step + 0.5f;
 
             m_particles.x[idx] = fx;
             m_particles.y[idx] = fy;
@@ -152,16 +164,19 @@ void SimulationBackendCUDA::update(float dt)
             m_deviceParticles,
             m_neighbors,
             Config::restDensity,
-            Config::smoothingRadius);
+            Config::smoothingRadius,
+            m_artPressureK,    
+            m_cachedWDeltaQ);
 
-        launchApplyDeltaPositions(
-            m_deviceParticles,
-            0.005f);
-    
+        launchApplyDeltaPositions(m_deviceParticles, 0.008f);
+        
+        /*
         launchProjectParticleCollisions(
             m_deviceParticles,
             m_neighbors,
-            Config::particleRadius);
+            Config::particleRadius
+        );
+        */
 
         launchProjectBounds(
             m_deviceParticles,
@@ -172,7 +187,7 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt, 2.5f, 
+    launchUpdateVelocities(m_deviceParticles, dt, 6.0f, 
         m_left, m_right, m_bottom,m_top, Config::particleRadius);
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======

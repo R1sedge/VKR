@@ -77,10 +77,10 @@ namespace
         }
 
         // Не понятно помогает или нет
-        //if (x[i] <= left   + radius + 1e-4f && newVx < 0.0f) newVx = 0.0f;
-        //if (x[i] >= right  - radius - 1e-4f && newVx > 0.0f) newVx = 0.0f;
-        //if (y[i] <= bottom + radius + 1e-4f && newVy < 0.0f) newVy = 0.0f;
-        //if (y[i] >= top    - radius - 1e-4f && newVy > 0.0f) newVy = 0.0f;
+        //if (x[i] <= left   + radius + 1e-1f && newVx < 0.0f) newVx = 0.0f;
+        //if (x[i] >= right  - radius - 1e-1f && newVx > 0.0f) newVx = 0.0f;
+        //if (y[i] <= bottom + radius + 1e-1f && newVy < 0.0f) newVy = 0.0f;
+        //if (y[i] >= top    - radius - 1e-1f && newVy > 0.0f) newVy = 0.0f;
 
         vx[i] = newVx;
         vy[i] = newVy;

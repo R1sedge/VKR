@@ -13,5 +13,8 @@ struct AppCommands
     bool hasSetRestDensity = false;
     float restDensityValue = 200.0f;
 
+    bool hasSetArtPressure  = false;
+    bool artPressureEnabled = true;
+
     void clear() {*this = AppCommands();}
 };

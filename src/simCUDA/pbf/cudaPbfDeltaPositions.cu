@@ -10,17 +10,19 @@
 namespace
 {
     __global__ void computeDeltaPositionsKernel(
-        int n,
-        const float* x,
-        const float* y,
-        const float* mass,
-        const float* lambda,
-        const int* neighborOffsets,
-        const int* neighborIds,
+       int n,
+        const float* __restrict__ x,
+        const float* __restrict__ y,
+        const float* __restrict__ mass,
+        const float* __restrict__ lambda,
+        const int*   __restrict__ neighborOffsets,
+        const int*   __restrict__ neighborIds,
         float* dxOut,
         float* dyOut,
         float restDensity,
-        float h)
+        float h,
+        float artPressureK,
+        float wDeltaQ)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
@@ -46,14 +48,20 @@ namespace
             const float dy = yi - y[j];
             const float r2 = dx * dx + dy * dy;
 
-            if (r2 < gradEps)
-                continue;
-
+            if (r2 < gradEps) continue;
+            
             const float r = sqrtf(r2);
             const float invR = 1.0f / r;
-            const float gradW = CudaSPH::spikyGradCoeff(r, h);
 
-            const float coeff = (lambdaI + lambda[j]) * mass[j] * invRestDensity * gradW;
+            // scorr = -k * (W(r,h) / W(deltaQ*h, h))^4
+            // Если wDeltaQ == 0 (artPressureK == 0), scorr тоже будет 0
+            const float wij   = CudaSPH::poly6(r, h);
+            const float ratio = (wDeltaQ > 1e-30f) ? (wij / wDeltaQ) : 0.0f;
+            const float ratio2 = ratio * ratio;
+            const float scorr  = -artPressureK * (ratio2 * ratio2);
+
+            const float gradW = CudaSPH::spikyGradCoeff(r, h);
+            const float coeff = (lambdaI + lambda[j] + scorr) * mass[j] * invRestDensity * gradW;
 
             deltaX += coeff * dx * invR;
             deltaY += coeff * dy * invR;
@@ -86,40 +94,34 @@ void launchComputeDeltaPositions(
     const DeviceParticles2D& particles,
     const DeviceNeighborList& neighbors,
     float restDensity,
-    float smoothingRadius)
+    float smoothingRadius,
+    float artPressureK,
+    float wDeltaQ)
 {
-    if (particles.count <= 0)
-        return;
+    if (particles.count <= 0) return;
 
     computeDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
-        particles.x,
-        particles.y,
+        particles.x, particles.y,
         particles.mass,
         particles.lambda,
-        neighbors.offsets,
-        neighbors.ids,
-        particles.dx,
-        particles.dy,
+        neighbors.offsets, neighbors.ids,
+        particles.dx, particles.dy,
         restDensity,
-        smoothingRadius);
+        smoothingRadius,
+        artPressureK, wDeltaQ);
 
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchApplyDeltaPositions(
-    DeviceParticles2D& particles,
-    float scale)
+void launchApplyDeltaPositions(DeviceParticles2D& particles, float scale)
 {
-    if (particles.count <= 0)
-        return;
+    if (particles.count <= 0) return;
 
     applyDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
-        particles.x,
-        particles.y,
-        particles.dx,
-        particles.dy,
+        particles.x, particles.y,
+        particles.dx, particles.dy,
         scale);
 
     CUDA_CHECK(cudaGetLastError());

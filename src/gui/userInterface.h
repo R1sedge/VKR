@@ -22,6 +22,7 @@ public:
 
     void setSimulationDt(float dt) { simDt = dt; } 
     void setRestDensity(float rd) { currentRestDensity = rd; }
+    void setArtPressureEnabled(bool enabled) { currentArtPressureEnabled = enabled; }
 
 private:
     bool initialized = false;
@@ -36,6 +37,7 @@ private:
 
     // Параметры физики
     float currentRestDensity = 200.0f;
+    bool currentArtPressureEnabled = true;
 
     // История
     static constexpr int historySize = 60;

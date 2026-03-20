@@ -18,6 +18,8 @@ public:
     void reset() override;
     void update(float dt) override;
     void setWorldBounds(float left, float right, float bottom, float top) override;
+    
+    void setArtificialPressureK(float k) { m_artPressureK = k; }
 
     const Particles2D& getParticles() const override;
 
@@ -47,4 +49,7 @@ private:
     float m_top = 3.0f;
 
     float m_velocityDamping = 0.001f;
+
+    float m_artPressureK = Config::artificialPressureK;
+    float m_cachedWDeltaQ = 0.0f; // предвычисляется в setWorldBounds
 };

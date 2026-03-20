@@ -135,6 +135,17 @@ void App::mainLoop()
         if (cmd.hasSetRestDensity)
             Config::restDensity = cmd.restDensityValue;
 
+        if (cmd.hasSetArtPressure) 
+        {
+            m_state.artPressureEnabled = cmd.artPressureEnabled;
+            if (m_backendType == SimulationBackendType::CUDA) 
+            {
+                auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
+                cudaBackend->setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
+            }
+        }
+
+
         if (cmd.reset) {
         m_sim.reset();
         if (m_interopEnabled) {

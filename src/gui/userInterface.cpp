@@ -116,14 +116,23 @@ void UserInterface::buildUI(const AppState& state, AppCommands& commands)
     ImGui::Text("Sim dt: %.4f s", simDt);
     ImGui::Separator();
 
-    ImGui::Text("Fluid");
+    ImGui::Text("PBF");
     float rd = currentRestDensity;
-    if (ImGui::SliderFloat("Rest Density", &rd, 10.0f, 1000.0f, "%.1f"))
+    if (ImGui::SliderFloat("Rest Density", &rd, 30.0f, 1000.0f, "%1.f"))
     {
         commands.hasSetRestDensity = true;
         commands.restDensityValue = rd;
         currentRestDensity = rd;
     }
+
+    bool artPressLocal = currentArtPressureEnabled;
+    if (ImGui::Checkbox("Artificial Pressure", &artPressLocal)) 
+    {
+        commands.hasSetArtPressure = true;
+        commands.artPressureEnabled = artPressLocal;
+        currentArtPressureEnabled = artPressLocal;
+    }
+
     ImGui::Separator();
 
 
