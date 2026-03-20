@@ -1,4 +1,4 @@
-#include "simCUDA/kernels/cudaCollisionCheck.cuh"
+#include "simCUDA/constraints/collisions/cudaCollisionCheck.cuh"
 
 #include <cuda_runtime.h>
 

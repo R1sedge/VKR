@@ -1,4 +1,4 @@
-#include "simCUDA/kernels/cudaParticleCollisionProject.cuh"
+#include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 
 #include <cuda_runtime.h>
 #include <math.h>

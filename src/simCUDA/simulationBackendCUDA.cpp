@@ -5,10 +5,10 @@
 #include "common/Config.h"
 #include "simCUDA/utils/cudaCheck.h"
 #include "simCUDA/kernels/cudaKernelsBasic.cuh"
-#include "simCUDA/kernels/cudaPbfDensity.cuh"
-#include "simCUDA/kernels/cudaParticleCollisionProject.cuh"
-#include "simCUDA/kernels/cudaPbfLambda.cuh"
-#include "simCUDA/kernels/cudaPbfDeltaPositions.cuh"
+#include "simCUDA/pbf/cudaPbfDensity.cuh"
+#include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
+#include "simCUDA/pbf/cudaPbfLambda.cuh"
+#include "simCUDA/pbf/cudaPbfDeltaPositions.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 #include "simCUDA/utils/cudaParticles.cuh"
@@ -172,7 +172,8 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt);
+    launchUpdateVelocities(m_deviceParticles, dt, 2.5f, 
+        m_left, m_right, m_bottom,m_top, Config::particleRadius);
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
     if (m_vboResource) 

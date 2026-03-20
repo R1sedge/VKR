@@ -1,7 +1,7 @@
 #pragma once
 
 #include "simCUDA/utils/cudaParticles.cuh"
-#include "deviceNeighborList.cuh"
+#include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void buildNeighborsNaiveCUDA(
     const DeviceParticles2D& particles,

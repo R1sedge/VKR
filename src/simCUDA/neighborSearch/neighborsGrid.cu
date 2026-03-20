@@ -1,4 +1,4 @@
-#include "neighborsGrid.cuh"
+#include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 #include <cub/cub.cuh>
 #include <cuda_runtime.h>

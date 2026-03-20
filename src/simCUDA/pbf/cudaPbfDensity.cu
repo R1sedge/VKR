@@ -1,4 +1,4 @@
-#include "simCUDA/kernels/cudaPbfDensity.cuh"
+#include "simCUDA/pbf/cudaPbfDensity.cuh"
 
 #include <cuda_runtime.h>
 #include <math.h>

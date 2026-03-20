@@ -6,7 +6,7 @@
 #include "common/Config.h"
 #include "sim/simulationBackend.h"
 #include "simCUDA/utils/cudaParticles.cuh"
-#include "simCUDA/kernels/cudaCollisionCheck.cuh"
+#include "simCUDA/constraints/collisions/cudaCollisionCheck.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl

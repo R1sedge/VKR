@@ -58,13 +58,32 @@ namespace
         const float* py,
         float* vx,
         float* vy,
-        float invDt)
+        float invDt,
+        float maxSpeed,
+        float left, float right, float bottom, float top, float radius)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
 
-        vx[i] = (x[i] - px[i]) * invDt;
-        vy[i] = (y[i] - py[i]) * invDt;
+        float newVx = (x[i] - px[i]) * invDt;
+        float newVy = (y[i] - py[i]) * invDt;
+
+        float speedSq = newVx * newVx + newVy * newVy;
+        if (speedSq > maxSpeed * maxSpeed)
+        {
+            float invSpeed = maxSpeed * rsqrtf(speedSq);
+            newVx *= invSpeed;
+            newVy *= invSpeed;
+        }
+
+        // Не понятно помогает или нет
+        //if (x[i] <= left   + radius + 1e-4f && newVx < 0.0f) newVx = 0.0f;
+        //if (x[i] >= right  - radius - 1e-4f && newVx > 0.0f) newVx = 0.0f;
+        //if (y[i] <= bottom + radius + 1e-4f && newVy < 0.0f) newVy = 0.0f;
+        //if (y[i] >= top    - radius - 1e-4f && newVy > 0.0f) newVy = 0.0f;
+
+        vx[i] = newVx;
+        vy[i] = newVy;
     }
 }
 
@@ -100,7 +119,8 @@ void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy,
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchUpdateVelocities(DeviceParticles2D& dp, float dt)
+void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed,
+        float left, float right, float bottom, float top, float radius)
 {
     if (dp.count <= 0 || dt <= 0.0f)
         return;
@@ -112,7 +132,8 @@ void launchUpdateVelocities(DeviceParticles2D& dp, float dt)
         dp.x, dp.y,
         dp.px, dp.py,
         dp.vx, dp.vy,
-        invDt);
+        invDt, maxSpeed,
+        left, right, bottom, top, radius); //TODO Нужно будет куда-то вынести, например в Config
 
     CUDA_CHECK(cudaGetLastError());
 }

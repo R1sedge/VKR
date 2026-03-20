@@ -1,4 +1,4 @@
-#include "simCUDA/kernels/cudaPbfLambda.cuh"
+#include "simCUDA/pbf/cudaPbfDeltaPositions.cuh"
 
 #include <cuda_runtime.h>
 #include <math.h>
@@ -9,17 +9,17 @@
 
 namespace
 {
-     __global__ void computeLambdaKernel(
+    __global__ void computeDeltaPositionsKernel(
         int n,
         const float* x,
         const float* y,
         const float* mass,
-        const float* density,
+        const float* lambda,
         const int* neighborOffsets,
         const int* neighborIds,
-        float* lambda,
+        float* dxOut,
+        float* dyOut,
         float restDensity,
-        float epsilon,
         float h)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -28,15 +28,12 @@ namespace
         const float invRestDensity = 1.0f / restDensity;
         const float gradEps = 1e-6f;
 
-        const float rhoi = density[i];
-        const float Ci = rhoi * invRestDensity - 1.0f;
-
         const float xi = x[i];
         const float yi = y[i];
+        const float lambdaI = lambda[i];
 
-        float sumGrad2 = 0.0f;
-        float gradCiX = 0.0f;
-        float gradCiY = 0.0f;
+        float deltaX = 0.0f;
+        float deltaY = 0.0f;
 
         const int begin = neighborOffsets[i];
         const int end   = neighborOffsets[i + 1];
@@ -56,42 +53,74 @@ namespace
             const float invR = 1.0f / r;
             const float gradW = CudaSPH::spikyGradCoeff(r, h);
 
-            const float coeff = mass[j] * invRestDensity * gradW;
-            const float gx = coeff * dx * invR;
-            const float gy = coeff * dy * invR;
+            const float coeff = (lambdaI + lambda[j]) * mass[j] * invRestDensity * gradW;
 
-            sumGrad2 += gx * gx + gy * gy;
-            gradCiX -= gx;
-            gradCiY -= gy;
+            deltaX += coeff * dx * invR;
+            deltaY += coeff * dy * invR;
         }
 
-        sumGrad2 += gradCiX * gradCiX + gradCiY * gradCiY;
-        lambda[i] = -Ci / (sumGrad2 + epsilon);
+        dxOut[i] = deltaX;
+        dyOut[i] = deltaY;
+    }
+
+    __global__ void applyDeltaPositionsKernel(
+        int n,
+        float* x,
+        float* y,
+        float* dx,
+        float* dy,
+        float scale)
+    {
+        const int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n) return;
+
+        x[i] += scale * dx[i];
+        y[i] += scale * dy[i];
+
+        dx[i] = 0.0f;
+        dy[i] = 0.0f;
     }
 }
 
-void launchComputeLambda(
+void launchComputeDeltaPositions(
     const DeviceParticles2D& particles,
     const DeviceNeighborList& neighbors,
     float restDensity,
-    float epsilon,
     float smoothingRadius)
 {
     if (particles.count <= 0)
         return;
 
-    computeLambdaKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
+    computeDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,
         particles.mass,
-        particles.density,
+        particles.lambda,
         neighbors.offsets,
         neighbors.ids,
-        particles.lambda,
+        particles.dx,
+        particles.dy,
         restDensity,
-        epsilon,
         smoothingRadius);
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
+void launchApplyDeltaPositions(
+    DeviceParticles2D& particles,
+    float scale)
+{
+    if (particles.count <= 0)
+        return;
+
+    applyDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
+        particles.count,
+        particles.x,
+        particles.y,
+        particles.dx,
+        particles.dy,
+        scale);
 
     CUDA_CHECK(cudaGetLastError());
 }

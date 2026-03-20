@@ -54,17 +54,17 @@ add_executable(Simulation
     simCUDA/kernels/cudaKernelsBasic.cuh
     simCUDA/kernels/cudaKernelsBasic.cu
 
-    simCUDA/kernels/cudaPbfDensity.cuh
-    simCUDA/kernels/cudaPbfDensity.cu
-    simCUDA/kernels/cudaPbfLambda.cuh
-    simCUDA/kernels/cudaPbfLambda.cu
-    simCUDA/kernels/cudaPbfDeltaPositions.cuh
-    simCUDA/kernels/cudaPbfDeltaPositions.cu
+    simCUDA/pbf/cudaPbfDensity.cuh
+    simCUDA/pbf/cudaPbfDensity.cu
+    simCUDA/pbf/cudaPbfLambda.cuh
+    simCUDA/pbf/cudaPbfLambda.cu
+    simCUDA/pbf/cudaPbfDeltaPositions.cuh
+    simCUDA/pbf/cudaPbfDeltaPositions.cu
 
-    simCUda/kernels/cudaCollisionCheck.cuh
-    simCUda/kernels/cudaCollisionCheck.cu
-    simCUDA/kernels/cudaParticleCollisionProject.cuh
-    simCUDA/kernels/cudaParticleCollisionProject.cu
+    simCUda/constraints/collisions/cudaCollisionCheck.cuh
+    simCUda/constraints/collisions/cudaCollisionCheck.cu
+    simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh
+    simCUDA/constraints/collisions/cudaParticleCollisionProject.cu
 
     simCUDA/kernels/cudaFillInstanceData.cu
 
