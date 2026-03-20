@@ -12,8 +12,18 @@ add_executable(Simulation
     data/particleData.h
     data/particleData.cpp
 
-    gui/userInterface.cpp
     gui/userInterface.h
+    gui/userInterface.cpp
+    
+    gui/panels/fps/fpsOverlay.h
+    gui/panels/fps/fpsOverlay.cpp
+    gui/panels/settings/settingsPanel.h
+    gui/panels/settings/settingsPanel.cpp
+    gui/panels/stats/statsPanel.h
+    gui/panels/stats/statsPanel.cpp
+
+    gui/timing/frameTimer.h
+    gui/timing/frameTimer.cpp
 
     render/renderer.cpp
     render/renderer.h

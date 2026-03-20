@@ -187,7 +187,7 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt, 6.0f, 
+    launchUpdateVelocities(m_deviceParticles, dt, 8.0f, 
         m_left, m_right, m_bottom,m_top, Config::particleRadius);
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======

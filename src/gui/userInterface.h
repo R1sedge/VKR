@@ -1,9 +1,17 @@
 #pragma once
 #include <GLFW/glfw3.h>
 
+#include "gui/timing/frameTimer.h"
+#include "gui/panels/fps/fpsOverlay.h"
+#include "gui/panels/stats/statsPanel.h"
+#include "gui/panels/settings/settingsPanel.h"
+
 struct AppState;
 struct AppCommands;
 
+
+//   Тонкий оркестратор: инициализирует ImGui, владеет панелями,
+//   делегирует отрисовку каждой панели своему классу.
 class UserInterface
 {
 public:
@@ -16,36 +24,22 @@ public:
     void buildUI(const AppState& state, AppCommands& commands);
     void endFrame();
 
-    void setFrameTiming(double frameTimeSeconds);
+    // Передача метрик из app.cpp
+    void setFrameTiming  (double frameTimeSeconds);
     void setPhysicsTiming(double seconds);
-    void setRenderTiming(double seconds);
+    void setRenderTiming (double seconds);
 
-    void setSimulationDt(float dt) { simDt = dt; } 
-    void setRestDensity(float rd) { currentRestDensity = rd; }
-    void setArtPressureEnabled(bool enabled) { currentArtPressureEnabled = enabled; }
+    void setSimulationDt  (float dt)      { m_simDt = dt; }
+    void setRestDensity   (float rd)      { m_settings.setRestDensity(rd); }
+    void setArtPressure   (bool enabled)  { m_settings.setArtPressureEnabled(enabled); }
 
 private:
     bool initialized = false;
 
-    // Метрики
-    float avgFrameMs = 0.0f;
-    float avgPhysicsMs = 0.0f;
-    float avgRenderMs = 0.0f;
+    float m_simDt = 0.0f;
 
-    float avgFps = 0.0f;
-    float simDt = 0.0f;
-
-    // Параметры физики
-    float currentRestDensity = 200.0f;
-    bool currentArtPressureEnabled = true;
-
-    // История
-    static constexpr int historySize = 60;
-
-    float frameTimes[historySize] = {0.0f};
-    float physicsFrameTimes[historySize] = {0.0f};
-    float renderFrameTimes[historySize] = {0.0f};
-
-    int historyIndex = 0;
-    int historyCount = 0;
+    FrameTimer   m_timer;
+    FpsOverlay   m_fps;
+    StatsPanel   m_stats;
+    SettingsPanel m_settings;
 };

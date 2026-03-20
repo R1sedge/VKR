@@ -209,7 +209,7 @@ void Renderer::initGeometry()
 
 void Renderer::renderFrame(const Particles2D& particles)
 {
-	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	int n = particles.count;
@@ -301,7 +301,7 @@ void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без п
 
 void Renderer::renderFrameInterop(int particleCount) // Рендерим без загрузки данных — CUDA уже заполнила VBO
 {
-    glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+    glClearColor(0.10f, 0.10f, 0.10f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (particleCount <= 0) return;
