@@ -15,6 +15,10 @@ public:
     virtual void setWorldBounds(float left, float right, float bottom, float top) = 0;
 
     virtual const Particles2D& getParticles() const = 0;
+
+    virtual bool setupInterop(unsigned int vbo) { return false; }
+    virtual void resetInterop(unsigned int vbo) {}
+    virtual void setArtificialPressureK(float k) {}
 };
 
 class SimulationBackend
@@ -30,6 +34,10 @@ public:
 
     SimulationBackendType getType() const { return m_type; }
     ISimulationBackendImpl* getImpl() { return m_impl.get(); }
+
+    bool setupInterop(unsigned int vbo);
+    void resetInterop(unsigned int vbo);
+    void setArtificialPressureK(float k);
 
 private:
     void createImplementation();

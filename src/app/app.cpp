@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "common/config.h"
-#include "simCUDA/simulationBackendCUDA.h"
+
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
@@ -66,16 +66,12 @@ bool App::initialize()
 
     m_running = true;
     
-    if (m_backendType == SimulationBackendType::CUDA) 
+    if (m_backendType == SimulationBackendType::CUDA)
     {
-    int n = m_sim.getParticles().count;
-    m_renderer.ensureInstanceBufferSize(n);
-
-    auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
-    cudaBackend->setInteropVbo(m_renderer.getInstanceVBO());
-    cudaBackend->fillInteropBuffer();
-    m_interopEnabled = true;
-    }   
+        int n = m_sim.getParticles().count;
+        m_renderer.ensureInstanceBufferSize(n);
+        m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
+    }
 
     return true;
 }
@@ -138,25 +134,19 @@ void App::mainLoop()
         if (cmd.hasSetArtPressure) 
         {
             m_state.artPressureEnabled = cmd.artPressureEnabled;
-            if (m_backendType == SimulationBackendType::CUDA) 
-            {
-                auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
-                cudaBackend->setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
-            }
+            m_sim.setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
         }
 
 
-        if (cmd.reset) {
-        m_sim.reset();
-        if (m_interopEnabled) {
-            int n = m_sim.getParticles().count;
-            auto* cudaBackend = static_cast<SimulationBackendCUDA*>(m_sim.getImpl());
-            cudaBackend->unregisterInterop();          // снимаем старую регистрацию
-            m_renderer.ensureInstanceBufferSize(n); // ресайзим VBO
-            cudaBackend->setInteropVbo(m_renderer.getInstanceVBO()); // регистрируем заново
-            cudaBackend->fillInteropBuffer();
-    }
-}
+        if (cmd.reset) 
+        {
+            m_sim.reset();
+            if (m_interopEnabled)
+            {
+                m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
+                m_sim.resetInterop(m_renderer.getInstanceVBO());
+            }
+        }
 
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)

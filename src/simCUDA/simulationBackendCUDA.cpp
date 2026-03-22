@@ -21,8 +21,6 @@
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 
-
-
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
     reset();
@@ -89,6 +87,20 @@ void SimulationBackendCUDA::setInteropVbo(GLuint vboId)
         &m_vboResource,
         vboId,
         cudaGraphicsMapFlagsWriteDiscard));  // GPU пишет, GL читает
+}
+
+bool SimulationBackendCUDA::setupInterop(unsigned int vbo)
+{
+    setInteropVbo(vbo);
+    fillInteropBuffer();
+    return true;
+}
+
+void SimulationBackendCUDA::resetInterop(unsigned int vbo)
+{
+    unregisterInterop();
+    setInteropVbo(vbo);
+    fillInteropBuffer();
 }
 
 void SimulationBackendCUDA::unregisterInterop() 

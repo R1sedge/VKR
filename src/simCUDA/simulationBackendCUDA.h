@@ -19,7 +19,7 @@ public:
     void update(float dt) override;
     void setWorldBounds(float left, float right, float bottom, float top) override;
     
-    void setArtificialPressureK(float k) { m_artPressureK = k; }
+    void setArtificialPressureK(float k) override { m_artPressureK = k; }
 
     const Particles2D& getParticles() const override;
 
@@ -27,6 +27,9 @@ public:
     void setInteropVbo(GLuint vboId);    // вызывается после ensureInstanceBufferSize
     void unregisterInterop();
     void fillInteropBuffer();
+
+    bool setupInterop(unsigned int vbo) override;
+    void resetInterop(unsigned int vbo) override;
 
 private:
     void syncDeviceToHost();

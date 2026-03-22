@@ -47,3 +47,18 @@ const Particles2D& SimulationBackend::getParticles() const
 {
     return m_impl->getParticles();
 }
+
+bool SimulationBackend::setupInterop(unsigned int vbo)
+{
+    return m_impl->setupInterop(vbo);
+}
+
+void SimulationBackend::resetInterop(unsigned int vbo)
+{
+    m_impl->resetInterop(vbo);
+}
+
+void SimulationBackend::setArtificialPressureK(float k)
+{
+    m_impl->setArtificialPressureK(k);
+}
