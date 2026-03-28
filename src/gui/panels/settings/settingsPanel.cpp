@@ -136,7 +136,7 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
                         "Restores rotational detail lost by numerical damping.");
     
     ImGui::SetNextItemWidth(innerW);
-    if (ImGui::SliderFloat("##XSPH Viscosity", &m_xsphViscosity, 0.0f, 0.2f, "Viscosity: %.3f")) 
+    if (ImGui::SliderFloat("##XSPH Viscosity", &m_xsphViscosity, 0.0f, 0.6f, "Viscosity: %.2f")) 
     {
         commands.hasSetXSPH = true;
         commands.xsphViscosity = m_xsphViscosity;

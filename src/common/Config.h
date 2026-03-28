@@ -10,11 +10,11 @@ namespace Config
     // Константы симуляции
     inline constexpr float dt = 1.0f / 100.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                  // Гравитация по x
-    inline float gravityY = -0.0f;                 // Гравитация по y
+    inline float gravityY = -6.0f;                 // Гравитация по y
     inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы
-    inline float restDensity = 100.0f;                              // Плотность воды
+    inline float restDensity = 200.0f;                              // Плотность воды
     inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 150.f;                         // Регуляризация для lambda
 
@@ -26,7 +26,7 @@ namespace Config
     inline float vorticityEpsilon = 0.10f;
 
     // Xsph
-    inline float xsphViscosity = 0.02f;
+    inline float xsphViscosity = 0.1f;
 
     // Настройки PBD решателя
     inline constexpr int iterations = 6;

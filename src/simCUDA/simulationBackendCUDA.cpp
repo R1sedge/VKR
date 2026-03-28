@@ -15,6 +15,7 @@
 #include "simCUDA/pbf/cudaPbfLambda.cuh"
 #include "simCUDA/pbf/cudaPbfDeltaPositions.cuh"
 #include "simCUDA/pbf/cudaVorticity.cuh"
+#include "simCUDA/pbf/cudaXSPH.cuh"
 
 #include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
@@ -211,6 +212,9 @@ void SimulationBackendCUDA::update(float dt)
         launchApplyVorticityConfinement(m_deviceParticles, m_neighbors,
                                         dt, m_vorticityEpsilon,
                                         Config::smoothingRadius);
+        
+        launchApplyXSPH(m_deviceParticles, m_neighbors,
+                        m_xsphViscosity, Config::smoothingRadius);
 }
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======

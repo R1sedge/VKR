@@ -70,8 +70,10 @@ add_executable(Simulation
     simCUDA/pbf/cudaPbfLambda.cu
     simCUDA/pbf/cudaPbfDeltaPositions.cuh
     simCUDA/pbf/cudaPbfDeltaPositions.cu
-    simCUDA/pbf/cudaVorticity.cu
     simCUDA/pbf/cudaVorticity.cuh
+    simCUDA/pbf/cudaVorticity.cu
+    simCUDA/pbf/cudaXSPH.cuh
+    simCUDA/pbf/cudaXSPH.cu
 
     simCUda/constraints/collisions/cudaCollisionCheck.cuh
     simCUda/constraints/collisions/cudaCollisionCheck.cu
