@@ -20,6 +20,9 @@ public:
     void setWorldBounds(float left, float right, float bottom, float top) override;
     
     void setArtificialPressureK(float k) override { m_artPressureK = k; }
+    void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
+
+    
 
     const Particles2D& getParticles() const override;
 
@@ -55,4 +58,6 @@ private:
 
     float m_artPressureK = Config::artificialPressureK;
     float m_cachedWDeltaQ = 0.0f; // предвычисляется в setWorldBounds
+
+    float m_vorticityEpsilon = Config::vorticityEpsilon;
 };

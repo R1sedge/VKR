@@ -137,6 +137,8 @@ void App::mainLoop()
             m_sim.setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
         }
 
+        if (cmd.hasSetVorticity)
+            m_sim.setVorticityEpsilon(cmd.vorticityEpsilon);
 
         if (cmd.reset) 
         {

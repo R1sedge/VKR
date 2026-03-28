@@ -42,6 +42,8 @@ void allocateDeviceParticles(DeviceParticles2D& dp, int count)
     CudaMem::allocFloatArray(dp.lambda, count);
     CudaMem::allocFloatArray(dp.dx, count);
     CudaMem::allocFloatArray(dp.dy, count);
+
+    CudaMem::allocFloatArray(dp.omega, count);
 }
 
 void freeDeviceParticles(DeviceParticles2D& dp)
@@ -58,6 +60,8 @@ void freeDeviceParticles(DeviceParticles2D& dp)
     CudaMem::freeFloatArray(dp.lambda);
     CudaMem::freeFloatArray(dp.dx);
     CudaMem::freeFloatArray(dp.dy);
+
+    CudaMem::freeFloatArray(dp.omega);
 
     dp.count = 0;
 }

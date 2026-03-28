@@ -1,4 +1,5 @@
 #pragma once
+#include "common/Config.h"
 
 struct AppCommands
 {
@@ -11,10 +12,13 @@ struct AppCommands
     bool reset = false;
 
     bool hasSetRestDensity = false;
-    float restDensityValue = 200.0f;
+    float restDensityValue = Config::restDensity;
 
     bool hasSetArtPressure  = false;
     bool artPressureEnabled = true;
+
+    bool  hasSetVorticity = false;
+    float vorticityEpsilon = Config::vorticityEpsilon;
 
     void clear() {*this = AppCommands();}
 };

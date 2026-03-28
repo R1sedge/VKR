@@ -20,6 +20,8 @@ struct DeviceParticles2D
     float* lambda = nullptr;
     float* dx = nullptr;
     float* dy = nullptr;
+
+    float* omega = nullptr;
 };
 
 void allocateDeviceParticles(DeviceParticles2D& dp, int count);

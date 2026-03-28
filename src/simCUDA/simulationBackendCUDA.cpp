@@ -14,6 +14,7 @@
 #include "simCUDA/pbf/cudaPbfDensity.cuh"
 #include "simCUDA/pbf/cudaPbfLambda.cuh"
 #include "simCUDA/pbf/cudaPbfDeltaPositions.cuh"
+#include "simCUDA/pbf/cudaVorticity.cuh"
 
 #include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
@@ -48,10 +49,10 @@ void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom
 void SimulationBackendCUDA::reset()
 {
     const float r = Config::particleRadius;
-    const float step = r * 2.5f;
+    const float step = r * 2.2f;
 
-    const int cols = 60;
-    const int rows = 60;
+    const int cols = 125;
+    const int rows = 80;
     const int n = cols * rows;
 
     m_particles.resize(n);
@@ -63,7 +64,7 @@ void SimulationBackendCUDA::reset()
             const int idx = row * cols + col;
 
             const float fx = (col - cols / 2) * step;
-            const float fy = (row - rows / 2) * step + 0.5f;
+            const float fy = (row - rows / 2) * step + 0.0f;
 
             m_particles.x[idx] = fx;
             m_particles.y[idx] = fy;
@@ -180,7 +181,7 @@ void SimulationBackendCUDA::update(float dt)
             m_artPressureK,    
             m_cachedWDeltaQ);
 
-        launchApplyDeltaPositions(m_deviceParticles, 0.008f);
+        launchApplyDeltaPositions(m_deviceParticles, 1.0f);
         
         /*
         launchProjectParticleCollisions(
@@ -201,6 +202,16 @@ void SimulationBackendCUDA::update(float dt)
 
     launchUpdateVelocities(m_deviceParticles, dt, 8.0f, 
         m_left, m_right, m_bottom,m_top, Config::particleRadius);
+
+    if (m_vorticityEpsilon > 0.0f) 
+    {
+        launchComputeVorticity(m_deviceParticles, m_neighbors,
+                            Config::smoothingRadius);
+
+        launchApplyVorticityConfinement(m_deviceParticles, m_neighbors,
+                                        dt, m_vorticityEpsilon,
+                                        Config::smoothingRadius);
+}
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
     if (m_vboResource) 

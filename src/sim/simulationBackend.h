@@ -19,6 +19,7 @@ public:
     virtual bool setupInterop(unsigned int vbo) { return false; }
     virtual void resetInterop(unsigned int vbo) {}
     virtual void setArtificialPressureK(float k) {}
+    virtual void setVorticityEpsilon(float e) {}
 };
 
 class SimulationBackend
@@ -38,6 +39,7 @@ public:
     bool setupInterop(unsigned int vbo);
     void resetInterop(unsigned int vbo);
     void setArtificialPressureK(float k);
+    void setVorticityEpsilon(float e) { m_impl->setVorticityEpsilon(e); }
 
 private:
     void createImplementation();
