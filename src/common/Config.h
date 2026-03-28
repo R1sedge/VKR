@@ -25,6 +25,9 @@ namespace Config
     // Vorticity Confinement
     inline float vorticityEpsilon = 0.10f;
 
+    // Xsph
+    inline float xsphViscosity = 0.02f;
+
     // Настройки PBD решателя
     inline constexpr int iterations = 6;
 }

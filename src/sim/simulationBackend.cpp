@@ -62,3 +62,13 @@ void SimulationBackend::setArtificialPressureK(float k)
 {
     m_impl->setArtificialPressureK(k);
 }
+
+void SimulationBackend::setVorticityEpsilon(float e) 
+{ 
+    m_impl->setVorticityEpsilon(e); 
+}
+
+void SimulationBackend::setXsphViscosity(float v)
+{
+    m_impl->setXsphViscosity(v);
+}

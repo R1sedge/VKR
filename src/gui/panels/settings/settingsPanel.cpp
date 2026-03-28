@@ -125,7 +125,8 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
 
     ImGui::Spacing();
     ImGui::SetNextItemWidth(innerW);
-    if (ImGui::SliderFloat("Vorticity \xce\xb5", &m_vorticityEpsilon, 0.0f, 0.5f, "Vorticity: %.2f")) {
+    if (ImGui::SliderFloat("##Vorticity \xce\xb5", &m_vorticityEpsilon, 0.0f, 0.5f, "Vorticity: %.2f")) 
+    {
         commands.hasSetVorticity = true;
         commands.vorticityEpsilon = m_vorticityEpsilon;
     }
@@ -133,6 +134,17 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
         ImGui::SetTooltip("Vorticity Confinement strength.\n"
                         "0 = off, ~0.05 typical.\n"
                         "Restores rotational detail lost by numerical damping.");
+    
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat("##XSPH Viscosity", &m_xsphViscosity, 0.0f, 0.2f, "Viscosity: %.3f")) 
+    {
+        commands.hasSetXSPH = true;
+        commands.xsphViscosity = m_xsphViscosity;
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("XSPH velocity smoothing.\n0 = off, 0.02 typical.\n"
+                          "Blends each particle's velocity toward its neighbours.\n"
+                          "Makes the fluid look cohesive, removes jittering.");
 }
 
 //  Секция управления симуляцией

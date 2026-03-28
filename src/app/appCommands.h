@@ -20,5 +20,8 @@ struct AppCommands
     bool  hasSetVorticity = false;
     float vorticityEpsilon = Config::vorticityEpsilon;
 
+    bool hasSetXSPH = false;
+    float xsphViscosity = Config::xsphViscosity;
+
     void clear() {*this = AppCommands();}
 };

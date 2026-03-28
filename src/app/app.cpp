@@ -57,6 +57,8 @@ bool App::initialize()
     m_gui.initialize(m_window);
     m_gui.setSimulationDt(Config::dt);
     m_gui.setRestDensity(Config::restDensity);
+    m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
+    m_gui.setXsphViscosity(Config::xsphViscosity);
 
     float halfWorldW = Config::windowWidth / (2.0f * Config::pixelsPerUnits);
     float halfWorldH = Config::windowHeight / (2.0f * Config::pixelsPerUnits);
@@ -124,32 +126,8 @@ void App::mainLoop()
 
         m_gui.buildUI(m_state, cmd);
 
-        // applyCommands (cmd):
-        if (cmd.togglePause) m_state.paused = !m_state.paused;
-        if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
-
-        if (cmd.hasSetRestDensity)
-            Config::restDensity = cmd.restDensityValue;
-
-        if (cmd.hasSetArtPressure) 
-        {
-            m_state.artPressureEnabled = cmd.artPressureEnabled;
-            m_sim.setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
-        }
-
-        if (cmd.hasSetVorticity)
-            m_sim.setVorticityEpsilon(cmd.vorticityEpsilon);
-
-        if (cmd.reset) 
-        {
-            m_sim.reset();
-            if (m_interopEnabled)
-            {
-                m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
-                m_sim.resetInterop(m_renderer.getInstanceVBO());
-            }
-        }
-
+        applyCommands(cmd);
+        
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)
         {
@@ -183,5 +161,36 @@ void App::render()
     } else {
         // CPU-путь: старый код
         m_renderer.renderFrame(m_sim.getParticles());
+    }
+}
+
+void App::applyCommands(AppCommands& cmd)
+{
+    if (cmd.togglePause) m_state.paused = !m_state.paused;
+    if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
+
+    if (cmd.hasSetRestDensity)
+        Config::restDensity = cmd.restDensityValue;
+
+    if (cmd.hasSetArtPressure) 
+    {
+        m_state.artPressureEnabled = cmd.artPressureEnabled;
+        m_sim.setArtificialPressureK(cmd.artPressureEnabled ? Config::artificialPressureK : 0.0f);
+    }
+
+    if (cmd.hasSetVorticity)
+        m_sim.setVorticityEpsilon(cmd.vorticityEpsilon);
+
+    if (cmd.hasSetXSPH)
+        m_sim.setXsphViscosity(cmd.xsphViscosity);
+
+    if (cmd.reset) 
+    {
+        m_sim.reset();
+        if (m_interopEnabled)
+        {
+            m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
+            m_sim.resetInterop(m_renderer.getInstanceVBO());
+        }
     }
 }

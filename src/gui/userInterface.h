@@ -25,21 +25,23 @@ public:
     void endFrame();
 
     // Передача метрик из app.cpp
-    void setFrameTiming  (double frameTimeSeconds);
+    void setFrameTiming(double frameTimeSeconds);
     void setPhysicsTiming(double seconds);
-    void setRenderTiming (double seconds);
+    void setRenderTiming(double seconds);
 
-    void setSimulationDt  (float dt)      { m_simDt = dt; }
-    void setRestDensity   (float rd)      { m_settings.setRestDensity(rd); }
-    void setArtPressure   (bool enabled)  { m_settings.setArtPressureEnabled(enabled); }
-
+    void setSimulationDt(float dt) { m_simDt = dt; }
+    void setRestDensity(float rd) { m_settings.setRestDensity(rd); }
+    void setArtPressure(bool enabled) { m_settings.setArtPressureEnabled(enabled); }
+    void setVorticityEpsilon(float val) { m_settings.setVorticityEpsilon(val); }
+    void setXsphViscosity(float val) { m_settings.setXsphViscosity(val); }
+    
 private:
     bool initialized = false;
 
     float m_simDt = 0.0f;
 
-    FrameTimer   m_timer;
-    FpsOverlay   m_fps;
-    StatsPanel   m_stats;
+    FrameTimer m_timer;
+    FpsOverlay m_fps;
+    StatsPanel m_stats;
     SettingsPanel m_settings;
 };

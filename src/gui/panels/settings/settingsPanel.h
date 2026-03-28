@@ -14,8 +14,9 @@ class SettingsPanel
 
         void setRestDensity(float rd) { m_restDensity = rd; }
         void setArtPressureEnabled(bool enabled) { m_artPressure = enabled; }
-        void setVorticityEpsilon(float e) { m_vorticityEpsilon = e; }
-
+        void setVorticityEpsilon(float val) { m_vorticityEpsilon = val; }
+        void setXsphViscosity(float val) { m_xsphViscosity = val; }
+        
     private:
         float m_anim = 0.0f;
         float m_restDensity = Config::restDensity;
@@ -25,6 +26,7 @@ class SettingsPanel
         static constexpr float kTriggerX = 96.0f;
         static constexpr float kAnimSpeed = 10.0f;
         float m_vorticityEpsilon = Config::vorticityEpsilon;
+        float m_xsphViscosity = Config::xsphViscosity;
 
         void drawEdgeHint(const ImGuiIO& io);
         void drawPbfSection(AppCommands& commands);

@@ -24,6 +24,7 @@ private:
     void mainLoop();
     void update(float dt);
     void render();
+    void applyCommands(AppCommands& cmd);
 
 private:
     GLFWwindow* m_window = nullptr;
