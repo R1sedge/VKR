@@ -89,6 +89,7 @@ void UserInterface::buildUI(const AppState& state, AppCommands& commands)
     m_fps.draw(m_timer);
     m_stats.draw(m_timer, m_simDt);
     m_settings.draw(state, commands);
+    m_scenes.draw(state, commands);
 }
 
 void UserInterface::endFrame()

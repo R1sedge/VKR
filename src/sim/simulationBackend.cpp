@@ -72,3 +72,8 @@ void SimulationBackend::setXsphViscosity(float v)
 {
     m_impl->setXsphViscosity(v);
 }
+
+void SimulationBackend::loadScene(const SceneDescription& desc) 
+{
+    m_impl->loadScene(desc);
+}

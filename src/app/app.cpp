@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "common/config.h"
-
+#include "scene/ScenePresets.h"
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
@@ -60,6 +60,8 @@ bool App::initialize()
     m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
     m_gui.setXsphViscosity(Config::xsphViscosity);
 
+    m_gui.setSceneIndex(0);
+
     float halfWorldW = Config::windowWidth / (2.0f * Config::pixelsPerUnits);
     float halfWorldH = Config::windowHeight / (2.0f * Config::pixelsPerUnits);
 
@@ -68,6 +70,8 @@ bool App::initialize()
 
     m_running = true;
     
+    m_sim.loadScene(ScenePresets::getByIndex(0));
+
     if (m_backendType == SimulationBackendType::CUDA)
     {
         int n = m_sim.getParticles().count;
@@ -184,10 +188,21 @@ void App::applyCommands(AppCommands& cmd)
     if (cmd.hasSetXSPH)
         m_sim.setXsphViscosity(cmd.xsphViscosity);
 
+    if (cmd.hasSetScene) 
+    {
+        m_state.activeSceneIndex = cmd.sceneIndex;
+        m_sim.loadScene(ScenePresets::getByIndex(cmd.sceneIndex));
+        if (m_interopEnabled) 
+        {
+            m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
+            m_sim.resetInterop(m_renderer.getInstanceVBO());
+        }
+    }
+
     if (cmd.reset) 
     {
-        m_sim.reset();
-        if (m_interopEnabled)
+        m_sim.loadScene(ScenePresets::getByIndex(m_state.activeSceneIndex));
+        if (m_interopEnabled) 
         {
             m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
             m_sim.resetInterop(m_renderer.getInstanceVBO());

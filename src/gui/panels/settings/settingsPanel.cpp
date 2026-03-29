@@ -1,4 +1,5 @@
 #include "settingsPanel.h"
+
 #include "app/appState.h"
 #include "app/appCommands.h"
 
@@ -9,17 +10,16 @@
 void SettingsPanel::draw(const AppState& state, AppCommands& commands)
 {
     const ImGuiIO& io = ImGui::GetIO();
-    const float    dt = io.DeltaTime;
+    const float dt = io.DeltaTime;
 
     // Держим панель открытой если:
     //  - курсор в зоне триггера у левого края, ИЛИ
     //  - ImGui сейчас обрабатывает активный элемент (слайдер захвачен, кнопка зажата)
     const float visibleEdge = kPanelW * m_anim;  // реальный правый край панели
     const float triggerEdge = std::max(kTriggerX, visibleEdge);
-    const bool mouseNear    = (io.MousePos.x >= 0.0f && io.MousePos.x < triggerEdge);
+    const bool mouseNear = io.MousePos.x < triggerEdge;
 
-    const bool itemActive = ImGui::IsAnyItemActive();
-    const float target    = (mouseNear || itemActive) ? 1.0f : 0.0f;
+    const float target = mouseNear ? 1.0f : 0.0f;
 
     m_anim += (target - m_anim) * (1.0f - std::exp(-kAnimSpeed * dt));
 
@@ -30,10 +30,10 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
     if (m_anim < 0.002f) return;
 
     // Позиция: выезжает из-за левого края
-    const float xPos   = -kPanelW + kPanelW * m_anim;
+    const float xPos = -kPanelW + kPanelW * m_anim;
     const float panelH = io.DisplaySize.y;
 
-    ImGui::SetNextWindowPos (ImVec2(xPos, 0.0f),      ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(xPos, 0.0f),      ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(kPanelW, panelH), ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.88f);
 

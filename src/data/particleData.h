@@ -20,6 +20,8 @@ struct Particles2D
     std::vector<float> lambda;  // Множители Лагранжа
     std::vector<float> dx, dy;  // коррекции позиции
 
+    std::vector<int> phase; // id типы жидкости
+
     void resize(int n);
     void clearDerived();
 };

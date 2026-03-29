@@ -2,6 +2,7 @@
 
 #include "simCPU/neighborSearch/pairsNaive.h"
 #include "simCPU/fluid/sphKernels.h"
+#include "scene/SceneFiller.h"
 
 #include <algorithm>
 #include <cmath>
@@ -388,4 +389,12 @@ void SimulationBackendCPU::applyDeltaPositions()
         particles.y[i] += 0.001f * particles.dy[i];
     }
     
+}
+
+
+void SimulationBackendCPU::loadScene(const SceneDescription& desc) 
+{
+    Config::gravityX = desc.gravityX;
+    Config::gravityY = desc.gravityY;
+    particles = SceneFiller::fill(desc);
 }

@@ -44,6 +44,8 @@ void allocateDeviceParticles(DeviceParticles2D& dp, int count)
     CudaMem::allocFloatArray(dp.dy, count);
 
     CudaMem::allocFloatArray(dp.omega, count);
+
+    CudaMem::allocIntArray(dp.phase, count);
 }
 
 void freeDeviceParticles(DeviceParticles2D& dp)
@@ -63,13 +65,18 @@ void freeDeviceParticles(DeviceParticles2D& dp)
 
     CudaMem::freeFloatArray(dp.omega);
 
+    CudaMem::freeIntArray(dp.phase);
+
     dp.count = 0;
 }
 
 void uploadParticlesToDevice(const Particles2D& hp, DeviceParticles2D& dp)
 {
     if (dp.count != hp.count)
-        allocateDeviceParticles(dp, hp.count);
+    {
+        freeDeviceParticles(dp); 
+        allocateDeviceParticles(dp, hp.count); 
+    }
     
     if (hp.count <= 0)
         return;

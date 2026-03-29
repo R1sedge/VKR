@@ -5,6 +5,7 @@
 #include "gui/panels/fps/fpsOverlay.h"
 #include "gui/panels/stats/statsPanel.h"
 #include "gui/panels/settings/settingsPanel.h"
+#include "gui/panels/scene/scenePanel.h"
 
 struct AppState;
 struct AppCommands;
@@ -34,6 +35,8 @@ public:
     void setArtPressure(bool enabled) { m_settings.setArtPressureEnabled(enabled); }
     void setVorticityEpsilon(float val) { m_settings.setVorticityEpsilon(val); }
     void setXsphViscosity(float val) { m_settings.setXsphViscosity(val); }
+
+    void setSceneIndex(int idx) { m_scenes.setSceneIndex(idx); }
     
 private:
     bool initialized = false;
@@ -44,4 +47,5 @@ private:
     FpsOverlay m_fps;
     StatsPanel m_stats;
     SettingsPanel m_settings;
+    ScenePanel m_scenes;
 };

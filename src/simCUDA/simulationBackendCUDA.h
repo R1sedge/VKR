@@ -5,6 +5,7 @@
 
 #include "common/Config.h"
 #include "sim/simulationBackend.h"
+#include "scene/SceneDescription.h"
 #include "simCUDA/utils/cudaParticles.cuh"
 #include "simCUDA/constraints/collisions/cudaCollisionCheck.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
@@ -29,9 +30,10 @@ public:
     void setInteropVbo(GLuint vboId);    // вызывается после ensureInstanceBufferSize
     void unregisterInterop();
     void fillInteropBuffer();
-
     bool setupInterop(unsigned int vbo) override;
     void resetInterop(unsigned int vbo) override;
+
+    void loadScene(const SceneDescription& desc) override;
 
 private:
     void syncDeviceToHost();

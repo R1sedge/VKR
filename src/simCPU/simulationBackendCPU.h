@@ -8,6 +8,7 @@
 #include "simCPU/neighborSearch/pairsGrid.h"
 #include "simCPU/constraints/boxBounds.h"
 #include "simCPU/constraints/circleCollision.h"
+#include "scene/SceneFiller.h"
 
 class SimulationBackendCPU final : public ISimulationBackendImpl
 {
@@ -17,6 +18,7 @@ public:
     void reset() override;
     void update(float dt) override;
     void setWorldBounds(float left, float right, float bottom, float top) override;
+    void loadScene(const SceneDescription& desc) override;
 
     const Particles2D& getParticles() const override { return particles; }
 

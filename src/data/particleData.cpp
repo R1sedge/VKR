@@ -17,6 +17,8 @@ void Particles2D::resize(int n)
     dx.resize(n);
     dy.resize(n);
 
+    phase.resize(n);
+
     count = n;
 }
 

@@ -12,6 +12,15 @@ add_executable(Simulation
     data/particleData.h
     data/particleData.cpp
 
+    scene/particleRegion.h
+    scene/sceneBuilder.h
+    scene/sceneBuilder.cpp
+    scene/sceneDescription.h
+    scene/sceneFiller.h
+    scene/sceneFiller.cpp
+    scene/scenePresets.h
+    scene/scenePresets.cpp
+
     gui/userInterface.h
     gui/userInterface.cpp
     
@@ -21,6 +30,8 @@ add_executable(Simulation
     gui/panels/settings/settingsPanel.cpp
     gui/panels/stats/statsPanel.h
     gui/panels/stats/statsPanel.cpp
+    gui/panels/scene/scenePanel.h
+    gui/panels/scene/scenePanel.cpp
 
     gui/timing/frameTimer.h
     gui/timing/frameTimer.cpp

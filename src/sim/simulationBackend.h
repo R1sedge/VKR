@@ -4,6 +4,7 @@
 
 #include "data/particleData.h"
 #include "sim/simulationBackendType.h"
+#include "scene/sceneDescription.h"
 
 class ISimulationBackendImpl
 {
@@ -16,11 +17,17 @@ public:
 
     virtual const Particles2D& getParticles() const = 0;
 
+    // CUDA -> OpenGL interop
     virtual bool setupInterop(unsigned int vbo) { return false; }
     virtual void resetInterop(unsigned int vbo) {}
+
+    // PBF
     virtual void setArtificialPressureK(float k) {}
     virtual void setVorticityEpsilon(float e) {}
     virtual void setXsphViscosity(float c) {}
+
+    // Сцена
+    virtual void loadScene(const SceneDescription& desc) = 0;
 };
 
 class SimulationBackend
@@ -39,9 +46,12 @@ public:
 
     bool setupInterop(unsigned int vbo);
     void resetInterop(unsigned int vbo);
+    
     void setArtificialPressureK(float k);
     void setVorticityEpsilon(float e);
     void setXsphViscosity(float c);
+
+    void loadScene(const SceneDescription& desc);
 
 private:
     void createImplementation();

@@ -22,6 +22,8 @@
 
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
+#include "scene/SceneFiller.h"
+
 
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
@@ -201,7 +203,7 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt, 8.0f, 
+    launchUpdateVelocities(m_deviceParticles, dt, 16.0f, 
         m_left, m_right, m_bottom,m_top, Config::particleRadius);
 
     if (m_vorticityEpsilon > 0.0f) 
@@ -247,4 +249,19 @@ void SimulationBackendCUDA::syncDeviceToHost()
 const Particles2D& SimulationBackendCUDA::getParticles() const
 {
     return m_particles;
+}
+
+void SimulationBackendCUDA::loadScene(const SceneDescription& desc) {
+    // 1. Применить гравитацию из сцены
+    Config::gravityX = desc.gravityX;
+    Config::gravityY = desc.gravityY;
+
+    // 2. Заполнить CPU-буфер через SceneFiller
+    m_particles = SceneFiller::fill(desc);
+
+    // 3. Залить на устройство (realloc если n изменился)
+    uploadParticlesToDevice(m_particles, m_deviceParticles);
+
+    // Примечание: interop-VBO ресайзит App после вызова:
+    // ensureInstanceBufferSize(n) + resetInterop(vbo)
 }

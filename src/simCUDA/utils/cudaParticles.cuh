@@ -21,6 +21,8 @@ struct DeviceParticles2D
     float* dx = nullptr;
     float* dy = nullptr;
 
+    int* phase = nullptr;
+
     float* omega = nullptr;
 };
 
