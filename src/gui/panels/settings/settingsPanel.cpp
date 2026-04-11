@@ -25,7 +25,7 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
 
     // Рисуем хинт у левого края когда панель скрыта
     if (m_anim < 0.95f)
-        drawEdgeHint(io);
+        drawEdgeHint(io, mouseNear);
 
     if (m_anim < 0.002f) return;
 
@@ -43,6 +43,20 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
         ImGuiWindowFlags_NoResize        |
         ImGuiWindowFlags_NoSavedSettings |
         ImGuiWindowFlags_NoFocusOnAppearing
+    );
+
+    // Кастомный accent bar на левом краю панели
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 winPos = ImGui::GetWindowPos();
+    ImVec2 winSize = ImGui::GetWindowSize();
+
+    drawList->AddRectFilledMultiColor(
+        winPos,
+        ImVec2(winPos.x + 3.0f, winPos.y + winSize.y),
+        IM_COL32(60, 120, 200, 255),
+        IM_COL32(60, 120, 200, 255),
+        IM_COL32(40, 80, 160, 255),
+        IM_COL32(40, 80, 160, 255)
     );
 
     ImGui::Spacing();
@@ -68,18 +82,26 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
 }
 
 //  Хинт у левого края (виден когда панель убрана)
-void SettingsPanel::drawEdgeHint(const ImGuiIO& io) //TODO Нужно добавить иконку
+void SettingsPanel::drawEdgeHint(const ImGuiIO& io, bool mouseNear)
 {
-    // Прозрачность хинта: максимальна когда панель полностью убрана
-    const float alpha = (1.0f - m_anim) * 1.0f;
-    if (alpha < 0.01f) return;
+    const float baseAlpha = 1.0f - m_anim;
+    if (baseAlpha < 0.01f) return;
 
-    const float h       = 22.0f;
+    // Пульсация для привлечения внимания
+    const float time = (float)ImGui::GetTime();
+    const float pulse = 0.85f + 0.15f * sinf(time * 2.0f);
+    const float alpha = baseAlpha * pulse;
+
+    // Цвет меняется при наведении
+    const ImVec4 normalColor = ImVec4(0.70f, 0.85f, 1.00f, alpha);
+    const ImVec4 hoverColor = ImVec4(0.90f, 0.95f, 1.00f, alpha);
+    const ImVec4 textColor = mouseNear ? hoverColor : normalColor;
+
     const float centerY = io.DisplaySize.y * 0.5f;
 
-    ImGui::SetNextWindowPos (ImVec2(0.0f, centerY - h * 0.5f), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(14.0f, h),                  ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(alpha);
+    ImGui::SetNextWindowPos(ImVec2(0.0f, centerY - kHintH * 0.5f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(kHintW, kHintH), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(alpha * 0.7f);
 
     ImGui::Begin("##SettingsHint", nullptr,
         ImGuiWindowFlags_NoDecoration    |
@@ -89,8 +111,32 @@ void SettingsPanel::drawEdgeHint(const ImGuiIO& io) //TODO Нужно добав
         ImGuiWindowFlags_NoSavedSettings
     );
 
-    // Маленькая стрелка вправо как индикатор
-    ImGui::TextColored(ImVec4(0.70f, 0.85f, 1.00f, alpha / 0.55f), ">");
+    // Кастомная отрисовка закругленного таба
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 winPos = ImGui::GetWindowPos();
+    ImVec2 winSize = ImGui::GetWindowSize();
+
+    // Градиентный фон таба
+    drawList->AddRectFilledMultiColor(
+        winPos,
+        ImVec2(winPos.x + winSize.x, winPos.y + winSize.y),
+        IM_COL32(30, 60, 100, (int)(alpha * 180)),
+        IM_COL32(40, 80, 130, (int)(alpha * 200)),
+        IM_COL32(40, 80, 130, (int)(alpha * 200)),
+        IM_COL32(30, 60, 100, (int)(alpha * 180))
+    );
+
+    // Accent линия справа
+    drawList->AddRectFilled(
+        ImVec2(winPos.x + winSize.x - 2.0f, winPos.y),
+        ImVec2(winPos.x + winSize.x, winPos.y + winSize.y),
+        IM_COL32(60, 120, 200, (int)(alpha * 255))
+    );
+
+    // Иконка шеврона
+    ImGui::SetCursorPosX(kHintW * 0.5f - 8.0f);
+    ImGui::SetCursorPosY(kHintH * 0.5f - 8.0f);
+    ImGui::TextColored(textColor, ">>");
 
     ImGui::End();
 }

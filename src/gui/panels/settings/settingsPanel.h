@@ -25,10 +25,13 @@ class SettingsPanel
         static constexpr float kPanelW = 260.0f;
         static constexpr float kTriggerX = 96.0f;
         static constexpr float kAnimSpeed = 10.0f;
+        static constexpr float kHintW = 48.0f;
+        static constexpr float kHintH = 90.0f;
+
         float m_vorticityEpsilon = Config::vorticityEpsilon;
         float m_xsphViscosity = Config::xsphViscosity;
 
-        void drawEdgeHint(const ImGuiIO& io);
+        void drawEdgeHint(const ImGuiIO& io, bool mouseNear);
         void drawPbfSection(AppCommands& commands);
         void drawSimSection(const AppState& state, AppCommands& commands);
 };

@@ -30,10 +30,12 @@ bool UserInterface::initialize(GLFWwindow* window)
     style.FrameRounding    = 4.0f;
     style.GrabRounding     = 4.0f;
     style.WindowBorderSize = 0.0f;
+    style.FrameBorderSize  = 1.0f;
     style.FramePadding     = ImVec2(8, 4);
     style.ItemSpacing      = ImVec2(8, 6);
 
     ImVec4* c = style.Colors;
+    c[ImGuiCol_Text]             = ImVec4(0.95f, 0.95f, 0.97f, 1.00f);
     c[ImGuiCol_WindowBg]         = ImVec4(0.08f, 0.08f, 0.10f, 0.88f);
     c[ImGuiCol_FrameBg]          = ImVec4(0.14f, 0.14f, 0.18f, 1.00f);
     c[ImGuiCol_FrameBgHovered]   = ImVec4(0.20f, 0.20f, 0.28f, 1.00f);
@@ -46,7 +48,7 @@ bool UserInterface::initialize(GLFWwindow* window)
     c[ImGuiCol_CheckMark]        = ImVec4(0.38f, 0.70f, 1.00f, 1.00f);
     c[ImGuiCol_Header]           = ImVec4(0.20f, 0.40f, 0.70f, 0.50f);
     c[ImGuiCol_HeaderHovered]    = ImVec4(0.28f, 0.52f, 0.88f, 0.80f);
-    c[ImGuiCol_Separator]        = ImVec4(0.28f, 0.28f, 0.36f, 1.00f);
+    c[ImGuiCol_Separator]        = ImVec4(0.35f, 0.35f, 0.45f, 1.00f);
 
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) return false;
     if (!ImGui_ImplOpenGL3_Init("#version 450"))      return false;
