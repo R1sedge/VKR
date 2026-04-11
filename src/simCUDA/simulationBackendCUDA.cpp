@@ -203,7 +203,7 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt, 16.0f, 
+    launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed,
         m_left, m_right, m_bottom,m_top, Config::particleRadius);
 
     if (m_vorticityEpsilon > 0.0f) 

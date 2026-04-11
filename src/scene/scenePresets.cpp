@@ -9,8 +9,8 @@ namespace ScenePresets
         const float r = Config::particleRadius;
         const float step = r * 2.2f;
 
-        const float halfW = 125.0f / 2 * step;
-        const float halfH = 80.0f / 2 * step;
+        const float halfW = 80.0f / 2 * step;
+        const float halfH = 60.0f / 2 * step;
 
         return SceneBuilder::create("Default Fluid")
             .addRect(0.0f, 0.0f, halfW, halfH)

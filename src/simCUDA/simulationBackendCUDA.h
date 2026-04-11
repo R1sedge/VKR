@@ -55,7 +55,7 @@ private:
     float m_bottom = -3.0f;
     float m_top = 3.0f;
 
-    float m_velocityDamping = 0.001f;
+    float m_velocityDamping = 0.0001f;
 
     float m_artPressureK = Config::artificialPressureK;
     float m_cachedWDeltaQ = 0.0f; // предвычисляется в setWorldBounds
