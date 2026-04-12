@@ -42,13 +42,6 @@ bool App::initialize()
     glfwMakeContextCurrent(m_window);
 	glfwSwapInterval(1); // v-sync
 
-    // Register scroll callback for mouse wheel
-    glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset) {
-        InputManager* input = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
-        if (input) input->addScrollDelta(yoffset);
-    });
-    glfwSetWindowUserPointer(m_window, &m_input);
-
     if (!gladLoadGL())
 	{   
         std::cerr << "GLAD init failed\n";
@@ -60,7 +53,7 @@ bool App::initialize()
 
     m_renderer.setWindow(m_window);
     m_input.setWindow(m_window);
-
+    
     m_gui.initialize(m_window);
     m_gui.setSimulationDt(Config::dt);
     m_gui.setRestDensity(Config::restDensity);
@@ -74,6 +67,11 @@ bool App::initialize()
 
     m_sim.setWorldBounds(-halfWorldW, halfWorldW, 
                          -halfWorldH, halfWorldH);
+
+    // Камера видит весь мир
+    float fovHalfRad = glm::radians(60.0f / 2.0f);
+    float dist = halfWorldH / std::tan(fovHalfRad) * 1.3f; // +30% отступ
+    m_camera.setDist(dist);
 
     m_running = true;
     
@@ -135,51 +133,30 @@ void App::mainLoop()
         if (m_input.justPressed(GLFW_KEY_SPACE)) cmd.togglePause = true;
         if (m_input.justPressed(GLFW_KEY_R)) cmd.reset = true;
 
-        // Mouse interaction (only if not hovering UI AND in Force mode)
+        // Отклик на мышь
         const ImGuiIO& io = ImGui::GetIO();
-        if (!io.WantCaptureMouse && m_state.interactionMode == 0) {
-            // Adjust radius with scroll
-            double scroll = m_input.getScrollDelta();
-            if (scroll != 0.0) {
-                m_state.mouseForceRadius += static_cast<float>(scroll) * 0.1f;
-                if (m_state.mouseForceRadius < 0.5f) m_state.mouseForceRadius = 0.5f;
-                if (m_state.mouseForceRadius > 3.0f) m_state.mouseForceRadius = 3.0f;
-                m_input.resetScrollDelta();
+        if (!io.WantCaptureMouse) 
+        {
+            // ЛКМ drag → orbit
+            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
+            {
+                float dx = static_cast<float>(m_input.getDeltaX());
+                float dy = static_cast<float>(m_input.getDeltaY());
+                m_camera.orbit(-dx * 0.35f, dy * 0.35f); 
             }
 
-            // Apply forces
-            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) ||
-                m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT) ||
-                m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
+            // ЦКМ drag → pan
+            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
             {
-                // Get actual window size (handles resize)
-                int windowWidth, windowHeight;
-                glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
+                float dx = static_cast<float>(m_input.getDeltaX());
+                float dy = static_cast<float>(m_input.getDeltaY());
+                m_camera.pan(dx, -dy);
+            }
 
-                // Convert screen to world coordinates
-                double screenX = m_input.getMouseX();
-                double screenY = m_input.getMouseY();
-
-                float worldX = static_cast<float>((screenX - windowWidth * 0.5) / Config::pixelsPerUnits);
-                float worldY = static_cast<float>(-(screenY - windowHeight * 0.5) / Config::pixelsPerUnits);
-
-                cmd.hasMouseForce = true;
-                cmd.mouseForceWorldX = worldX;
-                cmd.mouseForceWorldY = worldY;
-                cmd.mouseForceRadius = m_state.mouseForceRadius;
-
-                if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
-                    cmd.mouseForceType = 0;  // Repulsion
-                    cmd.mouseForceStrength = 2.0f;
-                }
-                else if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
-                    cmd.mouseForceType = 1;  // Attraction
-                    cmd.mouseForceStrength = 1.0f;
-                }
-                else if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE)) {
-                    cmd.mouseForceType = 2;  // Vortex
-                    cmd.mouseForceStrength = 0.3f;
-                }
+            // Колёсико → zoom
+            if (io.MouseWheel != 0.0f)
+            {
+                m_camera.zoom(io.MouseWheel * 0.6f);
             }
         }
 
@@ -220,6 +197,8 @@ void App::update(float dt)
 
 void App::render()
 {  
+     m_renderer.updateCamera(m_camera); // Устанавливаем uView + uProj
+
     if (m_interopEnabled) {
         // GPU-путь: данные уже в VBO, никакого memcpy
         m_renderer.renderFrameInterop(m_sim.getParticles().count);

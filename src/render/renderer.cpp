@@ -1,31 +1,31 @@
 #include "renderer.h"
 #include "common/config.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
 
-Renderer::Renderer(int width, int height, GLFWwindow* window):windowWidth(width), windowHeight(height), window(window)
-{
-	
-}	
+Renderer::Renderer(int width, int height, GLFWwindow* window):windowWidth(width), windowHeight(height), window(window) { }
+
+static Renderer* s_instance = nullptr;
 
 void Renderer::setWindow(GLFWwindow* wnd)
 {
 	window = wnd;
+	s_instance = this;  
 	if (window)
 	{
 		centerWindow();
 	
-		glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
+		//glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
 		glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
 		initGL();
 		initShaders();
-
-		updateProjection();
 
 		setMaxSpeed(2.5f); // Максимальная скорость для градиента цвета
 
@@ -63,9 +63,10 @@ void Renderer::initGL()
 void Renderer::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	// Достаём указатель на Renderer, который мы положили в user pointer
-	auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // Нужно т.к. нельзя просто передать метод класса
-	if (renderer)
-		renderer->onResize(width, height);
+	//auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // Нужно т.к. нельзя просто передать метод класса
+
+	if (s_instance)
+		s_instance->onResize(width, height);
 }
 
 void Renderer::onResize(int width, int height) 
@@ -73,8 +74,6 @@ void Renderer::onResize(int width, int height)
 	// Обновляем хранимый размер окна.
 	windowWidth = width;
 	windowHeight = height;
-
-	updateProjection();
 
 	// Настраиваем viewport под новый размер буфера кадра
 	glViewport(0, 0, width, height);
@@ -265,26 +264,22 @@ void Renderer::setMaxSpeed(float maxSpeed)
 			glUniform1f(loc, maxSpeed);
 }
 
-void Renderer::setOrthoProjection(float left, float right, float bottom, float top)
+void Renderer::updateCamera(Camera3D& cam)
 {
-	glUseProgram(shaderProgram);
-	float proj[16] = {
-        2.0f / (right - left),  		 0,                                0, 0,
-        0,                      		 2.0f / (top - bottom),            0, 0,
-        0,                      		 0,                               -1, 0,
-       -(right + left) / (right - left), -(top + bottom) / (top - bottom), 0, 1
-    };
+	// Синхронизируем aspect с текущим размером окна
+    cam.setAspect(static_cast<float>(windowWidth) / static_cast<float>(windowHeight));
 
-	GLint loc = glGetUniformLocation(shaderProgram, "uProjection");
-	if (loc != -1) glUniformMatrix4fv(loc, 1, GL_FALSE, proj);
-}
+    glUseProgram(shaderProgram);
 
-void Renderer::updateProjection()
-{
-	float halfWorldW = 	windowWidth / (2 * Config::pixelsPerUnits);
-	float halfWorldH = 	windowHeight / (2 * Config::pixelsPerUnits);
+	glm::mat4 view = cam.getViewMatrix();
+    GLint viewLoc = glGetUniformLocation(shaderProgram, "uView");
+    if (viewLoc != -1)
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-	setOrthoProjection(-halfWorldW, +halfWorldW, -halfWorldH, +halfWorldH);
+    glm::mat4 proj = cam.getProjMatrix();
+    GLint projLoc = glGetUniformLocation(shaderProgram, "uProj");
+    if (projLoc != -1)
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
 }
 
 void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без перерегистрации (регистрация — в CUDA backend)

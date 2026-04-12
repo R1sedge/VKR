@@ -18,6 +18,9 @@ public:
     double getMouseX() const { return mouseX; }
     double getMouseY() const { return mouseY; }
 
+    double getDeltaX() const { return mouseX - prevMouseX; }
+    double getDeltaY() const { return mouseY - prevMouseY; }
+
     // Mouse scroll
     double getScrollDelta() const { return scrollDelta; }
     void addScrollDelta(double delta) { scrollDelta += delta; }
@@ -32,7 +35,11 @@ private:
     // Mouse state
     std::array<uint8_t, GLFW_MOUSE_BUTTON_LAST + 1> mouseCurr{};
     std::array<uint8_t, GLFW_MOUSE_BUTTON_LAST + 1> mousePrev{};
+    
     double mouseX = 0.0;
     double mouseY = 0.0;
+    double prevMouseX = 0.0;
+    double prevMouseY = 0.0;
+
     double scrollDelta = 0.0;
 };

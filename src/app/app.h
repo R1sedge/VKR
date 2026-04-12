@@ -4,6 +4,8 @@
 #include <memory>
 
 #include "render/renderer.h"
+#include "render/Camera3D.h"  
+
 #include "sim/simulationBackend.h"
 #include "gui/userInterface.h"
 #include "input/inputManager.h"
@@ -29,8 +31,9 @@ private:
 private:
     GLFWwindow* m_window = nullptr;
     Renderer m_renderer;
+    Camera3D m_camera; 
 
-    SimulationBackendType m_backendType = SimulationBackendType::CPU;
+    SimulationBackendType m_backendType = SimulationBackendType::CUDA;
     SimulationBackend m_sim;
 
     UserInterface m_gui;

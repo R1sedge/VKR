@@ -36,8 +36,10 @@ add_executable(Simulation
     gui/timing/frameTimer.h
     gui/timing/frameTimer.cpp
 
-    render/renderer.cpp
     render/renderer.h
+    render/renderer.cpp
+    render/Camera3D.h
+    render/Camera3D.cpp
 
     Input/inputManager.cpp
     Input/inputManager.h

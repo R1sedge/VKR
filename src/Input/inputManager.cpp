@@ -26,6 +26,8 @@ void InputManager::update()
     updMouse(GLFW_MOUSE_BUTTON_MIDDLE);
 
     // Mouse position
+    prevMouseX = mouseX;
+    prevMouseY = mouseY;
     glfwGetCursorPos(window, &mouseX, &mouseY);
 }
 

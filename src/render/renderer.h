@@ -4,6 +4,7 @@
 #include <string>
 
 #include "data/particleData.h"
+#include "render/Camera3D.h" 
 
 class Renderer
 {
@@ -23,15 +24,15 @@ public:
 	Renderer(int width, int height, GLFWwindow* window);
 
 	void setWindow(GLFWwindow* window);
-	void renderFrame(const Particles2D& particles); // CPU rendering
 
-	// Interop rendering
-	void renderFrameInterop(int particleCount);
+	void renderFrame(const Particles2D& particles); // CPU rendering
+	void renderFrameInterop(int particleCount); // Interop rendering
+
 	void ensureInstanceBufferSize(int n);
 	GLuint getInstanceVBO() const {return instanceVBO; }
 
-	void setOrthoProjection(float left, float right, float bottom, float top);
-	void updateProjection();
+	void updateCamera(Camera3D& cam);
+
 	void setCircleRadius(float normalisedRadius);
 	void setMaxSpeed(float maxSpeed);
 
