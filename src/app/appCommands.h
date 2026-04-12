@@ -37,5 +37,12 @@ struct AppCommands
     float mouseForceStrength = 1.0f;
     int mouseForceType = 0;  // 0=repulsion, 1=attraction, 2=vortex
 
+    // Interaction mode
+    bool hasSetInteractionMode = false;
+    int interactionMode = 0;  // 0=force, 1=container rotation
+
+    // Mouse force radius update
+    bool hasSetMouseForceRadius = false;
+
     void clear() {*this = AppCommands();}
 };

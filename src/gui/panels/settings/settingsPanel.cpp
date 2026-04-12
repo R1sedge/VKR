@@ -78,6 +78,12 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
     drawSimSection(state, commands);
 
     ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    drawInteractionSection(state, commands);
+
+    ImGui::Spacing();
     ImGui::End();
 }
 
@@ -214,4 +220,36 @@ void SettingsPanel::drawSimSection(const AppState& state, AppCommands& commands)
     ImGui::SameLine();
     if (ImGui::Button("Reset (R)", ImVec2(btnW, 0)))
         commands.reset = true;
+}
+
+//  Секция взаимодействия мышью
+void SettingsPanel::drawInteractionSection(const AppState& state, AppCommands& commands)
+{
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Mouse Interaction");
+    ImGui::Spacing();
+
+    const float innerW = kPanelW - 20.0f;
+
+    // Mode selector
+    const char* modes[] = { "Force Application", "Container Rotation" };
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::Combo("##InteractionMode", &m_interactionMode, modes, 2)) {
+        commands.hasSetInteractionMode = true;
+        commands.interactionMode = m_interactionMode;
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Force: Apply forces with mouse\nRotation: Rotate container (stub)");
+
+    ImGui::Spacing();
+
+    // Radius slider (only enabled in Force mode)
+    ImGui::BeginDisabled(m_interactionMode != 0);
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat("##ForceRadius", &m_mouseForceRadius, 0.5f, 3.0f, "Radius: %.2f")) {
+        commands.hasSetMouseForceRadius = true;
+        commands.mouseForceRadius = m_mouseForceRadius;
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Mouse force application radius\nAdjust with scroll wheel");
+    ImGui::EndDisabled();
 }

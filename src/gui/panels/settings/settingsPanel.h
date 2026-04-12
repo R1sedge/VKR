@@ -16,6 +16,8 @@ class SettingsPanel
         void setArtPressureEnabled(bool enabled) { m_artPressure = enabled; }
         void setVorticityEpsilon(float val) { m_vorticityEpsilon = val; }
         void setXsphViscosity(float val) { m_xsphViscosity = val; }
+        void setInteractionMode(int mode) { m_interactionMode = mode; }
+        void setMouseForceRadius(float radius) { m_mouseForceRadius = radius; }
         
     private:
         float m_anim = 0.0f;
@@ -30,8 +32,11 @@ class SettingsPanel
 
         float m_vorticityEpsilon = Config::vorticityEpsilon;
         float m_xsphViscosity = Config::xsphViscosity;
+        int m_interactionMode = 0;
+        float m_mouseForceRadius = 1.0f;
 
         void drawEdgeHint(const ImGuiIO& io, bool mouseNear);
         void drawPbfSection(AppCommands& commands);
         void drawSimSection(const AppState& state, AppCommands& commands);
+        void drawInteractionSection(const AppState& state, AppCommands& commands);
 };

@@ -135,9 +135,9 @@ void App::mainLoop()
         if (m_input.justPressed(GLFW_KEY_SPACE)) cmd.togglePause = true;
         if (m_input.justPressed(GLFW_KEY_R)) cmd.reset = true;
 
-        // Mouse interaction (only if not hovering UI)
+        // Mouse interaction (only if not hovering UI AND in Force mode)
         const ImGuiIO& io = ImGui::GetIO();
-        if (!io.WantCaptureMouse) {
+        if (!io.WantCaptureMouse && m_state.interactionMode == 0) {
             // Adjust radius with scroll
             double scroll = m_input.getScrollDelta();
             if (scroll != 0.0) {
@@ -186,10 +186,16 @@ void App::mainLoop()
         m_gui.buildUI(m_state, cmd);
 
         applyCommands(cmd);
-        
+
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)
         {
+           // Apply mouse forces only when simulation is running
+           if (cmd.hasMouseForce) {
+               m_sim.applyMouseForce(cmd.mouseForceWorldX, cmd.mouseForceWorldY,
+                                    cmd.mouseForceRadius, cmd.mouseForceStrength,
+                                    cmd.mouseForceType);
+           }
            update(dt);
         }
         double endPhysicsTime = glfwGetTime();
@@ -264,9 +270,11 @@ void App::applyCommands(AppCommands& cmd)
         }
     }
 
-    if (cmd.hasMouseForce) {
-        m_sim.applyMouseForce(cmd.mouseForceWorldX, cmd.mouseForceWorldY,
-                             cmd.mouseForceRadius, cmd.mouseForceStrength,
-                             cmd.mouseForceType);
+    if (cmd.hasSetInteractionMode) {
+        m_state.interactionMode = cmd.interactionMode;
+    }
+
+    if (cmd.hasSetMouseForceRadius) {
+        m_state.mouseForceRadius = cmd.mouseForceRadius;
     }
 }

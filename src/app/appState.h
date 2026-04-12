@@ -8,4 +8,5 @@ struct AppState
 
     // Mouse interaction
     float mouseForceRadius = 1.0f;
+    int interactionMode = 0;  // 0=force, 1=container rotation
 };
