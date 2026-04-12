@@ -23,7 +23,11 @@ public:
     void setArtificialPressureK(float k) override { m_artPressureK = k; }
     void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
     void setXsphViscosity(float c) override { m_xsphViscosity = c; }
-    
+
+    void applyMouseForce(float worldX, float worldY,
+                        float radius, float strength,
+                        int forceType) override;
+
     const Particles2D& getParticles() const override;
 
     // Interop

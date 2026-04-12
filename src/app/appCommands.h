@@ -29,5 +29,13 @@ struct AppCommands
     bool hasSetScene = false;
     int sceneIndex = 0;
 
+    // Mouse interaction
+    bool hasMouseForce = false;
+    float mouseForceWorldX = 0.0f;
+    float mouseForceWorldY = 0.0f;
+    float mouseForceRadius = 1.0f;
+    float mouseForceStrength = 1.0f;
+    int mouseForceType = 0;  // 0=repulsion, 1=attraction, 2=vortex
+
     void clear() {*this = AppCommands();}
 };
