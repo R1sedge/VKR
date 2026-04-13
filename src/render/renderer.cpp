@@ -187,7 +187,7 @@ void Renderer::initGeometry()
 	);
 	
 
-	// instance
+	// instance: location=1 (vec4: x,y,z,radius), location=2 (float: speed)
 	glGenBuffers(1, &instanceVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
 	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STREAM_DRAW);
@@ -195,13 +195,24 @@ void Renderer::initGeometry()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(
 		1,                      // location в шейдере
-        4,                      // по4 компоненты (x, y, radius, speed)
+        4,                      // x, y, z, radius
         GL_FLOAT,
         GL_FALSE,
-        4 * sizeof(float),      
-        (void*)0                
+        5 * sizeof(float),      // шаг между вершинами
+        (void*)0
 	);
 	glVertexAttribDivisor(1, 1);
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(
+		2,                      // location в шейдере
+        1,                      // speed
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(float),
+        (void*)(4 * sizeof(float))  // смещение после x,y,z,radius
+	);
+	glVertexAttribDivisor(2, 1);
 
 	glBindVertexArray(0);
 }
@@ -219,9 +230,9 @@ void Renderer::renderFrame(const Particles2D& particles)
 	
 	setCircleRadius(1.0f);
 
-	// Собираем данные
+	// Собираем данные (x, y, z=0, radius, speed)
 	std::vector<float> instanceData;
-	instanceData.resize(n * 4);
+	instanceData.resize(n * 5);
 
 	float radius = Config::particleRadius;
 	for (int i = 0; i < n; ++i)
@@ -230,10 +241,11 @@ void Renderer::renderFrame(const Particles2D& particles)
 		float vy = particles.vy[i];
 		float speed = std::sqrt(vx * vx + vy * vy);
 
-		instanceData[4 * i + 0] = particles.x[i];
-		instanceData[4 * i + 1] = particles.y[i];
-		instanceData[4 * i + 2] = radius;
-		instanceData[4 * i + 3] = speed;
+		instanceData[5 * i + 0] = particles.x[i];
+		instanceData[5 * i + 1] = particles.y[i];
+		instanceData[5 * i + 2] = 0.0f; // z
+		instanceData[5 * i + 3] = radius;
+		instanceData[5 * i + 4] = speed;
 	}
 
 	// Переносим данные в InstanceVBO
@@ -280,13 +292,24 @@ void Renderer::updateCamera(Camera3D& cam)
     GLint projLoc = glGetUniformLocation(shaderProgram, "uProj");
     if (projLoc != -1)
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+	// Передаём оси камеры для billboard-рендеринга
+	glm::vec3 right = cam.getRight();
+	GLint rightLoc = glGetUniformLocation(shaderProgram, "uCameraRight");
+	if (rightLoc != -1)
+		glUniform3f(rightLoc, right.x, right.y, right.z);
+
+	glm::vec3 camUp = cam.getCamUp();
+	GLint camUpLoc = glGetUniformLocation(shaderProgram, "uCameraUp");
+	if (camUpLoc != -1)
+		glUniform3f(camUpLoc, camUp.x, camUp.y, camUp.z);
 }
 
 void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без перерегистрации (регистрация — в CUDA backend)
 {
     if (n == lastInstanceCount) return;
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(n * 4 * sizeof(float)),
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(n * 5 * sizeof(float)),
                  nullptr, GL_STREAM_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
