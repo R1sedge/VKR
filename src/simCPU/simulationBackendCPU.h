@@ -17,7 +17,7 @@ public:
 
     void reset() override;
     void update(float dt) override;
-    void setWorldBounds(float left, float right, float bottom, float top) override;
+    void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
     void loadScene(const SceneDescription& desc) override;
 
     const Particles2D& getParticles() const override { return particles; }

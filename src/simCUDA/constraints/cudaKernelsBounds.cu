@@ -7,13 +7,16 @@
 namespace
 {
     __global__ void projectBoundsKernel(
-        int n, 
+        int n,
         float* x,
         float* y,
-        float left, 
+        float* z,
+        float left,
         float right,
         float bottom,
         float top,
+        float front,
+        float back,
         float radius)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -23,6 +26,8 @@ namespace
         if (x[i] > right - radius)  x[i] = right - radius;
         if (y[i] < bottom + radius) y[i] = bottom + radius;
         if (y[i] > top - radius)    y[i] = top - radius;
+        if (z[i] < front + radius)  z[i] = front + radius;
+        if (z[i] > back - radius)   z[i] = back - radius;
     }
 }
 
@@ -32,6 +37,8 @@ void launchProjectBounds(
     float right,
     float bottom,
     float top,
+    float front,
+    float back,
     float radius)
 {
     if (dp.count <= 0)
@@ -41,10 +48,13 @@ void launchProjectBounds(
         dp.count,
         dp.x,
         dp.y,
+        dp.z,
         left,
         right,
         bottom,
         top,
+        front,
+        back,
         radius);
 
     CUDA_CHECK(cudaGetLastError());

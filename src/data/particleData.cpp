@@ -32,4 +32,5 @@ void Particles2D::clearDerived()
     std::fill(lambda.begin(), lambda.end(), 0.0f);
     std::fill(dx.begin(), dx.end(), 0.0f);
     std::fill(dy.begin(), dy.end(), 0.0f);
+    std::fill(dz.begin(), dz.end(), 0.0f);
 }

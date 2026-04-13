@@ -18,7 +18,7 @@ public:
 
     void reset() override;
     void update(float dt) override;
-    void setWorldBounds(float left, float right, float bottom, float top) override;
+    void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
     
     void setArtificialPressureK(float k) override { m_artPressureK = k; }
     void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
@@ -58,6 +58,8 @@ private:
     float m_right = 3.0f;
     float m_bottom = -3.0f;
     float m_top = 3.0f;
+    float m_front = -2.0f;
+    float m_back = 2.0f;
 
     float m_velocityDamping = 0.0001f;
 

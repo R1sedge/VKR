@@ -13,6 +13,7 @@ Particles2D SceneFiller::fill(const SceneDescription& desc)
         {
             case RegionShape::Rect:fillRect(region, out); break;
             case RegionShape::Circle:fillCircle(region, out); break;
+            case RegionShape::Sphere:fillSphere(region, out); break;
             default: assert(false && "SceneFiller: unknown RegionShape");
         }
     }
@@ -126,6 +127,55 @@ void SceneFiller::fillCircle(const ParticleRegion& r, Particles2D& out)
             out.dz.push_back(0.0f);
 
             out.phase.push_back(r.phase);
+        }
+    }
+}
+
+void SceneFiller::fillSphere(const ParticleRegion& r, Particles2D& out)
+{
+    const float step = resolveSpacing(r);
+    const float halfR = Config::particleRadius;
+
+    const int cols = static_cast<int>(2.0f * r.radius / step) + 1;
+    const int rows = cols;
+    const int depths = cols;
+
+    for (int depth = 0; depth < depths; ++depth)
+    {
+        for (int row = 0; row < rows; ++row)
+        {
+            for (int col = 0; col < cols; ++col)
+            {
+                const float px = r.cx - r.radius + col * step;
+                const float py = r.cy - r.radius + row * step;
+                const float pz = r.cz - r.radius + depth * step;
+
+                const float ddx = px - r.cx;
+                const float ddy = py - r.cy;
+                const float ddz = pz - r.cz;
+                if (ddx * ddx + ddy * ddy + ddz * ddz > (r.radius - halfR) * (r.radius - halfR))
+                    continue;
+
+                out.x.push_back(px);
+                out.y.push_back(py);
+                out.z.push_back(pz);
+                out.px.push_back(px);
+                out.py.push_back(py);
+                out.pz.push_back(pz);
+
+                out.vx.push_back(r.vx);
+                out.vy.push_back(r.vy);
+                out.vz.push_back(r.vz);
+                out.mass.push_back(r.mass);
+
+                out.density.push_back(0.0f);
+                out.lambda.push_back(0.0f);
+                out.dx.push_back(0.0f);
+                out.dy.push_back(0.0f);
+                out.dz.push_back(0.0f);
+
+                out.phase.push_back(r.phase);
+            }
         }
     }
 }

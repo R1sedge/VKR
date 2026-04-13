@@ -5,8 +5,9 @@ namespace Config
     // RENDERING / CAMERA
     inline int windowWidth = 1280;
     inline int windowHeight = 720;
-    inline constexpr float pixelsPerUnits = 100.0f; // 1 единица физ. коорд. = 100px
     inline float worldDepth = 4.0f;                 // Глубина мира (world units)
+    inline float fovY = 60.0f;                      // Угол обзора камеры (градусы)
+    inline float cameraDist = 5.0f;                 // Начальное расстояние камеры до цели
 
     // Константы симуляции
     inline constexpr float dt = 1.0f / 60.0f;     // Шаг симуляции
@@ -16,7 +17,7 @@ namespace Config
     inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы
-    inline float restDensity = 200.0f;                              // Плотность воды
+    inline float restDensity = 160.0f;                              // Плотность воды (3D)
     inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 100.f;                         // Регуляризация для lambda
 

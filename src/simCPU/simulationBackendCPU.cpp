@@ -49,7 +49,7 @@ void SimulationBackendCPU::reset()
     particles.clearDerived();
 }
 
-void SimulationBackendCPU::setWorldBounds(float left, float right, float bottom, float top)
+void SimulationBackendCPU::setWorldBounds(float left, float right, float bottom, float top, float /*front*/, float /*back*/)
 {
     boxConstraint.setBounds(left, right, bottom, top);
 

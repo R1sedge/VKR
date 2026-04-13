@@ -13,7 +13,7 @@ public:
 
     virtual void reset() = 0;
     virtual void update(float dt) = 0;
-    virtual void setWorldBounds(float left, float right, float bottom, float top) = 0;
+    virtual void setWorldBounds(float left, float right, float bottom, float top, float front, float back) = 0;
 
     virtual const Particles2D& getParticles() const = 0;
 
@@ -42,7 +42,7 @@ public:
 
     void reset();
     void update(float dt);
-    void setWorldBounds(float left, float right, float bottom, float top);
+    void setWorldBounds(float left, float right, float bottom, float top, float front, float back);
 
     const Particles2D& getParticles() const;
 

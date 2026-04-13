@@ -38,9 +38,9 @@ void SimulationBackend::update(float dt)
     m_impl->update(dt);
 }
 
-void SimulationBackend::setWorldBounds(float left, float right, float bottom, float top)
+void SimulationBackend::setWorldBounds(float left, float right, float bottom, float top, float front, float back)
 {
-    m_impl->setWorldBounds(left, right, bottom, top);
+    m_impl->setWorldBounds(left, right, bottom, top, front, back);
 }
 
 const Particles2D& SimulationBackend::getParticles() const

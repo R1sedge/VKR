@@ -41,6 +41,20 @@ SceneBuilder& SceneBuilder::addCircle(float cx, float cy, float cz, float radius
     return *this;
 }
 
+SceneBuilder& SceneBuilder::addSphere(float cx, float cy, float cz, float radius)
+{
+    ParticleRegion r;
+    r.shape  = RegionShape::Sphere;
+
+    r.cx = cx;
+    r.cy = cy;
+    r.cz = cz;
+    r.radius = radius;
+
+    m_desc.regions.push_back(r);
+    return *this;
+}
+
 ParticleRegion* SceneBuilder::last()
 {
     if (m_desc.regions.empty())

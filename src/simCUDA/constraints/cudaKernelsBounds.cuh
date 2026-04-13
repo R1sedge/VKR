@@ -8,4 +8,6 @@ void launchProjectBounds(
     float right,
     float bottom,
     float top,
+    float front,
+    float back,
     float radius);

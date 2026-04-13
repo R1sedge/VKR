@@ -9,6 +9,7 @@ public:
     // Добавление регионов
     SceneBuilder& addRect(float cx, float cy, float cz, float halfW, float halfH, float halfD = 0.0f);
     SceneBuilder& addCircle(float cx, float cy, float cz, float radius);
+    SceneBuilder& addSphere(float cx, float cy, float cz, float radius);
 
     // Модификаторы последнего добавленного региона
     SceneBuilder& withVelocity(float vx, float vy, float vz = 0.0f);

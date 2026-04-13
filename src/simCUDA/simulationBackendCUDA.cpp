@@ -38,12 +38,14 @@ SimulationBackendCUDA::~SimulationBackendCUDA()
     freeDeviceParticles(m_deviceParticles);
 }
 
-void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top) //TODO Надо переименовать метод
+void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top, float front, float back)
 {
     m_left = left;
     m_right = right;
     m_bottom = bottom;
     m_top = top;
+    m_front = front;
+    m_back = back;
 
     // считаем один раз, т.к. h и deltaQ — константы
     const float dq = Config::artificialPressureDeltaQ * Config::smoothingRadius;
@@ -202,6 +204,8 @@ void SimulationBackendCUDA::update(float dt)
             m_right,
             m_bottom,
             m_top,
+            m_front,
+            m_back,
             Config::particleRadius);
     }
 
