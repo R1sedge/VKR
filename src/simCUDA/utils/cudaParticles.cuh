@@ -27,7 +27,9 @@ struct DeviceParticles2D
 
     int* phase = nullptr;
 
-    float* omega = nullptr;
+    float* omegaX = nullptr;
+    float* omegaY = nullptr;
+    float* omegaZ = nullptr;
 };
 
 void allocateDeviceParticles(DeviceParticles2D& dp, int count);

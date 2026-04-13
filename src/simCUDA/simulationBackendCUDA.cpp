@@ -208,10 +208,9 @@ void SimulationBackendCUDA::update(float dt)
             Config::particleRadius);
     }
 
-    launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed,
-        m_left, m_right, m_bottom,m_top, Config::particleRadius);
+    launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed, Config::particleRadius);
 
-    if (m_vorticityEpsilon > 0.0f) 
+    if (m_vorticityEpsilon > 0.0f)
     {
         launchComputeVorticity(m_deviceParticles, m_neighbors,
                             Config::smoothingRadius);
@@ -219,10 +218,10 @@ void SimulationBackendCUDA::update(float dt)
         launchApplyVorticityConfinement(m_deviceParticles, m_neighbors,
                                         dt, m_vorticityEpsilon,
                                         Config::smoothingRadius);
-        
-        launchApplyXSPH(m_deviceParticles, m_neighbors,
-                        m_xsphViscosity, Config::smoothingRadius);
-}
+    }
+
+    launchApplyXSPH(m_deviceParticles, m_neighbors,
+                    m_xsphViscosity, Config::smoothingRadius);
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
     if (m_vboResource) 

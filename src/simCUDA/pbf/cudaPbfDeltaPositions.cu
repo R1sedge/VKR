@@ -10,15 +10,17 @@
 namespace
 {
     __global__ void computeDeltaPositionsKernel(
-       int n,
+        int n,
         const float* __restrict__ x,
         const float* __restrict__ y,
+        const float* __restrict__ z,
         const float* __restrict__ mass,
         const float* __restrict__ lambda,
         const int*   __restrict__ neighborOffsets,
         const int*   __restrict__ neighborIds,
         float* dxOut,
         float* dyOut,
+        float* dzOut,
         float restDensity,
         float h,
         float artPressureK,
@@ -32,10 +34,12 @@ namespace
 
         const float xi = x[i];
         const float yi = y[i];
+        const float zi = z[i];
         const float lambdaI = lambda[i];
 
         float deltaX = 0.0f;
         float deltaY = 0.0f;
+        float deltaZ = 0.0f;
 
         const int begin = neighborOffsets[i];
         const int end   = neighborOffsets[i + 1];
@@ -46,10 +50,11 @@ namespace
 
             const float dx = xi - x[j];
             const float dy = yi - y[j];
-            const float r2 = dx * dx + dy * dy;
+            const float dz = zi - z[j];
+            const float r2 = dx * dx + dy * dy + dz * dz;
 
             if (r2 < gradEps) continue;
-            
+
             const float r = sqrtf(r2);
             const float invR = 1.0f / r;
 
@@ -65,18 +70,22 @@ namespace
 
             deltaX += coeff * dx * invR;
             deltaY += coeff * dy * invR;
+            deltaZ += coeff * dz * invR;
         }
 
         dxOut[i] = deltaX;
         dyOut[i] = deltaY;
+        dzOut[i] = deltaZ;
     }
 
     __global__ void applyDeltaPositionsKernel(
         int n,
         float* x,
         float* y,
+        float* z,
         float* dx,
         float* dy,
+        float* dz,
         float scale)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -84,9 +93,11 @@ namespace
 
         x[i] += scale * dx[i];
         y[i] += scale * dy[i];
+        z[i] += scale * dz[i];
 
         dx[i] = 0.0f;
         dy[i] = 0.0f;
+        dz[i] = 0.0f;
     }
 }
 
@@ -102,11 +113,11 @@ void launchComputeDeltaPositions(
 
     computeDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
-        particles.x, particles.y,
+        particles.x, particles.y, particles.z,
         particles.mass,
         particles.lambda,
         neighbors.offsets, neighbors.ids,
-        particles.dx, particles.dy,
+        particles.dx, particles.dy, particles.dz,
         restDensity,
         smoothingRadius,
         artPressureK, wDeltaQ);
@@ -120,8 +131,8 @@ void launchApplyDeltaPositions(DeviceParticles2D& particles, float scale)
 
     applyDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
-        particles.x, particles.y,
-        particles.dx, particles.dy,
+        particles.x, particles.y, particles.z,
+        particles.dx, particles.dy, particles.dz,
         scale);
 
     CUDA_CHECK(cudaGetLastError());

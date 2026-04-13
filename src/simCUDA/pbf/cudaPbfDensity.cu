@@ -13,6 +13,7 @@ namespace
         int n,
         const float* x,
         const float* y,
+        const float* z,
         const float* mass,
         const int* neighborOffsets,
         const int* neighborIds,
@@ -24,6 +25,7 @@ namespace
 
         const float xi = x[i];
         const float yi = y[i];
+        const float zi = z[i];
 
         float rho = mass[i] * CudaSPH::poly6(0.0f, h);
 
@@ -36,7 +38,8 @@ namespace
 
             const float dx = xi - x[j];
             const float dy = yi - y[j];
-            const float r = sqrtf(dx * dx + dy * dy);
+            const float dz = zi - z[j];
+            const float r = sqrtf(dx * dx + dy * dy + dz * dz);
 
             rho += mass[j] * CudaSPH::poly6(r, h);
         }
@@ -52,11 +55,12 @@ void launchComputeDensity(
 {
     if (particles.count <= 0)
         return;
-    
+
     computeDensityKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x,
         particles.y,
+        particles.z,
         particles.mass,
         neighbors.offsets,
         neighbors.ids,

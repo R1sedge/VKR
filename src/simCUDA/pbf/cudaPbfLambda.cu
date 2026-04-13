@@ -13,6 +13,7 @@ namespace
         int n,
         const float* x,
         const float* y,
+        const float* z,
         const float* mass,
         const float* density,
         const int* neighborOffsets,
@@ -33,10 +34,12 @@ namespace
 
         const float xi = x[i];
         const float yi = y[i];
+        const float zi = z[i];
 
         float sumGrad2 = 0.0f;
         float gradCiX = 0.0f;
         float gradCiY = 0.0f;
+        float gradCiZ = 0.0f;
 
         const int begin = neighborOffsets[i];
         const int end   = neighborOffsets[i + 1];
@@ -47,7 +50,8 @@ namespace
 
             const float dx = xi - x[j];
             const float dy = yi - y[j];
-            const float r2 = dx * dx + dy * dy;
+            const float dz = zi - z[j];
+            const float r2 = dx * dx + dy * dy + dz * dz;
 
             if (r2 < gradEps)
                 continue;
@@ -59,13 +63,15 @@ namespace
             const float coeff = mass[j] * invRestDensity * gradW;
             const float gx = coeff * dx * invR;
             const float gy = coeff * dy * invR;
+            const float gz = coeff * dz * invR;
 
-            sumGrad2 += gx * gx + gy * gy;
+            sumGrad2 += gx * gx + gy * gy + gz * gz;
             gradCiX -= gx;
             gradCiY -= gy;
+            gradCiZ -= gz;
         }
 
-        sumGrad2 += gradCiX * gradCiX + gradCiY * gradCiY;
+        sumGrad2 += gradCiX * gradCiX + gradCiY * gradCiY + gradCiZ * gradCiZ;
         lambda[i] = -Ci / (sumGrad2 + epsilon);
     }
 }
@@ -84,6 +90,7 @@ void launchComputeLambda(
         particles.count,
         particles.x,
         particles.y,
+        particles.z,
         particles.mass,
         particles.density,
         neighbors.offsets,

@@ -4,4 +4,4 @@
 
 void launchClearDerived(DeviceParticles2D& dp);
 void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy, float gz, float velocityDamping);
-void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed, float left, float right, float bottom, float top, float radius);
+void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed, float radius);

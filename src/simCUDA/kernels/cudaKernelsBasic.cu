@@ -60,36 +60,36 @@ namespace
         int n,
         const float* x,
         const float* y,
+        const float* z,
         const float* px,
         const float* py,
+        const float* pz,
         float* vx,
         float* vy,
+        float* vz,
         float invDt,
         float maxSpeed,
-        float left, float right, float bottom, float top, float radius)
+        float radius)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
 
         float newVx = (x[i] - px[i]) * invDt;
         float newVy = (y[i] - py[i]) * invDt;
+        float newVz = (z[i] - pz[i]) * invDt;
 
-        float speedSq = newVx * newVx + newVy * newVy;
+        float speedSq = newVx * newVx + newVy * newVy + newVz * newVz;
         if (speedSq > maxSpeed * maxSpeed)
         {
             float invSpeed = maxSpeed * rsqrtf(speedSq);
             newVx *= invSpeed;
             newVy *= invSpeed;
+            newVz *= invSpeed;
         }
-
-        // Не понятно помогает или нет
-        //if (x[i] <= left   + radius + 1e-1f && newVx < 0.0f) newVx = 0.0f;
-        //if (x[i] >= right  - radius - 1e-1f && newVx > 0.0f) newVx = 0.0f;
-        //if (y[i] <= bottom + radius + 1e-1f && newVy < 0.0f) newVy = 0.0f;
-        //if (y[i] >= top    - radius - 1e-1f && newVy > 0.0f) newVy = 0.0f;
 
         vx[i] = newVx;
         vy[i] = newVy;
+        vz[i] = newVz;
     }
 }
 
@@ -126,8 +126,7 @@ void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy,
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed,
-        float left, float right, float bottom, float top, float radius)
+void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed, float radius)
 {
     if (dp.count <= 0 || dt <= 0.0f)
         return;
@@ -136,11 +135,10 @@ void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed,
 
     updateVelocitiesKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
-        dp.x, dp.y,
-        dp.px, dp.py,
-        dp.vx, dp.vy,
-        invDt, maxSpeed,
-        left, right, bottom, top, radius); //TODO Нужно будет куда-то вынести, например в Config
+        dp.x, dp.y, dp.z,
+        dp.px, dp.py, dp.pz,
+        dp.vx, dp.vy, dp.vz,
+        invDt, maxSpeed, radius);
 
     CUDA_CHECK(cudaGetLastError());
 }
