@@ -5,7 +5,7 @@ namespace Config
     // RENDERING / CAMERA
     inline int windowWidth = 1280;
     inline int windowHeight = 720;
-    inline float worldDepth = 4.0f;                 // Глубина мира (world units)
+    inline float worldDepth = 3.0f;                 // Глубина мира (world units)
     inline float fovY = 60.0f;                      // Угол обзора камеры (градусы)
     inline float cameraDist = 5.0f;                 // Начальное расстояние камеры до цели
 
@@ -17,13 +17,13 @@ namespace Config
     inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы
-    inline float restDensity = 800.0f;                              // Плотность воды (3D)
+    inline float restDensity = 1000.0f;                              // Плотность воды (3D)
     inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 100.f;                         // Регуляризация для lambda
 
     // Artificial Pressure
-    inline constexpr float artificialPressureK = 0.008f;
-    inline constexpr float artificialPressureDeltaQ = 0.05f;
+    inline constexpr float artificialPressureK = 0.01f;
+    inline constexpr float artificialPressureDeltaQ = 0.1f;
 
     // Vorticity Confinement
     inline float vorticityEpsilon = 0.10f;
@@ -32,7 +32,7 @@ namespace Config
     inline float xsphViscosity = 0.05f;
 
     // Настройки PBD решателя
-    inline constexpr int iterations = 6;
+    inline constexpr int iterations = 4;
 
     // Ограничение скорости
     inline float maxSpeed = 32.0f;

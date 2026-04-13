@@ -44,5 +44,8 @@ struct AppCommands
     // Mouse force radius update
     bool hasSetMouseForceRadius = false;
 
+    // Camera
+    bool resetCamera = false;
+
     void clear() {*this = AppCommands();}
 };

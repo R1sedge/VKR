@@ -7,6 +7,7 @@
 #include "gui/panels/settings/settingsPanel.h"
 #include "gui/panels/scene/scenePanel.h"
 
+class Camera3D;
 struct AppState;
 struct AppCommands;
 
@@ -22,7 +23,7 @@ public:
     bool initialize(GLFWwindow* window);
 
     void beginFrame();
-    void buildUI(const AppState& state, AppCommands& commands);
+    void buildUI(const AppState& state, const Camera3D& camera, AppCommands& commands);
     void endFrame();
 
     // Передача метрик из app.cpp

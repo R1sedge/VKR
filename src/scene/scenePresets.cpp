@@ -9,13 +9,15 @@ namespace ScenePresets
         const float r = Config::particleRadius;
         const float step = r * 2.2f;
 
-        const float halfW = 80.0f / 2 * step;
-        const float halfH = 60.0f / 2 * step;
+        // 3D-куб частиц: ~30×30×30
+        const float halfW = 30.0f / 2 * step;
+        const float halfH = 30.0f / 2 * step;
+        const float halfD = 30.0f / 2 * step;
 
         return SceneBuilder::create("Default Fluid")
-            .addRect(0.0f, 0.0f, 0.0f, halfW, halfH)
+            .addRect(0.0f, 0.0f, 0.0f, halfW, halfH, halfD)
             .withPhase(0)
-            .setGravity(Config::gravityX, Config::gravityY)
+            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
             .build();
     }
 
@@ -24,14 +26,23 @@ namespace ScenePresets
         const float r = Config::particleRadius;
         const float step = r * 2.2f;
 
-        // Левый столб — высокий и узкий, начальный импульс вправо.
-        // Правое «озеро» — низкое и широкое, стоит на месте.
+        // 3D Dam Break: высокий узкий куб слева + широкий низкий куб справа
+        const float colHalfW = 10.0f * step;
+        const float colHalfH = 30.0f * step;
+        const float colHalfD = 10.0f * step;
+        const float colCenterX = -50.0f * step;
+
+        const float lakeHalfW = 35.0f * step;
+        const float lakeHalfH = 6.0f * step;
+        const float lakeHalfD = 10.0f * step;
+        const float lakeCenterX = 20.0f * step;
+
         return SceneBuilder::create("Dam Break")
-            .addRect(-55.0f * step, 0.0f, 0.0f, 12.0f * step, 35.0f * step)
+            .addRect(colCenterX, 0.0f, 0.0f, colHalfW, colHalfH, colHalfD)
             .withPhase(0)
-            .addRect(20.0f * step, -27.0f * step, 0.0f, 40.0f * step, 8.0f * step)
+            .addRect(lakeCenterX, -22.0f * step, 0.0f, lakeHalfW, lakeHalfH, lakeHalfD)
             .withPhase(0)
-            .setGravity(Config::gravityX, Config::gravityY)
+            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
             .build();
     }
 
@@ -40,17 +51,20 @@ namespace ScenePresets
         const float r = Config::particleRadius;
         const float step = r * 2.2f;
 
-        // Нижняя жидкость (фаза 0) — плотная, тяжёлая.
-        // Верхняя жидкость (фаза 1) — лёгкая, лежит сверху.
-        // Тест неустойчивости Рэлея-Тейлора.
+        // 3D Rayleigh-Taylor: два куба друг над другом
+        // Нижняя жидкость (фаза 0) — тяжёлая, верхняя (фаза 1) — лёгкая
+        const float halfW = 40.0f / 2 * step;
+        const float halfH = 16.0f / 2 * step;
+        const float halfD = 16.0f / 2 * step;
+
         return SceneBuilder::create("Two Phase")
-            .addRect(0.0f, -20.0f * step, 0.0f, 50.0f * step, 18.0f * step)
+            .addRect(0.0f, -18.0f * step, 0.0f, halfW, halfH, halfD)
             .withPhase(0)
             .withMass(1.0f)
-            .addRect(0.0f,  20.0f * step, 0.0f, 50.0f * step, 18.0f * step)
+            .addRect(0.0f,  18.0f * step, 0.0f, halfW, halfH, halfD)
             .withPhase(1)
             .withMass(0.5f)
-            .setGravity(Config::gravityX, Config::gravityY)
+            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
             .build();
     }
 
@@ -59,24 +73,24 @@ namespace ScenePresets
         const float r = Config::particleRadius;
         const float step = r * 2.2f;
 
-        // Топливо (фаза 0) — заполняет нижние 60% бака.
-        // Воздух (фаза 1) — верхние 30%.
-        // Начальный горизонтальный импульс имитирует манёвр самолёта.
-        const float tankHalfW = 55.0f * step;
-        const float fuelHalfH = 22.0f * step;
-        const float airHalfH  = 10.0f * step;
+        // 3D Fuel Tank: куб топлива + куб воздуха, оба с горизонтальным импульсом
+        const float tankHalfW = 45.0f / 2 * step;
+        const float fuelHalfH = 18.0f / 2 * step;
+        const float fuelHalfD = 18.0f / 2 * step;
+        const float airHalfH  = 8.0f / 2 * step;
+        const float airHalfD  = 18.0f / 2 * step;
         const float airCenterY = fuelHalfH + airHalfH + step;
 
         return SceneBuilder::create("Fuel Tank")
-            .addRect(0.0f, 0.0f, 0.0f, tankHalfW, fuelHalfH)
+            .addRect(0.0f, 0.0f, 0.0f, tankHalfW, fuelHalfH, fuelHalfD)
             .withPhase(0)
             .withMass(1.0f)
-            .withVelocity(0.8f, 0.0f)
-            .addRect(0.0f, airCenterY, 0.0f, tankHalfW, airHalfH)
+            .withVelocity(0.8f, 0.0f, 0.0f)
+            .addRect(0.0f, airCenterY, 0.0f, tankHalfW, airHalfH, airHalfD)
             .withPhase(1)
             .withMass(0.2f)
-            .withVelocity(0.8f, 0.0f)
-            .setGravity(Config::gravityX, Config::gravityY)
+            .withVelocity(0.8f, 0.0f, 0.0f)
+            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
             .build();
     }
 

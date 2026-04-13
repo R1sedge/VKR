@@ -24,6 +24,8 @@ public:
     glm::vec3 getRight() const;
     glm::vec3 getCamUp() const;
     glm::vec3 getEye() const { return m_eye; }
+    float getYaw() const { return m_yaw; }
+    float getPitch() const { return m_pitch; }
 
 private:
     void recalcEye();

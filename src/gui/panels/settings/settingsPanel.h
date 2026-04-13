@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include "common/Config.h"
 
+class Camera3D;
 struct AppState;
 struct AppCommands;
 
@@ -10,7 +11,7 @@ struct AppCommands;
 class SettingsPanel
 {
     public:
-        void draw(const AppState& state, AppCommands& commands);
+        void draw(const AppState& state, const Camera3D& camera, AppCommands& commands);
 
         void setRestDensity(float rd) { m_restDensity = rd; }
         void setArtPressureEnabled(bool enabled) { m_artPressure = enabled; }
@@ -18,7 +19,7 @@ class SettingsPanel
         void setXsphViscosity(float val) { m_xsphViscosity = val; }
         void setInteractionMode(int mode) { m_interactionMode = mode; }
         void setMouseForceRadius(float radius) { m_mouseForceRadius = radius; }
-        
+
     private:
         float m_anim = 0.0f;
         float m_restDensity = Config::restDensity;
@@ -39,4 +40,5 @@ class SettingsPanel
         void drawPbfSection(AppCommands& commands);
         void drawSimSection(const AppState& state, AppCommands& commands);
         void drawInteractionSection(const AppState& state, AppCommands& commands);
+        void drawCameraSection(const Camera3D& camera, AppCommands& commands);
 };

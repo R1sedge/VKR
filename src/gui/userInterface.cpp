@@ -1,6 +1,7 @@
 #include "userInterface.h"
 #include "app/appState.h"
 #include "app/appCommands.h"
+#include "render/Camera3D.h"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -87,13 +88,13 @@ void UserInterface::beginFrame()
     ImGui::NewFrame();
 }
 
-void UserInterface::buildUI(const AppState& state, AppCommands& commands)
+void UserInterface::buildUI(const AppState& state, const Camera3D& camera, AppCommands& commands)
 {
     if (!initialized) return;
 
     m_fps.draw(m_timer);
     m_stats.draw(m_timer, m_simDt);
-    m_settings.draw(state, commands);
+    m_settings.draw(state, camera, commands);
     m_scenes.draw(state, commands);
 }
 

@@ -2,12 +2,13 @@
 
 #include "app/appState.h"
 #include "app/appCommands.h"
+#include "render/Camera3D.h"
 
 #include <imgui.h>
 #include <cmath>
 #include <algorithm>
 
-void SettingsPanel::draw(const AppState& state, AppCommands& commands)
+void SettingsPanel::draw(const AppState& state, const Camera3D& camera, AppCommands& commands)
 {
     const ImGuiIO& io = ImGui::GetIO();
     const float dt = io.DeltaTime;
@@ -84,6 +85,12 @@ void SettingsPanel::draw(const AppState& state, AppCommands& commands)
     drawInteractionSection(state, commands);
 
     ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    drawCameraSection(camera, commands);
+
+    ImGui::Spacing();
     ImGui::End();
 }
 
@@ -157,7 +164,7 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
 
     ImGui::SetNextItemWidth(innerW);
     if (ImGui::SliderFloat("##RestDensity", &m_restDensity,
-                           30.0f, 1000.0f, "Rest density: %.0f"))
+                           500.0f, 2000.0f, "Rest density: %.0f"))
     {
         commands.hasSetRestDensity = true;
         commands.restDensityValue  = m_restDensity;
@@ -252,4 +259,27 @@ void SettingsPanel::drawInteractionSection(const AppState& state, AppCommands& c
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Mouse force application radius\nAdjust with scroll wheel");
     ImGui::EndDisabled();
+}
+
+//  Секция камеры
+void SettingsPanel::drawCameraSection(const Camera3D& camera, AppCommands& commands)
+{
+    const float innerW = kPanelW - 20.0f;
+
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Camera");
+    ImGui::Spacing();
+
+    const auto eye = camera.getEye();
+    ImGui::Text("Eye: (%.1f, %.1f, %.1f)", eye.x, eye.y, eye.z);
+
+    ImGui::Text("Yaw: %.0f°  Pitch: %.0f°",
+        camera.getYaw(), camera.getPitch());
+
+    ImGui::Spacing();
+
+    const float btnW = kPanelW - 28.0f;
+    if (ImGui::Button("Reset View", ImVec2(btnW, 0)))
+        commands.resetCamera = true;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Reset camera to default position");
 }

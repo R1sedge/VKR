@@ -63,7 +63,7 @@ bool App::initialize()
     m_gui.setSceneIndex(0);
 
     float aspect = static_cast<float>(Config::windowWidth) / static_cast<float>(Config::windowHeight);
-    float halfWorldH = 3.6f;
+    float halfWorldH = 2.4f;
     float halfWorldW = halfWorldH * aspect;
     float halfWorldD = Config::worldDepth / 2.0f;
 
@@ -163,7 +163,7 @@ void App::mainLoop()
             }
         }
 
-        m_gui.buildUI(m_state, cmd);
+        m_gui.buildUI(m_state, m_camera, cmd);
 
         applyCommands(cmd);
 
@@ -258,5 +258,9 @@ void App::applyCommands(AppCommands& cmd)
 
     if (cmd.hasSetMouseForceRadius) {
         m_state.mouseForceRadius = cmd.mouseForceRadius;
+    }
+
+    if (cmd.resetCamera) {
+        m_camera.reset();
     }
 }
