@@ -5,15 +5,18 @@
 
 #include <cstddef>
 
-// Равномерная сетка на GPU
-struct DeviceUniformGrid 
+// Равномерная 3D сетка на GPU
+struct DeviceUniformGrid
 {
     int   cellsX     = 0;
     int   cellsY     = 0;
+    int   cellsZ     = 0;
     int   totalCells = 0;
     float cellSize   = 0.f;
     float left       = 0.f;
     float bottom     = 0.f;
+    float front      = 0.f;
+    float back       = 0.f;
     int   particleCapacity = 0;
 
     int*   particleCell = nullptr;  // [n] - ключи (cell id) для сортировки
@@ -30,12 +33,13 @@ struct DeviceUniformGrid
 void allocateDeviceUniformGrid(DeviceUniformGrid& g, int n, int totalCells);
 void freeDeviceUniformGrid(DeviceUniformGrid& g);
 
-// Основная функция - полный цикл построения соседей через сетку
+// Основная функция - полный цикл построения соседей через 3D сетку
 void buildNeighborsGridCUDA(
     const DeviceParticles2D& particles,
     DeviceNeighborList& nl,
     DeviceUniformGrid& grid,
     float smoothingRadius,
     float worldLeft, float worldRight,
-    float worldBottom, float worldTop
+    float worldBottom, float worldTop,
+    float worldFront, float worldBack
 );

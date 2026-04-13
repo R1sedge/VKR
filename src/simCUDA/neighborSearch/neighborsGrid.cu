@@ -10,15 +10,16 @@
 
 namespace 
 {
-    // Kernel 1: каждой частице ставим в соответствие ячейку
+    // Kernel 1: каждой частице ставим в соответствие 3D ячейку
     __global__ void assignCellsKernel(
-        int n, 
-        const float* __restrict__ x, 
+        int n,
+        const float* __restrict__ x,
         const float* __restrict__ y,
-        float left, float bottom, 
-        float cs, 
-        int cX, int cY,
-        int* cellIds, 
+        const float* __restrict__ z,
+        float left, float bottom, float front,
+        float cs,
+        int cX, int cY, int cZ,
+        int* cellIds,
         int* particleIds)
     {
         int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -26,11 +27,13 @@ namespace
 
         int cx = __float2int_rd((x[i] - left)  / cs);
         int cy = __float2int_rd((y[i] - bottom) / cs);
+        int cz = __float2int_rd((z[i] - front) / cs);
 
         cx = max(0, min(cx, cX - 1));
         cy = max(0, min(cy, cY - 1));
+        cz = max(0, min(cz, cZ - 1));
 
-        cellIds[i] = cy * cX + cx;
+        cellIds[i] = cz * cY * cX + cy * cX + cx;
         particleIds[i] = i;
     }
 
@@ -53,15 +56,16 @@ namespace
             cellEnd[cell] = i+1;
     }
 
-    // Kernel 3: подсчёт соседей (проход 1)
+    // Kernel 3: подсчёт соседей (проход 1) — 3D
     __global__ void countNeighborsKernel(
-        int n, 
-        const float* __restrict__ x, 
+        int n,
+        const float* __restrict__ x,
         const float* __restrict__ y,
-        float h2, 
-        float left, float bottom, 
-        float cs, 
-        int cX, int cY,
+        const float* __restrict__ z,
+        float h2,
+        float left, float bottom, float front,
+        float cs,
+        int cX, int cY, int cZ,
         const int* __restrict__ sortedIds,
         const int* __restrict__ cellStart,
         const int* __restrict__ cellEnd,
@@ -72,47 +76,54 @@ namespace
 
         float xi = x[i];
         float yi = y[i];
+        float zi = z[i];
 
         int cx = max(0, min((int)floorf((xi - left)  / cs), cX - 1));
         int cy = max(0, min((int)floorf((yi - bottom) / cs), cY - 1));
+        int cz = max(0, min((int)floorf((zi - front) / cs), cZ - 1));
 
         int cnt = 0;
 
-        for (int ny = max(0, cy - 1); ny <= min(cY - 1,cy + 1); ny++)
+        for (int nz = max(0, cz - 1); nz <= min(cZ - 1, cz + 1); nz++)
         {
-            for (int nx = max(0, cx - 1); nx <= min(cX - 1, cx + 1); nx++)
+            for (int ny = max(0, cy - 1); ny <= min(cY - 1, cy + 1); ny++)
             {
-                int cell  = ny * cX + nx;
-                int begin = cellStart[cell];
-                if (begin < 0) continue;
-                int end = cellEnd[cell];
-
-                for(int k = begin; k < end; k++)
+                for (int nx = max(0, cx - 1); nx <= min(cX - 1, cx + 1); nx++)
                 {
-                    int j = sortedIds[k]; 
+                    int cell  = nz * cY * cX + ny * cX + nx;
+                    int begin = cellStart[cell];
+                    if (begin < 0) continue;
+                    int end = cellEnd[cell];
 
-                    if (j == i) continue;
+                    for(int k = begin; k < end; k++)
+                    {
+                        int j = sortedIds[k];
 
-                    float dx = xi - x[j];
-                    float dy = yi - y[j];
+                        if (j == i) continue;
 
-                    if (dx * dx + dy * dy < h2) 
-                        cnt++;
+                        float dx = xi - x[j];
+                        float dy = yi - y[j];
+                        float dz = zi - z[j];
+
+                        if (dx * dx + dy * dy + dz * dz < h2)
+                            cnt++;
+                    }
                 }
             }
         }
         counts[i] = cnt;
     }
     
-    // Kernel 4: заполнение соседей (проход 2) 
+    // Kernel 4: заполнение соседей (проход 2) — 3D
     __global__ void fillNeighborsKernel(
-        int n, 
-        const float* __restrict__ x, 
+        int n,
+        const float* __restrict__ x,
         const float* __restrict__ y,
-        float h2, 
-        float left, float bottom, 
-        float cs, 
-        int cX, int cY,
+        const float* __restrict__ z,
+        float h2,
+        float left, float bottom, float front,
+        float cs,
+        int cX, int cY, int cZ,
         const int* __restrict__ sortedIds,
         const int* __restrict__ cellStart,
         const int* __restrict__ cellEnd,
@@ -124,32 +135,38 @@ namespace
 
         float xi = x[i];
         float yi = y[i];
+        float zi = z[i];
 
         int cx = max(0, min((int)floorf((xi - left)  / cs), cX - 1));
         int cy = max(0, min((int)floorf((yi - bottom) / cs), cY - 1));
+        int cz = max(0, min((int)floorf((zi - front) / cs), cZ - 1));
 
         int write = offsets[i];
 
-        for(int ny = max(0, cy - 1); ny <= min(cY - 1, cy + 1); ny++)
+        for(int nz = max(0, cz - 1); nz <= min(cZ - 1, cz + 1); nz++)
         {
-            for(int nx = max(0, cx - 1); nx <= min(cX - 1,cx + 1); nx++)
+            for(int ny = max(0, cy - 1); ny <= min(cY - 1, cy + 1); ny++)
             {
-                int cell  = ny * cX + nx;
-                int begin = cellStart[cell];
-                if (begin < 0) continue;
-                int end = cellEnd[cell];
-
-                for(int k = begin; k < end; k++)
+                for(int nx = max(0, cx - 1); nx <= min(cX - 1, cx + 1); nx++)
                 {
-                    int j = sortedIds[k];
+                    int cell  = nz * cY * cX + ny * cX + nx;
+                    int begin = cellStart[cell];
+                    if (begin < 0) continue;
+                    int end = cellEnd[cell];
 
-                    if(j == i) continue;
+                    for(int k = begin; k < end; k++)
+                    {
+                        int j = sortedIds[k];
 
-                    float dx = xi - x[j];
-                    float dy = yi - y[j];
+                        if(j == i) continue;
 
-                    if(dx * dx + dy * dy < h2) 
-                        ids[write++] = j;
+                        float dx = xi - x[j];
+                        float dy = yi - y[j];
+                        float dz = zi - z[j];
+
+                        if(dx * dx + dy * dy + dz * dz < h2)
+                            ids[write++] = j;
+                    }
                 }
             }
         }
@@ -210,43 +227,49 @@ void freeDeviceUniformGrid(DeviceUniformGrid& g)
     g.totalCells = 0;
 }
 
-// Главная функция 
+// Главная функция — 3D
 void buildNeighborsGridCUDA(
     const DeviceParticles2D& particles,
     DeviceNeighborList& nl,
     DeviceUniformGrid& grid,
     float h,
-    float left, 
-    float right, 
-    float bottom, 
-    float top)
+    float left,
+    float right,
+    float bottom,
+    float top,
+    float front,
+    float back)
 {
     const int n = particles.count;
     if (n == 0)
-    { 
-        nl.idsCount = 0; 
-        return; 
+    {
+        nl.idsCount = 0;
+        return;
     }
 
-    // Пересчёт параметров сетки 
+    // Пересчёт параметров 3D сетки
     float cs  = h; // ячейка = 1h
     int cX  = (int)floorf((right - left) / cs) + 1;
     int cY  = (int)floorf((top - bottom) / cs) + 1;
-    int tot = cX * cY;
+    int cZ  = (int)floorf((back - front) / cs) + 1;
+    int tot = cX * cY * cZ;
 
     if (grid.particleCapacity != n || grid.totalCells != tot)
         allocateDeviceUniformGrid(grid, n, tot);
 
-    grid.cellsX = cX; 
-    grid.cellsY = cY; 
+    grid.cellsX = cX;
+    grid.cellsY = cY;
+    grid.cellsZ = cZ;
     grid.cellSize = cs;
     grid.left = left;
     grid.bottom = bottom;
+    grid.front = front;
+    grid.back = back;
 
-    // 1. Назначение ячеек 
+    // 1. Назначение ячеек
     assignCellsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
-        n, particles.x, particles.y,
-        left, bottom, cs, cX, cY,
+        n, particles.x, particles.y, particles.z,
+        left, bottom, front, cs, cX, cY, cZ,
         grid.particleCell, grid.sortedIds);
 
     CUDA_CHECK(cudaGetLastError());
@@ -264,7 +287,7 @@ void buildNeighborsGridCUDA(
     std::swap(grid.particleCell, grid.keysAlt);
     std::swap(grid.sortedIds,    grid.valsAlt);
 
-    // 3. Границы ячеек 
+    // 3. Границы ячеек
     CUDA_CHECK(cudaMemset(grid.cellStart, 0xFF, sizeof(int) * tot)); // -1
     CUDA_CHECK(cudaMemset(grid.cellEnd,   0,    sizeof(int) * tot));
 
@@ -273,30 +296,30 @@ void buildNeighborsGridCUDA(
     CUDA_CHECK(cudaGetLastError());
 
     // 4. Аллокация списка соседей
-    if (nl.particleCount != n) 
+    if (nl.particleCount != n)
         allocateDeviceNeighborList(nl, n);
-    
+
     const float h2 = h * h;
 
     // 5. Подсчёт соседей
     countNeighborsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
         n,
-        particles.x, particles.y,
-        h2, 
-        left, bottom, 
-        cs, 
-        cX, cY,
-        grid.sortedIds, 
-        grid.cellStart, 
+        particles.x, particles.y, particles.z,
+        h2,
+        left, bottom, front,
+        cs,
+        cX, cY, cZ,
+        grid.sortedIds,
+        grid.cellStart,
         grid.cellEnd,
         nl.counts);
 
     CUDA_CHECK(cudaGetLastError());
 
-    //  6. Prefix sum через CUB (без синхронизации CPU) 
+    //  6. Prefix sum через CUB (без синхронизации CPU)
     size_t scanTmp = 0;
     cub::DeviceScan::ExclusiveSum(nullptr, scanTmp, nl.counts, nl.offsets, n + 1);
-    void* dScanBuf; 
+    void* dScanBuf;
 
     CUDA_CHECK(cudaMalloc(&dScanBuf, scanTmp));
 
@@ -304,7 +327,7 @@ void buildNeighborsGridCUDA(
 
     cudaFree(dScanBuf);
     CUDA_CHECK(cudaGetLastError());
-    
+
     // totalIds = offsets[n] — читаем одно int с GPU
     int totalIds = 0;
     CUDA_CHECK(cudaMemcpy(&totalIds, nl.offsets + n, sizeof(int), cudaMemcpyDeviceToHost));
@@ -315,26 +338,27 @@ void buildNeighborsGridCUDA(
         CudaMem::freeIntArray(nl.ids);
         nl.idsCapacity = totalIds;
 
-        if (totalIds > 0) 
+        if (totalIds > 0)
             CudaMem::allocIntArray(nl.ids, totalIds);
     }
     nl.idsCount = totalIds;
     if (totalIds == 0) return;
 
-    // 8. Заполнение ids 
+    // 8. Заполнение ids
     fillNeighborsKernel<<<CudaUtils::gridSize(n), CudaUtils::BLOCK_SIZE>>>(
-        n, 
-        particles.x, 
+        n,
+        particles.x,
         particles.y,
+        particles.z,
         h2,
-        left, bottom, 
-        cs, 
-        cX, cY,
-        grid.sortedIds, 
-        grid.cellStart, 
+        left, bottom, front,
+        cs,
+        cX, cY, cZ,
+        grid.sortedIds,
+        grid.cellStart,
         grid.cellEnd,
-        nl.offsets, 
+        nl.offsets,
         nl.ids);
-        
+
     CUDA_CHECK(cudaGetLastError());
 }

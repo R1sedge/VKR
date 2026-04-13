@@ -150,14 +150,13 @@ void SimulationBackendCUDA::update(float dt)
         m_velocityDamping);
 
     buildNeighborsGridCUDA(
-        m_deviceParticles, 
-        m_neighbors, 
+        m_deviceParticles,
+        m_neighbors,
         m_grid,
         Config::smoothingRadius,
-        m_left, 
-        m_right, 
-        m_bottom,
-        m_top);
+        m_left, m_right,
+        m_bottom, m_top,
+        m_front, m_back);
 
     
     for (int iter = 0; iter < iterations; ++iter)
