@@ -243,7 +243,7 @@ void Renderer::renderFrame(const Particles2D& particles)
 
 		instanceData[5 * i + 0] = particles.x[i];
 		instanceData[5 * i + 1] = particles.y[i];
-		instanceData[5 * i + 2] = 0.0f; // z
+		instanceData[5 * i + 2] = particles.z[i];
 		instanceData[5 * i + 3] = radius;
 		instanceData[5 * i + 4] = speed;
 	}

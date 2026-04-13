@@ -144,6 +144,7 @@ void SimulationBackendCUDA::update(float dt)
         dt,
         Config::gravityX,
         Config::gravityY,
+        Config::gravityZ,
         m_velocityDamping);
 
     buildNeighborsGridCUDA(
@@ -256,6 +257,7 @@ void SimulationBackendCUDA::loadScene(const SceneDescription& desc) {
     // 1. Применить гравитацию из сцены
     Config::gravityX = desc.gravityX;
     Config::gravityY = desc.gravityY;
+    Config::gravityZ = desc.gravityZ;
 
     // 2. Заполнить CPU-буфер через SceneFiller
     m_particles = SceneFiller::fill(desc);

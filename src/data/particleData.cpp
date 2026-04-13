@@ -4,11 +4,14 @@ void Particles2D::resize(int n)
 {
     x.resize(n);
     y.resize(n);
+    z.resize(n);
     px.resize(n);
     py.resize(n);
+    pz.resize(n);
 
     vx.resize(n);
     vy.resize(n);
+    vz.resize(n);
 
     mass.resize(n);
 
@@ -16,6 +19,7 @@ void Particles2D::resize(int n)
     lambda.resize(n);
     dx.resize(n);
     dy.resize(n);
+    dz.resize(n);
 
     phase.resize(n);
 

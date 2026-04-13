@@ -6,11 +6,13 @@ namespace Config
     inline int windowWidth = 1280;
     inline int windowHeight = 720;
     inline constexpr float pixelsPerUnits = 100.0f; // 1 единица физ. коорд. = 100px
+    inline float worldDepth = 4.0f;                 // Глубина мира (world units)
 
     // Константы симуляции
     inline constexpr float dt = 1.0f / 60.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                  // Гравитация по x
     inline float gravityY = -6.0f;                 // Гравитация по y
+    inline float gravityZ = 0.0f;                  // Гравитация по z
     inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы

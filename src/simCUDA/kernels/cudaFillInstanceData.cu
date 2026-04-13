@@ -34,9 +34,8 @@ void launchFillInstanceData(
 {
     if (dp.count <= 0) return;
 
-    // Пока z-поля нет в DeviceParticles2D — передаём nullptr, kernel подставит 0.0f
     fillInstanceDataKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
-        dp.count, dp.x, dp.y, nullptr, dp.vx, dp.vy,
+        dp.count, dp.x, dp.y, dp.z, dp.vx, dp.vy,
         d_instanceBuffer, radius);
 
     CUDA_CHECK(cudaGetLastError());

@@ -6,11 +6,11 @@ struct Particles2D
     int count = 0;
     
     // Позиции
-    std::vector<float> x, y;   // Предсказанные / Текущие позиции
-    std::vector<float> px, py; // Позиции на начало шага
+    std::vector<float> x, y, z;   // Предсказанные / Текущие позиции
+    std::vector<float> px, py, pz; // Позиции на начало шага
 
     // Скорости
-    std::vector<float> vx, vy;
+    std::vector<float> vx, vy, vz;
 
     // Масса
     std::vector<float> mass;
@@ -18,7 +18,7 @@ struct Particles2D
     // PBF буфферы
     std::vector<float> density; // Плотности
     std::vector<float> lambda;  // Множители Лагранжа
-    std::vector<float> dx, dy;  // коррекции позиции
+    std::vector<float> dx, dy, dz;  // коррекции позиции
 
     std::vector<int> phase; // id типы жидкости
 

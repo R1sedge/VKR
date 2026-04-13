@@ -12,7 +12,8 @@ namespace
         float* density,
         float* lambda,
         float* dx,
-        float* dy)
+        float* dy,
+        float* dz)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
@@ -21,15 +22,16 @@ namespace
         lambda[i] = 0.0f;
         dx[i] = 0.0f;
         dy[i] = 0.0f;
+        dz[i] = 0.0f;
     }
 
     __global__ void predictPositionKernel(
         int n,
-        float* x, float* y,
-        float* px, float* py,
-        float* vx, float* vy,
+        float* x, float* y, float* z,
+        float* px, float* py, float* pz,
+        float* vx, float* vy, float* vz,
         float dt,
-        float gx, float gy,
+        float gx, float gy, float gz,
         float velocityDamping)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -39,15 +41,19 @@ namespace
 
         vx[i] += gx * dt;
         vy[i] += gy * dt;
+        vz[i] += gz * dt;
 
         vx[i] *= damp;
         vy[i] *= damp;
+        vz[i] *= damp;
 
         px[i] = x[i];
         py[i] = y[i];
+        pz[i] = z[i];
 
         x[i] += vx[i] * dt;
         y[i] += vy[i] * dt;
+        z[i] += vz[i] * dt;
     }
     
     __global__ void updateVelocitiesKernel(
@@ -97,23 +103,24 @@ void launchClearDerived(DeviceParticles2D& dp)
         dp.density,
         dp.lambda,
         dp.dx,
-        dp.dy);
-        
+        dp.dy,
+        dp.dz);
+
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy, float velocityDamping)
+void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy, float gz, float velocityDamping)
 {
     if (dp.count <= 0)
     return;
 
     predictPositionKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
         dp.count,
-        dp.x, dp.y,
-        dp.px, dp.py,
-        dp.vx, dp.vy,
+        dp.x, dp.y, dp.z,
+        dp.px, dp.py, dp.pz,
+        dp.vx, dp.vy, dp.vz,
         dt,
-        gx, gy,
+        gx, gy, gz,
         velocityDamping);
 
     CUDA_CHECK(cudaGetLastError());

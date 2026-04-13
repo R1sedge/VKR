@@ -13,7 +13,7 @@ namespace ScenePresets
         const float halfH = 60.0f / 2 * step;
 
         return SceneBuilder::create("Default Fluid")
-            .addRect(0.0f, 0.0f, halfW, halfH)
+            .addRect(0.0f, 0.0f, 0.0f, halfW, halfH)
             .withPhase(0)
             .setGravity(Config::gravityX, Config::gravityY)
             .build();
@@ -27,9 +27,9 @@ namespace ScenePresets
         // Левый столб — высокий и узкий, начальный импульс вправо.
         // Правое «озеро» — низкое и широкое, стоит на месте.
         return SceneBuilder::create("Dam Break")
-            .addRect(-55.0f * step, 0.0f, 12.0f * step, 35.0f * step)
+            .addRect(-55.0f * step, 0.0f, 0.0f, 12.0f * step, 35.0f * step)
             .withPhase(0)
-            .addRect(20.0f * step, -27.0f * step, 40.0f * step, 8.0f * step)
+            .addRect(20.0f * step, -27.0f * step, 0.0f, 40.0f * step, 8.0f * step)
             .withPhase(0)
             .setGravity(Config::gravityX, Config::gravityY)
             .build();
@@ -44,10 +44,10 @@ namespace ScenePresets
         // Верхняя жидкость (фаза 1) — лёгкая, лежит сверху.
         // Тест неустойчивости Рэлея-Тейлора.
         return SceneBuilder::create("Two Phase")
-            .addRect(0.0f, -20.0f * step, 50.0f * step, 18.0f * step)
+            .addRect(0.0f, -20.0f * step, 0.0f, 50.0f * step, 18.0f * step)
             .withPhase(0)
             .withMass(1.0f)
-            .addRect(0.0f,  20.0f * step, 50.0f * step, 18.0f * step)
+            .addRect(0.0f,  20.0f * step, 0.0f, 50.0f * step, 18.0f * step)
             .withPhase(1)
             .withMass(0.5f)
             .setGravity(Config::gravityX, Config::gravityY)
@@ -68,11 +68,11 @@ namespace ScenePresets
         const float airCenterY = fuelHalfH + airHalfH + step;
 
         return SceneBuilder::create("Fuel Tank")
-            .addRect(0.0f, 0.0f, tankHalfW, fuelHalfH)
+            .addRect(0.0f, 0.0f, 0.0f, tankHalfW, fuelHalfH)
             .withPhase(0)
             .withMass(1.0f)
             .withVelocity(0.8f, 0.0f)
-            .addRect(0.0f, airCenterY, tankHalfW, airHalfH)
+            .addRect(0.0f, airCenterY, 0.0f, tankHalfW, airHalfH)
             .withPhase(1)
             .withMass(0.2f)
             .withVelocity(0.8f, 0.0f)

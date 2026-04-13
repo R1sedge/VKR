@@ -10,28 +10,31 @@ SceneBuilder SceneBuilder::create(const std::string& name)
     return builder;
 }
 
-SceneBuilder& SceneBuilder::addRect(float cx, float cy, float halfW, float halfH)
+SceneBuilder& SceneBuilder::addRect(float cx, float cy, float cz, float halfW, float halfH, float halfD)
 {
     ParticleRegion r;
     r.shape = RegionShape::Rect;
 
     r.cx = cx;
     r.cy = cy;
+    r.cz = cz;
 
     r.halfW = halfW;
     r.halfH = halfH;
+    r.halfD = halfD;
 
     m_desc.regions.push_back(r);
     return *this;
 }
 
-SceneBuilder& SceneBuilder::addCircle(float cx, float cy, float radius)
+SceneBuilder& SceneBuilder::addCircle(float cx, float cy, float cz, float radius)
 {
     ParticleRegion r;
     r.shape  = RegionShape::Circle;
 
     r.cx = cx;
     r.cy = cy;
+    r.cz = cz;
     r.radius = radius;
 
     m_desc.regions.push_back(r);
@@ -51,12 +54,13 @@ ParticleRegion* SceneBuilder::last()
 
 // Модификаторы последнего региона
 
-SceneBuilder& SceneBuilder::withVelocity(float vx, float vy)
+SceneBuilder& SceneBuilder::withVelocity(float vx, float vy, float vz)
 {
     if (ParticleRegion* p = last())
     {
         p->vx = vx;
         p->vy = vy;
+        p->vz = vz;
     }
     return *this;
 }
@@ -86,10 +90,11 @@ SceneBuilder& SceneBuilder::withPhase(int phase)
     return *this;
 }
 
-SceneBuilder& SceneBuilder::setGravity(float gx, float gy)
+SceneBuilder& SceneBuilder::setGravity(float gx, float gy, float gz)
 {
     m_desc.gravityX = gx;
     m_desc.gravityY = gy;
+    m_desc.gravityZ = gz;
     return *this;
 }
 

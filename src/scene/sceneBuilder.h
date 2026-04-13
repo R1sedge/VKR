@@ -7,17 +7,17 @@ public:
     static SceneBuilder create(const std::string& name = ""); // Статический фабричный метод
 
     // Добавление регионов
-    SceneBuilder& addRect(float cx, float cy, float halfW, float halfH);
-    SceneBuilder& addCircle(float cx, float cy, float radius);
+    SceneBuilder& addRect(float cx, float cy, float cz, float halfW, float halfH, float halfD = 0.0f);
+    SceneBuilder& addCircle(float cx, float cy, float cz, float radius);
 
     // Модификаторы последнего добавленного региона
-    SceneBuilder& withVelocity(float vx, float vy);
+    SceneBuilder& withVelocity(float vx, float vy, float vz = 0.0f);
     SceneBuilder& withMass(float mass);
     SceneBuilder& withSpacing(float spacing);
     SceneBuilder& withPhase(int phase);
 
     // Глобальные параметры
-    SceneBuilder& setGravity(float gx, float gy);
+    SceneBuilder& setGravity(float gx, float gy, float gz = 0.0f);
 
     SceneDescription build();
 

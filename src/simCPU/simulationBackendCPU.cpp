@@ -97,21 +97,26 @@ void SimulationBackendCPU::predictPositions(float dt)
 {
     const float gx = Config::gravityX;
     const float gy = Config::gravityY;
+    const float gz = Config::gravityZ;
     const float damp = 1.0f - velocityDamping;
 
     for (int i = 0; i < particles.count; ++i)
     {
         particles.vx[i] += gx * dt;
         particles.vy[i] += gy * dt;
+        particles.vz[i] += gz * dt;
 
         particles.vx[i] *= damp;
         particles.vy[i] *= damp;
+        particles.vz[i] *= damp;
 
         particles.px[i] = particles.x[i];
         particles.py[i] = particles.y[i];
+        particles.pz[i] = particles.z[i];
 
         particles.x[i] += particles.vx[i] * dt;
         particles.y[i] += particles.vy[i] * dt;
+        particles.z[i] += particles.vz[i] * dt;
     }
 }
 
@@ -239,6 +244,7 @@ void SimulationBackendCPU::finalizeVelocities(float dt)
     {
         particles.vx[i] = (particles.x[i] - particles.px[i]) * invDt;
         particles.vy[i] = (particles.y[i] - particles.py[i]) * invDt;
+        particles.vz[i] = (particles.z[i] - particles.pz[i]) * invDt;
     }
 }
 
@@ -392,9 +398,10 @@ void SimulationBackendCPU::applyDeltaPositions()
 }
 
 
-void SimulationBackendCPU::loadScene(const SceneDescription& desc) 
+void SimulationBackendCPU::loadScene(const SceneDescription& desc)
 {
     Config::gravityX = desc.gravityX;
     Config::gravityY = desc.gravityY;
+    Config::gravityZ = desc.gravityZ;
     particles = SceneFiller::fill(desc);
 }

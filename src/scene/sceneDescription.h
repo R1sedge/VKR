@@ -12,4 +12,5 @@ struct SceneDescription
 
     float gravityX = Config::gravityX;
     float gravityY = Config::gravityY;
+    float gravityZ = Config::gravityZ;
 };
