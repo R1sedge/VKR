@@ -261,7 +261,12 @@ void SimulationBackendCUDA::loadScene(const SceneDescription& desc) {
     Config::gravityY = desc.gravityY;
     Config::gravityZ = desc.gravityZ;
 
-    // 2. Заполнить CPU-буфер через SceneFiller
+    // 2. Применить границы из сцены
+    setWorldBounds(desc.bounds.xMin, desc.bounds.xMax,
+                   desc.bounds.yMin, desc.bounds.yMax,
+                   desc.bounds.zMin, desc.bounds.zMax);
+
+    // 3. Заполнить CPU-буфер через SceneFiller
     m_particles = SceneFiller::fill(desc);
 
     // 3. Залить на устройство (realloc если n изменился)

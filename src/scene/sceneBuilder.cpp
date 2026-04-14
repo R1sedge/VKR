@@ -112,6 +112,17 @@ SceneBuilder& SceneBuilder::setGravity(float gx, float gy, float gz)
     return *this;
 }
 
+SceneBuilder& SceneBuilder::setBounds(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax)
+{
+    m_desc.bounds.xMin = xMin;
+    m_desc.bounds.xMax = xMax;
+    m_desc.bounds.yMin = yMin;
+    m_desc.bounds.yMax = yMax;
+    m_desc.bounds.zMin = zMin;
+    m_desc.bounds.zMax = zMax;
+    return *this;
+}
+
 SceneDescription SceneBuilder::build()
 {
     return std::move(m_desc);

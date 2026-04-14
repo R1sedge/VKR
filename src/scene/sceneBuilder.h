@@ -19,6 +19,7 @@ public:
 
     // Глобальные параметры
     SceneBuilder& setGravity(float gx, float gy, float gz = 0.0f);
+    SceneBuilder& setBounds(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
 
     SceneDescription build();
 

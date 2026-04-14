@@ -18,6 +18,7 @@ namespace ScenePresets
             .addRect(0.0f, 0.0f, 0.0f, halfW, halfH, halfD)
             .withPhase(0)
             .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
+            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
             .build();
     }
 
@@ -43,6 +44,7 @@ namespace ScenePresets
             .addRect(lakeCenterX, -22.0f * step, 0.0f, lakeHalfW, lakeHalfH, lakeHalfD)
             .withPhase(0)
             .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
+            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
             .build();
     }
 
@@ -65,6 +67,7 @@ namespace ScenePresets
             .withPhase(1)
             .withMass(0.5f)
             .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
+            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
             .build();
     }
 
@@ -91,6 +94,7 @@ namespace ScenePresets
             .withMass(0.2f)
             .withVelocity(0.8f, 0.0f, 0.0f)
             .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
+            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
             .build();
     }
 

@@ -62,16 +62,8 @@ bool App::initialize()
 
     m_gui.setSceneIndex(0);
 
-    float aspect = static_cast<float>(Config::windowWidth) / static_cast<float>(Config::windowHeight);
+    // Камера видит весь мир (границы задаются в сцене)
     float halfWorldH = 2.4f;
-    float halfWorldW = halfWorldH * aspect;
-    float halfWorldD = Config::worldDepth / 2.0f;
-
-    m_sim.setWorldBounds(-halfWorldW, halfWorldW,
-                         -halfWorldH, halfWorldH,
-                         -halfWorldD, halfWorldD);
-
-    // Камера видит весь мир
     float fovHalfRad = glm::radians(60.0f / 2.0f);
     float dist = halfWorldH / std::tan(fovHalfRad) * 1.3f; // +30% отступ
     m_camera.setDist(dist);
