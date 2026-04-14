@@ -57,6 +57,8 @@ void Renderer::initGL()
 {
 	glViewport(0, 0, windowWidth, windowHeight);
 	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -220,7 +222,7 @@ void Renderer::initGeometry()
 void Renderer::renderFrame(const Particles2D& particles)
 {
 	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);;
 
 	int n = particles.count;
     if (n == 0)
@@ -320,7 +322,7 @@ void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без п
 void Renderer::renderFrameInterop(int particleCount) // Рендерим без загрузки данных — CUDA уже заполнила VBO
 {
     glClearColor(0.10f, 0.10f, 0.10f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);;
 
     if (particleCount <= 0) return;
 

@@ -20,7 +20,7 @@ namespace CudaSPH
     {
         if (r <= 0.0f || r > h) return 0.0f;
         const float h6 = h * h * h * h * h * h;
-        const float k  = -15.0f / (kPi * h6);
+        const float k  = -45.0f / (kPi * h6);
         const float x  = h - r;
         return k * x * x;
     }
