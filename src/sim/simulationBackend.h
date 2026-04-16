@@ -15,7 +15,7 @@ public:
     virtual void update(float dt) = 0;
     virtual void setWorldBounds(float left, float right, float bottom, float top, float front, float back) = 0;
 
-    virtual const Particles2D& getParticles() const = 0;
+    virtual const Particles3D& getParticles() const = 0;
 
     // CUDA -> OpenGL interop
     virtual bool setupInterop(unsigned int vbo) { return false; }
@@ -44,7 +44,7 @@ public:
     void update(float dt);
     void setWorldBounds(float left, float right, float bottom, float top, float front, float back);
 
-    const Particles2D& getParticles() const;
+    const Particles3D& getParticles() const;
 
     SimulationBackendType getType() const { return m_type; }
     ISimulationBackendImpl* getImpl() { return m_impl.get(); }

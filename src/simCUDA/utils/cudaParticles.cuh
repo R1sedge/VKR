@@ -35,5 +35,5 @@ struct DeviceParticles2D
 void allocateDeviceParticles(DeviceParticles2D& dp, int count);
 void freeDeviceParticles(DeviceParticles2D& dp);
 
-void uploadParticlesToDevice(const Particles2D& hp, DeviceParticles2D& dp);
-void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles2D& hp);
+void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles2D& dp);
+void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles3D& hp);

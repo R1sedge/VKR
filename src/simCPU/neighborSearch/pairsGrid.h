@@ -27,8 +27,8 @@ struct UniformGrid2D
     std::vector<int> scatterCursor;
 
     void rebuild(float l, float r, float b, float t, float cs);
-    void build(const Particles2D& p);
-    void findPairs(const Particles2D& p, float radius, std::vector<CollisionPair>& out) const;
+    void build(const Particles3D& p);
+    void findPairs(const Particles3D& p, float radius, std::vector<CollisionPair>& out) const;
 
 private:
     int clampCellX(float x) const;

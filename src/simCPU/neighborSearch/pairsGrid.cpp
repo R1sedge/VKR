@@ -46,7 +46,7 @@ void UniformGrid2D::rebuild(float l, float r, float b, float t, float cs)
     sortedParticleIds.clear();
 }
 
-void UniformGrid2D::build(const Particles2D& p)
+void UniformGrid2D::build(const Particles3D& p)
 {
     int n = p.count;
 
@@ -88,7 +88,7 @@ void UniformGrid2D::build(const Particles2D& p)
     }
 }
 
-void UniformGrid2D::findPairs(const Particles2D& p, float radius, std::vector<CollisionPair>& out) const
+void UniformGrid2D::findPairs(const Particles3D& p, float radius, std::vector<CollisionPair>& out) const
 {
     const float minDist = 2.0f * radius;
     const float minDist2 = minDist * minDist;

@@ -219,7 +219,7 @@ void Renderer::initGeometry()
 	glBindVertexArray(0);
 }
 
-void Renderer::renderFrame(const Particles2D& particles)
+void Renderer::renderFrame(const Particles3D& particles)
 {
 	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);;

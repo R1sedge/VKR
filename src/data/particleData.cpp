@@ -1,6 +1,6 @@
 #include "particleData.h"
 
-void Particles2D::resize(int n)
+void Particles3D::resize(int n)
 {
     x.resize(n);
     y.resize(n);
@@ -26,7 +26,7 @@ void Particles2D::resize(int n)
     count = n;
 }
 
-void Particles2D::clearDerived()
+void Particles3D::clearDerived()
 {
     std::fill(density.begin(), density.end(), 0.0f);
     std::fill(lambda.begin(), lambda.end(), 0.0f);

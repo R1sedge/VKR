@@ -2,7 +2,7 @@
 #include "cmath"
 #include <algorithm>  // std::max
 
-void CircleCollisionConstraint2D::project(Particles2D& particles, std::vector<CollisionPair>& pairs)
+void CircleCollisionConstraint2D::project(Particles3D& particles, std::vector<CollisionPair>& pairs)
 {
     const float minDist = 2.0f * radius;
     const float eps = 1e-6f;

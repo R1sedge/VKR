@@ -8,7 +8,7 @@ class CircleCollisionConstraint2D
 public:
     CircleCollisionConstraint2D(float radi = Config::particleRadius): radius(radi){};
 
-    void project(Particles2D& particles, std::vector<CollisionPair>& out);
+    void project(Particles3D& particles, std::vector<CollisionPair>& out);
 
 private:
     float radius;

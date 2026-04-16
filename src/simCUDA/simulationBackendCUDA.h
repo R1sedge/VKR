@@ -28,7 +28,7 @@ public:
                         float radius, float strength,
                         int forceType) override;
 
-    const Particles2D& getParticles() const override;
+    const Particles3D& getParticles() const override;
 
     // Interop
     void setInteropVbo(GLuint vboId);    // вызывается после ensureInstanceBufferSize
@@ -45,7 +45,7 @@ private:
 private:
     int iterations = Config::iterations;
 
-    Particles2D m_particles;
+    Particles3D m_particles;
     DeviceParticles2D m_deviceParticles;
 
     DeviceUniformGrid m_grid;

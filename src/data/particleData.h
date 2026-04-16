@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-struct Particles2D
+struct Particles3D
 {
     int count = 0;
     

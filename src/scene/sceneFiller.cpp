@@ -3,9 +3,9 @@
 #include <cmath>
 #include <cassert>
 
-Particles2D SceneFiller::fill(const SceneDescription& desc)
+Particles3D SceneFiller::fill(const SceneDescription& desc)
 {
-    Particles2D out;
+    Particles3D out;
 
     for (const ParticleRegion& region : desc.regions)
     {
@@ -27,7 +27,7 @@ float SceneFiller::resolveSpacing(const ParticleRegion& region)
     return (region.spacing > 0.0f) ? region.spacing : Config::particleRadius * 2.1f;
 }
 
-void SceneFiller::fillRect(const ParticleRegion& r, Particles2D& out)
+void SceneFiller::fillRect(const ParticleRegion& r, Particles3D& out)
 {
     const float step = resolveSpacing(r);
 
@@ -88,7 +88,7 @@ void SceneFiller::fillRect(const ParticleRegion& r, Particles2D& out)
     }
 }
 
-void SceneFiller::fillCircle(const ParticleRegion& r, Particles2D& out)
+void SceneFiller::fillCircle(const ParticleRegion& r, Particles3D& out)
 {
     const float step = resolveSpacing(r);
     const float halfR = Config::particleRadius;
@@ -131,7 +131,7 @@ void SceneFiller::fillCircle(const ParticleRegion& r, Particles2D& out)
     }
 }
 
-void SceneFiller::fillSphere(const ParticleRegion& r, Particles2D& out)
+void SceneFiller::fillSphere(const ParticleRegion& r, Particles3D& out)
 {
     const float step = resolveSpacing(r);
     const float halfR = Config::particleRadius;

@@ -82,7 +82,7 @@ void freeDeviceParticles(DeviceParticles2D& dp)
     dp.count = 0;
 }
 
-void uploadParticlesToDevice(const Particles2D& hp, DeviceParticles2D& dp)
+void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles2D& dp)
 {
     if (dp.count != hp.count)
     {
@@ -113,7 +113,7 @@ void uploadParticlesToDevice(const Particles2D& hp, DeviceParticles2D& dp)
     copyHostToDevice(dp.dz, hp.dz, hp.count);
 }
 
-void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles2D& hp)
+void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles3D& hp)
 {
     hp.resize(dp.count);
 

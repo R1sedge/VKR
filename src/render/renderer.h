@@ -25,7 +25,7 @@ public:
 
 	void setWindow(GLFWwindow* window);
 
-	void renderFrame(const Particles2D& particles); // CPU rendering
+	void renderFrame(const Particles3D& particles); // CPU rendering
 	void renderFrameInterop(int particleCount); // Interop rendering
 
 	void ensureInstanceBufferSize(int n);

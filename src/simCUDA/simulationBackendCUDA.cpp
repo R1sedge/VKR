@@ -250,7 +250,7 @@ void SimulationBackendCUDA::syncDeviceToHost()
     downloadParticlesFromDevice(m_deviceParticles, m_particles);
 }
 
-const Particles2D& SimulationBackendCUDA::getParticles() const
+const Particles3D& SimulationBackendCUDA::getParticles() const
 {
     return m_particles;
 }

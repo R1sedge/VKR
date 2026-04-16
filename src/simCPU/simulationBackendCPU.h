@@ -20,7 +20,7 @@ public:
     void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
     void loadScene(const SceneDescription& desc) override;
 
-    const Particles2D& getParticles() const override { return particles; }
+    const Particles3D& getParticles() const override { return particles; }
 
     void setIterations(int iter) { iterations = iter; }
     void configureGrid(float left, float right, float bottom, float top, float cellSize);
@@ -33,7 +33,7 @@ private:
     int iterations = Config::iterations;
     float velocityDamping = 0.003f;
 
-    Particles2D particles;
+    Particles3D particles;
     BoxBoundsConstraint2D boxConstraint;
     CircleCollisionConstraint2D circleCollision;
 

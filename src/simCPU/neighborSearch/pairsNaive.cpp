@@ -1,7 +1,7 @@
 #include "pairsNaive.h"
 
 
-void findPairsNaive(const Particles2D& p, float radius, std::vector<CollisionPair>& out)
+void findPairsNaive(const Particles3D& p, float radius, std::vector<CollisionPair>& out)
 {
     const int n = p.count;
     const float minDist = 2.0f * radius;

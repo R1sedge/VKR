@@ -1,6 +1,6 @@
 #include "boxBounds.h"
 
-void BoxBoundsConstraint2D :: project(Particles2D& particles)
+void BoxBoundsConstraint2D :: project(Particles3D& particles)
     {
         for (int i = 0; i < particles.count; ++i)
         {

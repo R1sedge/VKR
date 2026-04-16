@@ -18,7 +18,7 @@ public:
         top = t;
     }
 
-    void project(Particles2D& particles);
+    void project(Particles3D& particles);
 
 private:
     float left, right, bottom, top;
