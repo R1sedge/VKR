@@ -28,6 +28,15 @@ private:
     void render();
     void applyCommands(AppCommands& cmd);
 
+    bool initializeGLFW();
+    bool createWindow();
+    bool initializeGLAD();
+    bool setWindow();
+    bool initializeIMGUI(int idx);
+    bool initializeCamera();
+    
+    bool initializeScene(int idx);
+
 private:
     GLFWwindow* m_window = nullptr;
     Renderer m_renderer;

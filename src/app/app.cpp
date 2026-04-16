@@ -19,66 +19,60 @@ App::App()
 App::~App() = default;
 
 bool App::initialize()
-{
-    if (!glfwInit())
+{ 
+    // 1. Инициализация GLFW (оконная система, события)
+    if (!initializeGLFW())
     {
-		std::cerr << "GLFW init failed\n";
-        return false;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    m_window = glfwCreateWindow(Config::windowWidth, 
-                                Config::windowHeight, 
-                                "Simulation", nullptr, nullptr);
-	if (!m_window)
-	{
-        std::cerr << "Window creation failed\n";
-		glfwTerminate();
-		return false;
-	}
-
-    glfwMakeContextCurrent(m_window);
-	glfwSwapInterval(1); // v-sync
-
-    if (!gladLoadGL())
-	{   
-        std::cerr << "GLAD init failed\n";
-        glfwDestroyWindow(m_window);
-        glfwTerminate();
-        m_window = nullptr;
+        std::cerr << "[App] GLFW initialization failed\n";
         return false;
     }
 
-    m_renderer.setWindow(m_window);
-    m_input.setWindow(m_window);
-    
-    m_gui.initialize(m_window);
-    m_gui.setSimulationDt(Config::dt);
-    m_gui.setRestDensity(Config::restDensity);
-    m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
-    m_gui.setXsphViscosity(Config::xsphViscosity);
+    // 2. Создание окна + OpenGL-контекст (glfwMakeContextCurrent внутри)
+    if (!createWindow())
+    {
+        std::cerr << "[App] Window creation failed\n";
+        return false;
+    }
 
-    m_gui.setSceneIndex(0);
+    // 3. Загрузка указателей OpenGL 4.5 через GLAD
+    //    Обязательно ПОСЛЕ glfwMakeContextCurrent
+    if (!initializeGLAD())
+    {
+        std::cerr << "[App] GLAD initialization failed\n";
+        return false;
+    }
 
-    // Камера видит весь мир (границы задаются в сцене)
-    float halfWorldH = 2.4f;
-    float fovHalfRad = glm::radians(60.0f / 2.0f);
-    float dist = halfWorldH / std::tan(fovHalfRad) * 1.3f; // +30% отступ
-    m_camera.setDist(dist);
+    // 4. Привязка m_window к Renderer и InputManager
+    //    Renderer.setWindow → хранит указатель, InputManager → регистрирует GLFW-колбэки
+    if (!setWindow())
+    {
+        std::cerr << "[App] setWindow failed\n";
+        return false;
+    }
+
+    // 5. ImGui: создание контекста, привязка к GLFW + OpenGL backend
+    if (!initializeIMGUI(0))
+    {
+        std::cerr << "[App] ImGui initialization failed\n";
+        return false;
+    }
+
+    // 6. Камера: вычисление начальной дистанции под FOV и размер мира
+    if (!initializeCamera())
+    {
+        std::cerr << "[App] Camera initialization failed\n";
+        return false;
+    }
+
+    // 7. Загрузка стартовой сцены (индекс 0)
+    //    Внутри: sim.loadScene + CUDA-GL interop setup (ensureInstanceBufferSize, setupInterop)
+    if (!initializeScene(0))
+    {
+        std::cerr << "[App] Scene initialization failed\n";
+        return false;
+    }
 
     m_running = true;
-    
-    m_sim.loadScene(ScenePresets::getByIndex(0));
-
-    if (m_backendType == SimulationBackendType::CUDA)
-    {
-        int n = m_sim.getParticles().count;
-        m_renderer.ensureInstanceBufferSize(n);
-        m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
-    }
-
     return true;
 }
 
@@ -255,4 +249,94 @@ void App::applyCommands(AppCommands& cmd)
     if (cmd.resetCamera) {
         m_camera.reset();
     }
+}
+
+bool App::initializeGLFW()
+{
+    if (!glfwInit())
+    {
+		std::cerr << "GLFW init failed\n";
+        return false;
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    return true;
+}
+
+bool App::createWindow()
+{
+    m_window = glfwCreateWindow(Config::windowWidth, 
+                                Config::windowHeight, 
+                                "Simulation", nullptr, nullptr);
+	if (!m_window)
+	{
+        std::cerr << "Window creation failed\n";
+		glfwTerminate();
+		return false;
+	}
+
+    glfwMakeContextCurrent(m_window);
+	glfwSwapInterval(1); // v-sync
+
+    return true;
+}
+
+bool App::initializeGLAD()
+{
+    if (!gladLoadGL())
+	{   
+        std::cerr << "GLAD init failed\n";
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+        m_window = nullptr;
+        return false;
+    }
+    
+    return true;
+}
+
+bool App::setWindow()
+{
+    m_renderer.setWindow(m_window);
+    m_input.setWindow(m_window);
+    return true;
+}
+
+bool App::initializeIMGUI(int idx)
+{
+    m_gui.initialize(m_window);
+    m_gui.setSimulationDt(Config::dt);
+    m_gui.setRestDensity(Config::restDensity);
+    m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
+    m_gui.setXsphViscosity(Config::xsphViscosity);
+
+    m_gui.setSceneIndex(idx);
+
+    return true;
+}
+
+bool App::initializeCamera()
+{
+    float halfWorldH = 2.4f;
+    float fovHalfRad = glm::radians(60.0f / 2.0f);
+    float dist = halfWorldH / std::tan(fovHalfRad) * 1.3f; // +30% отступ
+    m_camera.setDist(dist);
+
+    return true;
+}
+
+bool App::initializeScene(int idx)
+{
+    m_sim.loadScene(ScenePresets::getByIndex(idx));
+
+    if (m_backendType == SimulationBackendType::CUDA)
+    {
+        int n = m_sim.getParticles().count;
+        m_renderer.ensureInstanceBufferSize(n);
+        m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
+    }
+
+    return true;
 }
