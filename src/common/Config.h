@@ -17,9 +17,9 @@ namespace Config
     inline constexpr float particleRadius = 0.04f; // В world units 
 
     // PBF константы
-    inline float restDensity = 1300.0f;                              // Плотность воды (3D)
+    inline float restDensity = 1300.0f;                             // Плотность воды (3D)
     inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
-    inline constexpr float epsilon = 50.f;                         // Регуляризация для lambda
+    inline constexpr float epsilon = 50.f;                          // Регуляризация для lambda
 
     // Artificial Pressure
     inline constexpr float artificialPressureK = 0.01f;

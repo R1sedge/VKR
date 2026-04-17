@@ -21,6 +21,13 @@ add_executable(Simulation
     scene/scenePresets.h
     scene/scenePresets.cpp
 
+    scene/boundary/boundaryPlane.h
+    scene/boundary/vesselBoundary.h
+    scene/boundary/vesselBoundary.cpp
+
+    scene/physics/physicsOverrides.h
+    scene/physics/physicsOverrides.cpp
+
     gui/userInterface.h
     gui/userInterface.cpp
     
