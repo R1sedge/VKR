@@ -1,5 +1,6 @@
 #pragma once
 #include "common/Config.h"
+#include "app/appState.h"
 
 struct AppCommands
 {
@@ -39,7 +40,7 @@ struct AppCommands
 
     // Interaction mode
     bool hasSetInteractionMode = false;
-    int interactionMode = 0;  // 0=force, 1=container rotation
+    int interactionMode = InteractionModeCameraControl;  // 0=camera, 1=vessel, 2=force
 
     // Mouse force radius update
     bool hasSetMouseForceRadius = false;

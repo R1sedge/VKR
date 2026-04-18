@@ -1,5 +1,12 @@
 #pragma once
 
+enum InteractionMode
+{
+    InteractionModeCameraControl = 0,
+    InteractionModeVesselRotation = 1,
+    InteractionModeForceApplication = 2,
+};
+
 struct AppState
 {
     bool paused = true;
@@ -8,5 +15,5 @@ struct AppState
 
     // Mouse interaction
     float mouseForceRadius = 1.0f;
-    int interactionMode = 0;  // 0=force, 1=container rotation
+    int interactionMode = InteractionModeCameraControl;
 };

@@ -6,6 +6,7 @@ add_executable(Simulation
     app/app.h
     app/appCommands.h
     app/appState.h
+    app/sceneRuntimeState.h
 
     common/Config.h
 

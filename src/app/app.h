@@ -9,8 +9,10 @@
 #include "sim/simulationBackend.h"
 #include "gui/userInterface.h"
 #include "input/inputManager.h"
+
 #include "app/appState.h"
 #include "app/appCommands.h"
+#include "app/sceneRuntimeState.h"
 
 class App
 {
@@ -26,6 +28,7 @@ private:
     void mainLoop();
     void update(float dt);
     void render();
+    
     void applyCommands(AppCommands& cmd);
 
     bool initializeGLFW();
@@ -36,6 +39,12 @@ private:
     bool initializeCamera();
     
     bool initializeScene(int idx);
+    
+    void rotateVesselFromMouseDrag(float dxPixels, float dyPixels);
+
+    void resetSceneRuntimeState();
+    void applySceneRuntimeState();
+    void setRuntimeVesselOrientation(const glm::quat& q);
 
 private:
     GLFWwindow* m_window = nullptr;
@@ -48,6 +57,8 @@ private:
     UserInterface m_gui;
     InputManager m_input;
     AppState m_state;
+
+    SceneRuntimeState m_sceneRuntime;
 
     bool m_running = false;
     int frameCount = 0;

@@ -232,27 +232,42 @@ void SettingsPanel::drawSimSection(const AppState& state, AppCommands& commands)
 //  Секция взаимодействия мышью
 void SettingsPanel::drawInteractionSection(const AppState& state, AppCommands& commands)
 {
+    m_interactionMode = state.interactionMode;
+    m_mouseForceRadius = state.mouseForceRadius;
+
     ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Mouse Interaction");
     ImGui::Spacing();
 
     const float innerW = kPanelW - 20.0f;
 
     // Mode selector
-    const char* modes[] = { "Force Application", "Container Rotation" };
+    const char* modes[] = {
+                            "Camera Control",
+                            "Vessel Rotation",
+                            "Force Application"
+                          };
     ImGui::SetNextItemWidth(innerW);
-    if (ImGui::Combo("##InteractionMode", &m_interactionMode, modes, 2)) {
-        commands.hasSetInteractionMode = true;
-        commands.interactionMode = m_interactionMode;
+    if (ImGui::Combo("##InteractionMode", &m_interactionMode, modes, 3)) 
+    {
+    commands.hasSetInteractionMode = true;
+    commands.interactionMode = m_interactionMode;
     }
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Force: Apply forces with mouse\nRotation: Rotate container (stub)");
+    {
+        ImGui::SetTooltip(
+            "Camera: LMB orbit, MMB pan, Wheel zoom\n"
+            "Vessel: LMB rotate vessel\n"
+            "Force: LMB apply force"
+        );
+    }
 
     ImGui::Spacing();
 
     // Radius slider (only enabled in Force mode)
-    ImGui::BeginDisabled(m_interactionMode != 0);
+    ImGui::BeginDisabled(m_interactionMode != InteractionModeForceApplication);
     ImGui::SetNextItemWidth(innerW);
-    if (ImGui::SliderFloat("##ForceRadius", &m_mouseForceRadius, 0.5f, 3.0f, "Radius: %.2f")) {
+    if (ImGui::SliderFloat("##ForceRadius", &m_mouseForceRadius, 0.5f, 3.0f, "Radius: %.2f")) 
+    {
         commands.hasSetMouseForceRadius = true;
         commands.mouseForceRadius = m_mouseForceRadius;
     }

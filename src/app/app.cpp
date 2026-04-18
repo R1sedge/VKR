@@ -3,8 +3,16 @@
 #include <stdexcept>
 #include <iostream>
 
+#include <glm/gtc/quaternion.hpp>
+
 #include "common/config.h"
 #include "scene/ScenePresets.h"
+
+namespace
+{
+    constexpr float kCameraOrbitSensitivity = 0.35f;      // град/пиксель
+    constexpr float kVesselRotationSensitivity = 0.30f;   // град/пиксель
+}
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
@@ -124,28 +132,51 @@ void App::mainLoop()
 
         // Отклик на мышь
         const ImGuiIO& io = ImGui::GetIO();
-        if (!io.WantCaptureMouse) 
+        if (!io.WantCaptureMouse)
         {
-            // ЛКМ drag → orbit
-            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
-            {
-                float dx = static_cast<float>(m_input.getDeltaX());
-                float dy = static_cast<float>(m_input.getDeltaY());
-                m_camera.orbit(-dx * 0.35f, dy * 0.35f); 
-            }
+            const float dx = static_cast<float>(m_input.getDeltaX());
+            const float dy = static_cast<float>(m_input.getDeltaY());
 
-            // ЦКМ drag → pan
-            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
+            switch (m_state.interactionMode)
             {
-                float dx = static_cast<float>(m_input.getDeltaX());
-                float dy = static_cast<float>(m_input.getDeltaY());
-                m_camera.pan(dx, -dy);
-            }
+                case InteractionModeCameraControl:
+                {
+                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
+                    {
+                        m_camera.orbit(-dx * kCameraOrbitSensitivity,
+                                        dy * kCameraOrbitSensitivity);
+                    }
 
-            // Колёсико → zoom
-            if (io.MouseWheel != 0.0f)
-            {
-                m_camera.zoom(io.MouseWheel * 0.6f);
+                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
+                    {
+                        m_camera.pan(dx, -dy);
+                    }
+
+                    if (io.MouseWheel != 0.0f)
+                    {
+                        m_camera.zoom(io.MouseWheel * 0.6f);
+                    }
+                    break;
+                }
+
+                case InteractionModeVesselRotation:
+                {
+                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
+                    {
+                        rotateVesselFromMouseDrag(dx, dy);
+                    }
+                    break;
+                }
+
+                case InteractionModeForceApplication:
+                {
+                    // Здесь камера мышью не управляется.
+                    // Сама логика применения силы остаётся отдельной.
+                    break;
+                }
+
+                default:
+                    break;
             }
         }
 
@@ -156,12 +187,14 @@ void App::mainLoop()
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)
         {
-           // Apply mouse forces only when simulation is running
-           if (cmd.hasMouseForce) {
-               m_sim.applyMouseForce(cmd.mouseForceWorldX, cmd.mouseForceWorldY,
-                                    cmd.mouseForceRadius, cmd.mouseForceStrength,
-                                    cmd.mouseForceType);
-           }
+           const int effectiveInteractionMode = cmd.hasSetInteractionMode ? cmd.interactionMode : m_state.interactionMode;
+
+        if (cmd.hasMouseForce && effectiveInteractionMode == InteractionModeForceApplication)
+        {
+            m_sim.applyMouseForce(cmd.mouseForceWorldX, cmd.mouseForceWorldY,
+                                cmd.mouseForceRadius, cmd.mouseForceStrength,
+                                cmd.mouseForceType);
+        }
            update(dt);
         }
         double endPhysicsTime = glfwGetTime();
@@ -226,6 +259,8 @@ void App::applyCommands(AppCommands& cmd)
             m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
             m_sim.resetInterop(m_renderer.getInstanceVBO());
         }
+
+        resetSceneRuntimeState();
     }
 
     if (cmd.reset)
@@ -236,6 +271,8 @@ void App::applyCommands(AppCommands& cmd)
             m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
             m_sim.resetInterop(m_renderer.getInstanceVBO());
         }
+
+        resetSceneRuntimeState();
     }
 
     if (cmd.hasSetInteractionMode) {
@@ -338,5 +375,49 @@ bool App::initializeScene(int idx)
         m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
     }
 
+    resetSceneRuntimeState();
+
     return true;
+}
+
+void App::rotateVesselFromMouseDrag(float dxPixels, float dyPixels)
+{
+    if (dxPixels == 0.0f && dyPixels == 0.0f)
+        return;
+
+    const glm::vec3 cameraUp = glm::normalize(m_camera.getCamUp());
+    const glm::vec3 cameraRight = glm::normalize(m_camera.getRight());
+
+    const float yawRad = glm::radians(dxPixels * kVesselRotationSensitivity);
+    const float pitchRad = glm::radians(dyPixels * kVesselRotationSensitivity);
+
+    const glm::quat qYaw = glm::angleAxis(yawRad, cameraUp);
+    const glm::quat qPitch = glm::angleAxis(pitchRad, cameraRight);
+
+    const glm::quat delta = glm::normalize(qYaw * qPitch);
+    const glm::quat nextOrientation = glm::normalize(delta * m_sceneRuntime.vesselOrientation);
+
+    setRuntimeVesselOrientation(nextOrientation);
+}
+
+void App::resetSceneRuntimeState()
+{
+    m_sceneRuntime = SceneRuntimeState{};
+    applySceneRuntimeState();
+}
+
+void App::applySceneRuntimeState()
+{
+    m_sim.setVesselOrientation(m_sceneRuntime.vesselOrientation);
+
+    // Потом:
+    // Config::gravityX = m_sceneRuntime.gravityWorld.x;
+    // Config::gravityY = m_sceneRuntime.gravityWorld.y;
+    // Config::gravityZ = m_sceneRuntime.gravityWorld.z;
+}
+
+void App::setRuntimeVesselOrientation(const glm::quat& q)
+{
+    m_sceneRuntime.vesselOrientation = glm::normalize(q);
+    applySceneRuntimeState();
 }
