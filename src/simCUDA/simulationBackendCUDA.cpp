@@ -29,7 +29,6 @@
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
     refreshCachedKernelConstants();
-    reset();
 }
 
 SimulationBackendCUDA::~SimulationBackendCUDA()
@@ -72,36 +71,10 @@ void SimulationBackendCUDA::setWorldBounds(float left, float right,
 
 void SimulationBackendCUDA::reset()
 {
-    const float r = Config::particleRadius;
-    const float step = r * 2.2f;
+   if (!m_hasLoadedScene)
+        return;
 
-    const int cols = 125;
-    const int rows = 80;
-    const int n = cols * rows;
-
-    m_particles.resize(n);
-
-    for (int row = 0; row < rows; ++row)
-    {
-        for (int col = 0; col < cols; ++col)
-        {
-            const int idx = row * cols + col;
-
-            const float fx = (col - cols / 2) * step;
-            const float fy = (row - rows / 2) * step + 0.0f;
-
-            m_particles.x[idx] = fx;
-            m_particles.y[idx] = fy;
-            m_particles.px[idx] = fx;
-            m_particles.py[idx] = fy;
-            m_particles.vx[idx] = 0.0f;
-            m_particles.vy[idx] = 0.0f;
-            m_particles.mass[idx] = 1.0f;
-        }
-    }
-
-    m_particles.clearDerived();
-    uploadParticlesToDevice(m_particles, m_deviceParticles);
+    loadScene(m_loadedScene);
 }
 
 void SimulationBackendCUDA::setInteropVbo(GLuint vboId) 
@@ -312,28 +285,31 @@ void SimulationBackendCUDA::setVesselPlanes(const std::vector<BoundaryPlane>& pl
 
 void SimulationBackendCUDA::loadScene(const SceneDescription& desc)
 {
+    m_loadedScene = desc;
+    m_hasLoadedScene = true;
+
+    // 1. Сохраняем геометрию сосуда
     m_vessel = desc.vessel;
 
-    // 1. Построить частицы из новой scene-модели.
+    // 2. Строим частицы из новой scene-модели
     m_particles = SceneFiller::fill(desc);
 
-    // 2. Залить частицы на устройство.
+    // 3. Загружаем частицы на устройство
     uploadParticlesToDevice(m_particles, m_deviceParticles);
 
-    // 3. Вычислить bounds для neighbour-grid из VesselBoundary.
+    // 4. Вычисляем bounds для neighbour-grid из VesselBoundary
     const float gridMargin = Config::smoothingRadius + Config::particleRadius;
     m_gridBounds = m_vessel.computeGridAABB(gridMargin);
 
-    // 4. Пока update() ещё использует scalar bounds,
-    // прокидываем новый grid AABB через существующий контракт.
+    // 5. прокидываем новый grid AABB
     setWorldBounds(m_gridBounds.xMin, m_gridBounds.xMax,
                    m_gridBounds.yMin, m_gridBounds.yMax,
                    m_gridBounds.zMin, m_gridBounds.zMax);
 
-    // 5. Кэшировать мировые плоскости сосуда.
+    // 6. Кэшировать мировые плоскости сосуда.
     m_worldPlanesCache = m_vessel.getWorldPlanes();
 
-    // 6. Сразу загрузить мировые плоскости сосуда на GPU.
+    // 7. Загружаем плоскости на GPU
     setVesselPlanes(m_worldPlanesCache);
 
     // interop-VBO ресайзит App после вызова: ensureInstanceBufferSize(n) + resetInterop(vbo)

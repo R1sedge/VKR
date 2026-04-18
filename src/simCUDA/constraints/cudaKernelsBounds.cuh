@@ -17,8 +17,3 @@ void launchProjectToVesselPlanes(DeviceParticles3D& dp,
                                  const DeviceBoundaryPlane* planes,
                                  int planeCount,
                                  float radius);
-
-void launchProjectToVesselPlanes(DeviceParticles3D& dp,
-                                 const DeviceBoundaryPlane* planes,
-                                 int planeCount,
-                                 float radius);
