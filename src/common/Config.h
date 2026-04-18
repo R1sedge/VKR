@@ -14,15 +14,17 @@ namespace Config
     inline float gravityX = 0.0f;                  // Гравитация по x
     inline float gravityY = -6.0f;                 // Гравитация по y
     inline float gravityZ = 0.0f;                  // Гравитация по z
-    inline constexpr float particleRadius = 0.04f; // В world units 
+
+    inline constexpr float particleRadius = 0.05f; // В world units 
+    inline float particleMass = 1.0f;              // В kg
 
     // PBF константы
-    inline float restDensity = 1300.0f;                             // Плотность воды (3D)
+    inline float restDensity = 1000.0f;                             // Плотность воды (3D)
     inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 50.f;                          // Регуляризация для lambda
 
     // Artificial Pressure
-    inline constexpr float artificialPressureK = 0.01f;
+    inline constexpr float artificialPressureK = 0.005f;
     inline constexpr float artificialPressureDeltaQ = 0.1f;
 
     // Vorticity Confinement
@@ -32,7 +34,7 @@ namespace Config
     inline float xsphViscosity = 0.05f;
 
     // Настройки PBD решателя
-    inline constexpr int iterations = 2;
+    inline constexpr int iterations = 4;
 
     // Ограничение скорости
     inline float maxSpeed = 32.0f;

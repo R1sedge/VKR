@@ -81,7 +81,7 @@ namespace
 }
 
 void buildNeighborsNaiveCUDA(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     DeviceNeighborList& nl,
     float smoothingRadius)
 {

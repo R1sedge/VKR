@@ -1,20 +1,38 @@
 #include "scene/sceneFiller.h"
 #include "common/Config.h"
+
+#include <glm/vec3.hpp>
 #include <cmath>
 #include <cassert>
+
+
+bool shouldKeepParticle(const FluidRegion& region,
+                        const VesselBoundary* vessel,
+                        const glm::vec3& p)
+{
+    if (!region.filterByBoundary)
+        return true;
+
+    if (vessel == nullptr || vessel->bodyPatches.empty())
+        return true;
+
+    // Держим центр частицы на расстоянии хотя бы radius от стенки.
+    return vessel->contains(p, Config::particleRadius);    
+}
 
 Particles3D SceneFiller::fill(const SceneDescription& desc)
 {
     Particles3D out;
 
-    for (const ParticleRegion& region : desc.regions)
+    const VesselBoundary* vessel = desc.vessel.bodyPatches.empty() ? nullptr : &desc.vessel;
+
+    for (const FluidRegion& region : desc.regions)
     {
         switch (region.shape)
         {
-            case RegionShape::Rect:fillRect(region, out); break;
-            case RegionShape::Circle:fillCircle(region, out); break;
-            case RegionShape::Sphere:fillSphere(region, out); break;
-            default: assert(false && "SceneFiller: unknown RegionShape");
+            case RegionShape::Rect:fillRect(region, vessel, out); break;
+            case RegionShape::Sphere:fillSphere(region, vessel, out); break;
+            default: assert(false && "SceneFiller: неизвестный RegionShape");
         }
     }
 
@@ -22,159 +40,122 @@ Particles3D SceneFiller::fill(const SceneDescription& desc)
     return out;
 }
 
-float SceneFiller::resolveSpacing(const ParticleRegion& region)
+float SceneFiller::resolveSpacing(const FluidRegion& region)
 {
     return (region.spacing > 0.0f) ? region.spacing : Config::particleRadius * 2.1f;
 }
 
-void SceneFiller::fillRect(const ParticleRegion& r, Particles3D& out)
+void SceneFiller::appendParticle(const FluidRegion& region,
+                                 const VesselBoundary* vessel,
+                                 float px, float py, float pz,
+                                 Particles3D& out)
 {
-    const float step = resolveSpacing(r);
+    const glm::vec3 p(px, py, pz);
+    if (!shouldKeepParticle(region, vessel, p))
+        return;
 
-    const int cols = static_cast<int>(2.0f * r.halfW / step) + 1;
-    const int rows = static_cast<int>(2.0f * r.halfH / step) + 1;
-    const int depths = (r.halfD > 0.0f) ? (static_cast<int>(2.0f * r.halfD / step) + 1) : 1;
+    out.x.push_back(px);
+    out.y.push_back(py);
+    out.z.push_back(pz);
 
-    const int n = cols * rows * depths;
+    out.px.push_back(px);
+    out.py.push_back(py);
+    out.pz.push_back(pz);
 
-    out.x.reserve(out.x.size() + n);
-    out.y.reserve(out.y.size() + n);
-    out.z.reserve(out.z.size() + n);
-    out.px.reserve(out.px.size() + n);
-    out.py.reserve(out.py.size() + n);
-    out.pz.reserve(out.pz.size() + n);
+    out.vx.push_back(region.vx);
+    out.vy.push_back(region.vy);
+    out.vz.push_back(region.vz);
 
-    out.vx.reserve(out.vx.size() + n);
-    out.vy.reserve(out.vy.size() + n);
-    out.vz.reserve(out.vz.size() + n);
-    out.mass.reserve(out.mass.size() + n);
+    //TODO нужно добавлять массу в зависимости от фазы жидкости
+    out.mass.push_back(Config::particleMass);
 
-    out.density.reserve(out.density.size() + n);
-    out.lambda.reserve(out.lambda.size() + n);
-    out.dx.reserve(out.dx.size() + n);
-    out.dy.reserve(out.dy.size() + n);
-    out.dz.reserve(out.dz.size() + n);
+    out.density.push_back(0.0f);
+    out.lambda.push_back(0.0f);
 
-    out.phase.reserve(out.phase.size() + n);
+    out.dx.push_back(0.0f);
+    out.dy.push_back(0.0f);
+    out.dz.push_back(0.0f);
+
+    out.phase.push_back(region.phase);
+}
 
 
-    for (int depth = 0; depth < depths; ++depth)
+void SceneFiller::fillRect(const FluidRegion& r,const VesselBoundary* vessel, Particles3D& out)
+{
+     const float step = resolveSpacing(r);
+    assert(step > 0.0f && "Particle spacing must be positive");
+
+    const float R = Config::particleRadius;
+
+    const float startX = r.cx - r.halfX + R;
+    const float endX = r.cx + r.halfX - R;
+
+    const float startY = r.cy - r.halfY + R;
+    const float endY = r.cy + r.halfY - R;
+
+    const bool isFlatZ = (r.halfZ <= 0.0f);
+    const float startZ = isFlatZ ? r.cz : (r.cz - r.halfZ + R);
+    const float endZ = isFlatZ ? r.cz : (r.cz + r.halfZ - R);
+
+    if (endX < startX || endY < startY || endZ < startZ)
+        return;
+
+    const int cols = std::max(1, static_cast<int>(std::floor((endX - startX) / step)) + 1);
+    const int rows = std::max(1, static_cast<int>(std::floor((endY - startY) / step)) + 1);
+    const int deps = isFlatZ
+        ? 1
+        : std::max(1, static_cast<int>(std::floor((endZ - startZ) / step)) + 1);
+
+    for (int iz = 0; iz < deps; ++iz)
     {
-        for (int row = 0; row < rows; ++row)
+        const float pz = isFlatZ ? r.cz : (startZ + iz * step);
+
+        for (int iy = 0; iy < rows; ++iy)
         {
-            for (int col = 0; col < cols; ++col)
+            const float py = startY + iy * step;
+
+            for (int ix = 0; ix < cols; ++ix)
             {
-                out.x.push_back(r.cx - r.halfW + col * step);
-                out.y.push_back(r.cy - r.halfH + row * step);
-                out.z.push_back(r.cz - r.halfD + depth * step);
-                out.px.push_back(r.cx - r.halfW + col * step);
-                out.py.push_back(r.cy - r.halfH + row * step);
-                out.pz.push_back(r.cz - r.halfD + depth * step);
-
-                out.vx.push_back(r.vx);
-                out.vy.push_back(r.vy);
-                out.vz.push_back(r.vz);
-                out.mass.push_back(r.mass);
-
-                out.density.push_back(0.0f);
-                out.lambda.push_back(0.0f);
-                out.dx.push_back(0.0f);
-                out.dy.push_back(0.0f);
-                out.dz.push_back(0.0f);
-
-                out.phase.push_back(r.phase);
+                const float px = startX + ix * step;
+                appendParticle(r, vessel, px, py, pz, out);
             }
         }
     }
 }
 
-void SceneFiller::fillCircle(const ParticleRegion& r, Particles3D& out)
+void SceneFiller::fillSphere(const FluidRegion& r, const VesselBoundary* vessel, Particles3D& out)
 {
     const float step = resolveSpacing(r);
-    const float halfR = Config::particleRadius;
+    assert(step > 0.0f && "Particle spacing must be positive");
 
-    const int cols = static_cast<int>(2.0f * r.radius / step) + 1;
-    const int rows = cols;
+    const float usableRadius = r.radius - Config::particleRadius;
 
-    for (int row = 0; row < rows; ++row)
+    if (usableRadius <= 0.0f)
+        return;
+
+    const int cells = std::max(1, static_cast<int>(std::floor((2.0f * usableRadius) / step)) + 1);
+    const float start = -usableRadius;
+
+    for (int iz = 0; iz < cells; ++iz)
     {
-        for (int col = 0; col < cols; ++col)
+        const float lz = start + iz * step;
+
+        for (int iy = 0; iy < cells; ++iy)
         {
-            const float px = r.cx - r.radius + col * step;
-            const float py = r.cy - r.radius + row * step;
+            const float ly = start + iy * step;
 
-            const float dx = px - r.cx;
-            const float dy = py - r.cy;
-            if (dx * dx + dy * dy > (r.radius - halfR) * (r.radius - halfR))
-                continue;
-
-            out.x.push_back(px);
-            out.y.push_back(py);
-            out.z.push_back(r.cz);
-            out.px.push_back(px);
-            out.py.push_back(py);
-            out.pz.push_back(r.cz);
-
-            out.vx.push_back(r.vx);
-            out.vy.push_back(r.vy);
-            out.vz.push_back(r.vz);
-            out.mass.push_back(r.mass);
-
-            out.density.push_back(0.0f);
-            out.lambda.push_back(0.0f);
-            out.dx.push_back(0.0f);
-            out.dy.push_back(0.0f);
-            out.dz.push_back(0.0f);
-
-            out.phase.push_back(r.phase);
-        }
-    }
-}
-
-void SceneFiller::fillSphere(const ParticleRegion& r, Particles3D& out)
-{
-    const float step = resolveSpacing(r);
-    const float halfR = Config::particleRadius;
-
-    const int cols = static_cast<int>(2.0f * r.radius / step) + 1;
-    const int rows = cols;
-    const int depths = cols;
-
-    for (int depth = 0; depth < depths; ++depth)
-    {
-        for (int row = 0; row < rows; ++row)
-        {
-            for (int col = 0; col < cols; ++col)
+            for (int ix = 0; ix < cells; ++ix)
             {
-                const float px = r.cx - r.radius + col * step;
-                const float py = r.cy - r.radius + row * step;
-                const float pz = r.cz - r.radius + depth * step;
+                const float lx = start + ix * step;
 
-                const float ddx = px - r.cx;
-                const float ddy = py - r.cy;
-                const float ddz = pz - r.cz;
-                if (ddx * ddx + ddy * ddy + ddz * ddz > (r.radius - halfR) * (r.radius - halfR))
+                if (lx * lx + ly * ly + lz * lz > usableRadius * usableRadius)
                     continue;
 
-                out.x.push_back(px);
-                out.y.push_back(py);
-                out.z.push_back(pz);
-                out.px.push_back(px);
-                out.py.push_back(py);
-                out.pz.push_back(pz);
-
-                out.vx.push_back(r.vx);
-                out.vy.push_back(r.vy);
-                out.vz.push_back(r.vz);
-                out.mass.push_back(r.mass);
-
-                out.density.push_back(0.0f);
-                out.lambda.push_back(0.0f);
-                out.dx.push_back(0.0f);
-                out.dy.push_back(0.0f);
-                out.dz.push_back(0.0f);
-
-                out.phase.push_back(r.phase);
+                appendParticle(r, vessel,
+                               r.cx + lx,
+                               r.cy + ly,
+                               r.cz + lz,
+                               out);
             }
         }
     }

@@ -12,7 +12,7 @@ add_executable(Simulation
     data/particleData.h
     data/particleData.cpp
 
-    scene/particleRegion.h
+    scene/fluidRegion.h
     scene/sceneBuilder.h
     scene/sceneBuilder.cpp
     scene/sceneDescription.h
@@ -24,9 +24,6 @@ add_executable(Simulation
     scene/boundary/boundaryPlane.h
     scene/boundary/vesselBoundary.h
     scene/boundary/vesselBoundary.cpp
-
-    scene/physics/physicsOverrides.h
-    scene/physics/physicsOverrides.cpp
 
     gui/userInterface.h
     gui/userInterface.cpp

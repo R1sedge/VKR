@@ -1,30 +1,40 @@
 #pragma once
 #include "scene/sceneDescription.h"
 
-class SceneBuilder 
-{
+class SceneBuilder {
 public:
-    static SceneBuilder create(const std::string& name = ""); // Статический фабричный метод
+    // Фабрика 
+    static SceneBuilder create(const std::string& name);
 
-    // Добавление регионов
-    SceneBuilder& addRect(float cx, float cy, float cz, float halfW, float halfH, float halfD = 0.0f);
-    SceneBuilder& addCircle(float cx, float cy, float cz, float radius);
-    SceneBuilder& addSphere(float cx, float cy, float cz, float radius);
+    // ───────────────────── Этап 1: Сосуд ─────────────────────
 
-    // Модификаторы последнего добавленного региона
-    SceneBuilder& withVelocity(float vx, float vy, float vz = 0.0f);
-    SceneBuilder& withMass(float mass);
+    /// Прямоугольный параллелепипед с центром в pivot
+    SceneBuilder& setBoxVessel(float halfX, float halfY, float halfZ);
+
+    /// Выпуклая призма (XZ-полигон, вытянутая по Y)
+    SceneBuilder& setConvexPrismVessel(const std::vector<glm::vec2>& polygon, float yMin, float yMax);
+
+    /// Добавить патч к телу сосуда вручную
+    SceneBuilder& addVesselPatch(const BoundaryPatch& patch);
+
+    // ───────────────────── Этап 2: Регионы частиц ─────────────────────
+    SceneBuilder& addFluidBox(float cx, float cy, float cz,
+                         float halfX, float halfY, float halfZ = 0.f);
+
+    SceneBuilder& addFluidSphere(float cx, float cy, float cz, float radius);
+
+    // Модификаторы последнего региона жидкости
+    SceneBuilder& withVelocity(float vx, float vy = 0.f, float vz = 0.f);
     SceneBuilder& withSpacing(float spacing);
     SceneBuilder& withPhase(int phase);
+    SceneBuilder& withFilterByBoundary(bool enabled);
 
-    // Глобальные параметры
-    SceneBuilder& setGravity(float gx, float gy, float gz = 0.0f);
-    SceneBuilder& setBounds(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
-
+    // ───────────────────── Финал ─────────────────────
     SceneDescription build();
 
-    private:
-    SceneDescription m_desc;
-    // для модификаторов последнего региона
-    ParticleRegion* last();
+private:
+    SceneDescription mdesc;
+
+    /// Возвращает указатель на последний регион; assert если регионов нет
+    FluidRegion* last();
 };

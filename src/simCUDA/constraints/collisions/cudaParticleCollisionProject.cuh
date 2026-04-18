@@ -4,6 +4,6 @@
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void launchProjectParticleCollisions(
-    DeviceParticles2D& particles,
+    DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float particleRadius);

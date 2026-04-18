@@ -229,7 +229,7 @@ void freeDeviceUniformGrid(DeviceUniformGrid& g)
 
 // Главная функция — 3D
 void buildNeighborsGridCUDA(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     DeviceNeighborList& nl,
     DeviceUniformGrid& grid,
     float h,

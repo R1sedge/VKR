@@ -4,6 +4,6 @@
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void buildNeighborsNaiveCUDA(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     DeviceNeighborList& nl,
     float smoothingRadius);

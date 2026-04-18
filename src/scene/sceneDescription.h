@@ -1,24 +1,17 @@
+// scene/SceneDescription.h
 #pragma once
-
 #include <vector>
 #include <string>
-#include "scene/particleRegion.h"
-#include "common/Config.h"
+#include "scene/fluidRegion.h"
+#include "scene/boundary/vesselBoundary.h"
 
-struct BoxBounds
-{
-    float xMin = 0.0f, xMax = 0.0f;
-    float yMin = 0.0f, yMax = 0.0f;
-    float zMin = 0.0f, zMax = 0.0f;
-};
-
-struct SceneDescription
+struct SceneDescription 
 {
     std::string name;
-    std::vector<ParticleRegion> regions;
-    BoxBounds bounds;
 
-    float gravityX = Config::gravityX;
-    float gravityY = Config::gravityY;
-    float gravityZ = Config::gravityZ;
+    // Сосуд (бокс по умолчанию)
+    VesselBoundary vessel;
+
+    // Регионы частиц
+    std::vector<FluidRegion> regions;
 };

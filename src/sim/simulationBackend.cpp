@@ -85,3 +85,8 @@ void SimulationBackend::loadScene(const SceneDescription& desc)
 {
     m_impl->loadScene(desc);
 }
+
+void SimulationBackend::setVesselOrientation(const glm::quat& orientation)
+{
+    m_impl->setVesselOrientation(orientation);
+}

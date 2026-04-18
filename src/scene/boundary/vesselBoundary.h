@@ -2,6 +2,7 @@
 #include "BoundaryPlane.h"
 #include <glm/gtc/quaternion.hpp>
 #include <vector>
+#include "sim/structs.h"
 
 // Выпуклый сосуд — набор патчей в системе отсчёта тела (body-frame).
 // Вращение мышкой → обновить `orientation` → вызвать getWorldPlanes()
@@ -15,24 +16,29 @@ struct VesselBoundary
     glm::vec3 pivot = {0.f, 0.f, 0.f}; // точка вращения
 
     // Трансформировать все body-frame патчи в мировые плоскости.
-    [[nodiscard]] std::vector<BoundaryPlane> getWorldPlanes() const;
+   std::vector<BoundaryPlane> getWorldPlanes() const;
 
     // Возврашает true, если точка p находится внутри всех полуплоскостей.
     // Переводит p в body-space — не аллоцирует мировые плоскости.
     // margin: отступ от стенки внутрь.
-    [[nodiscard]] bool contains(glm::vec3 p, float margin = 0.f) const noexcept;
+     bool contains(glm::vec3 p, float margin) const;
+
+    // Максимальное расстояние от pivot до любого угла любого патча.
+    // Считается в body-frame и не зависит от orientation.
+    float computeBoundingRadius() const;
+
+    // Кубический AABB для neighbour-grid вокруг pivot.
+    // extraMargin добавляется к радиусу наружу.
+    AABB computeGridAABB(float extraMargin) const;
 
     // ──────────────────── Фабрики ───────────────────────
 
     // Прямоугольный ящик. Создаёт ровно 6 патчей с нормалями ±X, ±Y, ±Z.
-    [[nodiscard]] static VesselBoundary makeBox(glm::vec3 halfExtents,
-                                                glm::vec3 pivot = {0.f, 0.f, 0.f});
+    static VesselBoundary makeBox(glm::vec3 halfExtents);
 
     // Выпуклая призма: замкнутый 2D-полигон в плоскости XZ
     // (vec2.x = мировой X, vec2.y = мировой Z), вершины перечислены
     // против часовой стрелки при взгляде с +Y, вытянут вдоль оси Y.
     // Создаёт polygon.size() боковых патчей + 2 торцевых крышки.
-    [[nodiscard]] static VesselBoundary makeConvexPrism(const std::vector<glm::vec2>& polygon,
-                                                        float yMin, float yMax,
-                                                        glm::vec3 pivot = {0.f, 0.f, 0.f});
+    static VesselBoundary makeConvexPrism(const std::vector<glm::vec2>& polygon, float yMin, float yMax);
 };

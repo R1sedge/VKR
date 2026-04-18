@@ -31,14 +31,15 @@ public:
                                  float radius, float strength,
                                  int forceType) {}
 
-    // Сцена
+    virtual void setVesselOrientation(const glm::quat& orientation) {}
+
     virtual void loadScene(const SceneDescription& desc) = 0;
 };
 
 class SimulationBackend
 {
 public:
-    explicit SimulationBackend(SimulationBackendType type = SimulationBackendType::CPU);
+    explicit SimulationBackend(SimulationBackendType type = SimulationBackendType::CUDA);
 
     void reset();
     void update(float dt);
@@ -59,6 +60,8 @@ public:
     void applyMouseForce(float worldX, float worldY,
                         float radius, float strength,
                         int forceType);
+    
+    void setVesselOrientation(const glm::quat& orientation);
 
     void loadScene(const SceneDescription& desc);
 
@@ -66,6 +69,6 @@ private:
     void createImplementation();
 
 private:
-    SimulationBackendType m_type = SimulationBackendType::CPU;
+    SimulationBackendType m_type = SimulationBackendType::CUDA;
     std::unique_ptr<ISimulationBackendImpl> m_impl;
 };

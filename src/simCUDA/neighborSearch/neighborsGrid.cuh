@@ -35,7 +35,7 @@ void freeDeviceUniformGrid(DeviceUniformGrid& g);
 
 // Основная функция - полный цикл построения соседей через 3D сетку
 void buildNeighborsGridCUDA(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     DeviceNeighborList& nl,
     DeviceUniformGrid& grid,
     float smoothingRadius,

@@ -4,7 +4,7 @@
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void launchComputeDeltaPositions(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float restDensity,
     float smoothingRadius,
@@ -12,4 +12,4 @@ void launchComputeDeltaPositions(
     float wDeltaQ
 );
 
-void launchApplyDeltaPositions(DeviceParticles2D& particles, float scale = 0.001f);
+void launchApplyDeltaPositions(DeviceParticles3D& particles, float scale = 0.001f);

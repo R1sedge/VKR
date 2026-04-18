@@ -48,7 +48,7 @@ namespace
     }
 }
 
-void launchApplyMouseForce(DeviceParticles2D& particles,
+void launchApplyMouseForce(DeviceParticles3D& particles,
                           float mouseX, float mouseY,
                           float radius, float strength,
                           int forceType)

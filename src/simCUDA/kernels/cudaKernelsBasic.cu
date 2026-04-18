@@ -93,7 +93,7 @@ namespace
     }
 }
 
-void launchClearDerived(DeviceParticles2D& dp)
+void launchClearDerived(DeviceParticles3D& dp)
 {
     if (dp.count <= 0)
     return;
@@ -109,7 +109,7 @@ void launchClearDerived(DeviceParticles2D& dp)
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy, float gz, float velocityDamping)
+void launchPredictPositions(DeviceParticles3D& dp, float dt, float gx, float gy, float gz, float velocityDamping)
 {
     if (dp.count <= 0)
     return;
@@ -126,7 +126,7 @@ void launchPredictPositions(DeviceParticles2D& dp, float dt, float gx, float gy,
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchUpdateVelocities(DeviceParticles2D& dp, float dt, float maxSpeed, float radius)
+void launchUpdateVelocities(DeviceParticles3D& dp, float dt, float maxSpeed, float radius)
 {
     if (dp.count <= 0 || dt <= 0.0f)
         return;

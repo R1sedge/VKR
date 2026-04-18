@@ -4,7 +4,7 @@
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 void launchComputeLambda(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float restDensity,
     float epsilon,

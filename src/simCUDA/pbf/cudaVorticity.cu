@@ -161,7 +161,7 @@ namespace
 }
 
 void launchComputeVorticity(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float smoothingRadius)
 {
@@ -180,7 +180,7 @@ void launchComputeVorticity(
 }
 
 void launchApplyVorticityConfinement(
-    DeviceParticles2D& particles,
+    DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float dt,
     float vorticityEpsilon,

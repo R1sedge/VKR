@@ -3,7 +3,7 @@
 #include "simCUDA/neighborSearch/deviceNeighborList.cuh"
 
 // Двухфазный Jacobi-XSPH.
-void launchApplyXSPH(DeviceParticles2D& particles,
+void launchApplyXSPH(DeviceParticles3D& particles,
                      const DeviceNeighborList& neighbors,
                      float xsphViscosity,
                      float smoothingRadius);

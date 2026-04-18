@@ -400,13 +400,5 @@ void SimulationBackendCPU::applyDeltaPositions()
 
 void SimulationBackendCPU::loadScene(const SceneDescription& desc)
 {
-    Config::gravityX = desc.gravityX;
-    Config::gravityY = desc.gravityY;
-    Config::gravityZ = desc.gravityZ;
-
-    setWorldBounds(desc.bounds.xMin, desc.bounds.xMax,
-                   desc.bounds.yMin, desc.bounds.yMax,
-                   desc.bounds.zMin, desc.bounds.zMax);
-
-    particles = SceneFiller::fill(desc);
+    // Не поддерживается
 }

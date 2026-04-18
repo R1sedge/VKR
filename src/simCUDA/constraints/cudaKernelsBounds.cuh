@@ -1,9 +1,10 @@
 #pragma once
 
 #include "simCUDA/utils/cudaParticles.cuh"
+#include "simCUDA/utils/cudaBoundaryPlane.cuh"
 
 void launchProjectBounds(
-    DeviceParticles2D& dp,
+    DeviceParticles3D& dp,
     float left,
     float right,
     float bottom,
@@ -11,3 +12,13 @@ void launchProjectBounds(
     float front,
     float back,
     float radius);
+
+void launchProjectToVesselPlanes(DeviceParticles3D& dp,
+                                 const DeviceBoundaryPlane* planes,
+                                 int planeCount,
+                                 float radius);
+
+void launchProjectToVesselPlanes(DeviceParticles3D& dp,
+                                 const DeviceBoundaryPlane* planes,
+                                 int planeCount,
+                                 float radius);

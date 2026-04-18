@@ -28,29 +28,47 @@
 
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
+    refreshCachedKernelConstants();
     reset();
 }
 
 SimulationBackendCUDA::~SimulationBackendCUDA()
 {
+    releaseVesselPlanes();
     freeDeviceCollisionCheck(m_collisionCheck);
     freeDeviceNeighborList(m_neighbors);
     freeDeviceParticles(m_deviceParticles);
 }
 
-void SimulationBackendCUDA::setWorldBounds(float left, float right, float bottom, float top, float front, float back)
+void SimulationBackendCUDA::releaseVesselPlanes()
 {
-    m_left = left;
-    m_right = right;
-    m_bottom = bottom;
-    m_top = top;
-    m_front = front;
-    m_back = back;
+    if (m_dVesselPlanes)
+    {
+        CUDA_CHECK(cudaFree(m_dVesselPlanes));
+        m_dVesselPlanes = nullptr;
+    }
 
-    // считаем один раз, т.к. h и deltaQ — константы
+    m_vesselPlaneCount = 0;
+}
+
+void SimulationBackendCUDA::refreshCachedKernelConstants()
+{
+    // h и deltaQ сейчас берутся из Config и фактически глобальны для backend.
     const float dq = Config::artificialPressureDeltaQ * Config::smoothingRadius;
     m_cachedWDeltaQ = CudaSPH::poly6(dq, Config::smoothingRadius);
 }
+
+void SimulationBackendCUDA::setWorldBounds(float left, float right,
+                                           float bottom, float top,
+                                           float front, float back)
+{
+    m_gridBounds = AABB{
+        left, right,
+        bottom, top,
+        front, back
+    };
+}
+
 
 void SimulationBackendCUDA::reset()
 {
@@ -154,9 +172,9 @@ void SimulationBackendCUDA::update(float dt)
         m_neighbors,
         m_grid,
         Config::smoothingRadius,
-        m_left, m_right,
-        m_bottom, m_top,
-        m_front, m_back);
+        m_gridBounds.xMin, m_gridBounds.xMax,
+        m_gridBounds.yMin, m_gridBounds.yMax,
+        m_gridBounds.zMin, m_gridBounds.zMax);
 
     
     for (int iter = 0; iter < iterations; ++iter)
@@ -197,15 +215,26 @@ void SimulationBackendCUDA::update(float dt)
         );
         */
 
-        launchProjectBounds(
-            m_deviceParticles,
-            m_left,
-            m_right,
-            m_bottom,
-            m_top,
-            m_front,
-            m_back,
-            Config::particleRadius);
+        if (m_dVesselPlanes && m_vesselPlaneCount > 0)
+        {
+            launchProjectToVesselPlanes(
+                m_deviceParticles,
+                m_dVesselPlanes,
+                m_vesselPlaneCount,
+                Config::particleRadius);
+        }
+        else
+        {
+            launchProjectBounds(
+                m_deviceParticles,
+                m_gridBounds.xMin,
+                m_gridBounds.xMax,
+                m_gridBounds.yMin,
+                m_gridBounds.yMax,
+                m_gridBounds.zMin,
+                m_gridBounds.zMax,
+                Config::particleRadius);
+        }
     }
 
     launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed, Config::particleRadius);
@@ -255,25 +284,66 @@ const Particles3D& SimulationBackendCUDA::getParticles() const
     return m_particles;
 }
 
-void SimulationBackendCUDA::loadScene(const SceneDescription& desc) {
-    // 1. Применить гравитацию из сцены
-    Config::gravityX = desc.gravityX;
-    Config::gravityY = desc.gravityY;
-    Config::gravityZ = desc.gravityZ;
+void SimulationBackendCUDA::setVesselPlanes(const std::vector<BoundaryPlane>& planes)
+{
+    releaseVesselPlanes();
 
-    // 2. Применить границы из сцены
-    setWorldBounds(desc.bounds.xMin, desc.bounds.xMax,
-                   desc.bounds.yMin, desc.bounds.yMax,
-                   desc.bounds.zMin, desc.bounds.zMax);
+    if (planes.empty())
+        return;
 
-    // 3. Заполнить CPU-буфер через SceneFiller
+    std::vector<DeviceBoundaryPlane> hostDevicePlanes;
+    hostDevicePlanes.reserve(planes.size());
+
+    for (const BoundaryPlane& plane : planes)
+        hostDevicePlanes.push_back(makeDeviceBoundaryPlane(plane));
+
+    m_vesselPlaneCount = static_cast<int>(hostDevicePlanes.size());
+
+    CUDA_CHECK(cudaMalloc(
+        reinterpret_cast<void**>(&m_dVesselPlanes),
+        sizeof(DeviceBoundaryPlane) * m_vesselPlaneCount));
+
+    CUDA_CHECK(cudaMemcpy(
+        m_dVesselPlanes,
+        hostDevicePlanes.data(),
+        sizeof(DeviceBoundaryPlane) * m_vesselPlaneCount,
+        cudaMemcpyHostToDevice));
+}
+
+void SimulationBackendCUDA::loadScene(const SceneDescription& desc)
+{
+    m_vessel = desc.vessel;
+
+    // 1. Построить частицы из новой scene-модели.
     m_particles = SceneFiller::fill(desc);
 
-    // 3. Залить на устройство (realloc если n изменился)
+    // 2. Залить частицы на устройство.
     uploadParticlesToDevice(m_particles, m_deviceParticles);
 
-    // Примечание: interop-VBO ресайзит App после вызова:
-    // ensureInstanceBufferSize(n) + resetInterop(vbo)
+    // 3. Вычислить bounds для neighbour-grid из VesselBoundary.
+    const float gridMargin = Config::smoothingRadius + Config::particleRadius;
+    m_gridBounds = m_vessel.computeGridAABB(gridMargin);
+
+    // 4. Пока update() ещё использует scalar bounds,
+    // прокидываем новый grid AABB через существующий контракт.
+    setWorldBounds(m_gridBounds.xMin, m_gridBounds.xMax,
+                   m_gridBounds.yMin, m_gridBounds.yMax,
+                   m_gridBounds.zMin, m_gridBounds.zMax);
+
+    // 5. Кэшировать мировые плоскости сосуда.
+    m_worldPlanesCache = m_vessel.getWorldPlanes();
+
+    // 6. Сразу загрузить мировые плоскости сосуда на GPU.
+    setVesselPlanes(m_worldPlanesCache);
+
+    // interop-VBO ресайзит App после вызова: ensureInstanceBufferSize(n) + resetInterop(vbo)
+}
+
+void SimulationBackendCUDA::setVesselOrientation(const glm::quat& orientation)
+{
+    m_vessel.orientation = glm::normalize(orientation);
+    m_worldPlanesCache = m_vessel.getWorldPlanes();
+    setVesselPlanes(m_worldPlanesCache);
 }
 
 void SimulationBackendCUDA::applyMouseForce(float worldX, float worldY,

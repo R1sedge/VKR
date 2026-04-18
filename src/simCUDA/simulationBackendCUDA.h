@@ -1,12 +1,15 @@
 #pragma once
 
+#include <vector>
+
 #include <glad/glad.h>
 #include <cuda_gl_interop.h>
 
 #include "common/Config.h"
 #include "sim/simulationBackend.h"
-#include "scene/SceneDescription.h"
+#include "scene/sceneDescription.h"
 #include "simCUDA/utils/cudaParticles.cuh"
+#include "simCUDA/utils/cudaBoundaryPlane.cuh"
 #include "simCUDA/constraints/collisions/cudaCollisionCheck.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
@@ -19,52 +22,61 @@ public:
     void reset() override;
     void update(float dt) override;
     void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
-    
+
     void setArtificialPressureK(float k) override { m_artPressureK = k; }
     void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
     void setXsphViscosity(float c) override { m_xsphViscosity = c; }
 
     void applyMouseForce(float worldX, float worldY,
-                        float radius, float strength,
-                        int forceType) override;
+                         float radius, float strength,
+                         int forceType) override;
 
     const Particles3D& getParticles() const override;
 
     // Interop
-    void setInteropVbo(GLuint vboId);    // вызывается после ensureInstanceBufferSize
+    void setInteropVbo(GLuint vboId);
     void unregisterInterop();
     void fillInteropBuffer();
     bool setupInterop(unsigned int vbo) override;
     void resetInterop(unsigned int vbo) override;
 
     void loadScene(const SceneDescription& desc) override;
+    void setVesselOrientation(const glm::quat& orientation) override;
 
 private:
     void syncDeviceToHost();
+
+    void setVesselPlanes(const std::vector<BoundaryPlane>& planes);
+    void releaseVesselPlanes();
+
+    void refreshCachedKernelConstants();
 
 private:
     int iterations = Config::iterations;
 
     Particles3D m_particles;
-    DeviceParticles2D m_deviceParticles;
+    DeviceParticles3D m_deviceParticles;
 
     DeviceUniformGrid m_grid;
     DeviceNeighborList m_neighbors;
     DeviceCollisionCheck m_collisionCheck;
-    
+
     cudaGraphicsResource_t m_vboResource = nullptr;
 
-    float m_left = -3.0f;
-    float m_right = 3.0f;
-    float m_bottom = -3.0f;
-    float m_top = 3.0f;
-    float m_front = -2.0f;
-    float m_back = 2.0f;
+    VesselBoundary m_vessel;
+    std::vector<BoundaryPlane> m_worldPlanesCache;
+    AABB m_gridBounds = { -3.0f, 3.0f, -3.0f, 3.0f, -2.0f, 2.0f };
 
+    DeviceBoundaryPlane* m_dVesselPlanes = nullptr;
+    int m_vesselPlaneCount = 0;
+
+    SceneDescription m_loadedScene;
+    bool m_hasLoadedScene = false;
+    
     float m_velocityDamping = 0.0001f;
 
     float m_artPressureK = Config::artificialPressureK;
-    float m_cachedWDeltaQ = 0.0f; // предвычисляется в setWorldBounds
+    float m_cachedWDeltaQ = 0.0f;
 
     float m_vorticityEpsilon = Config::vorticityEpsilon;
     float m_xsphViscosity = Config::xsphViscosity;

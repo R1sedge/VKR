@@ -6,95 +6,85 @@ namespace ScenePresets
 {
     SceneDescription defaultFluid()
     {
-        const float r = Config::particleRadius;
-        const float step = r * 2.2f;
-
-        // 3D-куб частиц: ~30×30×30
-        const float halfW = 30.0f / 2 * step;
-        const float halfH = 30.0f / 2 * step;
-        const float halfD = 30.0f / 2 * step;
+        const float spacing = Config::particleRadius * 2.1f;
 
         return SceneBuilder::create("Default Fluid")
-            .addRect(0.0f, 0.0f, 0.0f, halfW, halfH, halfD)
-            .withPhase(0)
-            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
-            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
+            .setBoxVessel(1.1f, 1.2f, 1.6f)
+            .addFluidBox(0.0f, 0.0f, 0.0f,
+                    1.0f, 1.15f, 1.0f)
+                .withSpacing(spacing)
+                .withPhase(0)
+                .withFilterByBoundary(true)
             .build();
     }
 
     SceneDescription damBreak()
     {
-        const float r = Config::particleRadius;
-        const float step = r * 2.2f;
-
-        // 3D Dam Break: высокий узкий куб слева + широкий низкий куб справа
-        const float colHalfW = 10.0f * step;
-        const float colHalfH = 30.0f * step;
-        const float colHalfD = 10.0f * step;
-        const float colCenterX = -50.0f * step;
-
-        const float lakeHalfW = 35.0f * step;
-        const float lakeHalfH = 6.0f * step;
-        const float lakeHalfD = 10.0f * step;
-        const float lakeCenterX = 20.0f * step;
+        const float spacing = Config::particleRadius * 2.1f;
 
         return SceneBuilder::create("Dam Break")
-            .addRect(colCenterX, 0.0f, 0.0f, colHalfW, colHalfH, colHalfD)
-            .withPhase(0)
-            .addRect(lakeCenterX, -22.0f * step, 0.0f, lakeHalfW, lakeHalfH, lakeHalfD)
-            .withPhase(0)
-            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
-            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
+            .setBoxVessel(3.2f, 2.3f, 1.6f)
+            .addFluidBox(-1.75f, -0.40f, 0.0f,
+                    0.95f, 1.45f, 0.95f)
+                .withSpacing(spacing)
+                .withPhase(0)
+                .withFilterByBoundary(true)
             .build();
     }
 
     SceneDescription twoPhase()
     {
-        const float r = Config::particleRadius;
-        const float step = r * 2.2f;
-
-        // 3D Rayleigh-Taylor: два куба друг над другом
-        // Нижняя жидкость (фаза 0) — тяжёлая, верхняя (фаза 1) — лёгкая
-        const float halfW = 40.0f / 2 * step;
-        const float halfH = 16.0f / 2 * step;
-        const float halfD = 16.0f / 2 * step;
+        const float spacing = Config::particleRadius * 2.1f;
 
         return SceneBuilder::create("Two Phase")
-            .addRect(0.0f, -18.0f * step, 0.0f, halfW, halfH, halfD)
-            .withPhase(0)
-            .withMass(1.0f)
-            .addRect(0.0f,  18.0f * step, 0.0f, halfW, halfH, halfD)
-            .withPhase(1)
-            .withMass(0.5f)
-            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
-            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
+            .setBoxVessel(3.0f, 2.2f, 1.6f)
+
+            // Левая жидкость
+            .addFluidBox(-1.05f, -0.55f, 0.0f,
+                    0.95f, 1.05f, 0.95f)
+                .withSpacing(spacing)
+                .withPhase(0)
+                .withFilterByBoundary(true)
+
+            // Правая жидкость
+            .addFluidBox( 1.05f, -0.55f, 0.0f,
+                     0.95f, 1.05f, 0.95f)
+                .withSpacing(spacing)
+                .withPhase(1)
+                .withFilterByBoundary(true)
             .build();
     }
 
     SceneDescription fuelTank()
     {
-        const float r = Config::particleRadius;
-        const float step = r * 2.2f;
+        const float spacing = Config::particleRadius * 2.1f;
 
-        // 3D Fuel Tank: куб топлива + куб воздуха, оба с горизонтальным импульсом
-        const float tankHalfW = 45.0f / 2 * step;
-        const float fuelHalfH = 18.0f / 2 * step;
-        const float fuelHalfD = 18.0f / 2 * step;
-        const float airHalfH  = 8.0f / 2 * step;
-        const float airHalfD  = 18.0f / 2 * step;
-        const float airCenterY = fuelHalfH + airHalfH + step;
+        // Выпуклый шестиугольник в плоскости XZ, CCW
+        const std::vector<glm::vec2> tankPolygon =
+        {
+            { 2.20f,  0.00f},
+            { 1.10f,  1.30f},
+            {-1.10f,  1.30f},
+            {-2.20f,  0.00f},
+            {-1.10f, -1.30f},
+            { 1.10f, -1.30f}
+        };
 
         return SceneBuilder::create("Fuel Tank")
-            .addRect(0.0f, 0.0f, 0.0f, tankHalfW, fuelHalfH, fuelHalfD)
-            .withPhase(0)
-            .withMass(1.0f)
-            .withVelocity(0.8f, 0.0f, 0.0f)
-            .addRect(0.0f, airCenterY, 0.0f, tankHalfW, airHalfH, airHalfD)
-            .withPhase(1)
-            .withMass(0.2f)
-            .withVelocity(0.8f, 0.0f, 0.0f)
-            .setGravity(Config::gravityX, Config::gravityY, Config::gravityZ)
-            .setBounds(-4.267f, 4.267f, -2.4f, 2.4f, -1.5f, 1.5f)
+            .setConvexPrismVessel(tankPolygon, -1.45f, 1.45f)
+
+            // Основной объём жидкости
+            .addFluidBox(0.0f, -0.80f, 0.0f,
+                    1.75f, 0.55f, 1.00f)
+                .withSpacing(spacing)
+                .withPhase(0)
+                .withFilterByBoundary(true)
+
+            // Небольшой пузырь второй фазы
+            .addFluidSphere(0.55f, 0.10f, 0.0f, 0.42f)
+                .withSpacing(spacing)
+                .withPhase(1)
+                .withFilterByBoundary(true)
             .build();
     }
 

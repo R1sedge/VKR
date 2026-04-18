@@ -102,7 +102,7 @@ namespace
 }
 
 void launchComputeDeltaPositions(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float restDensity,
     float smoothingRadius,
@@ -125,7 +125,7 @@ void launchComputeDeltaPositions(
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchApplyDeltaPositions(DeviceParticles2D& particles, float scale)
+void launchApplyDeltaPositions(DeviceParticles3D& particles, float scale)
 {
     if (particles.count <= 0) return;
 

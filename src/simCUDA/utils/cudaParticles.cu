@@ -19,7 +19,7 @@ namespace
     }
 }
 
-void allocateDeviceParticles(DeviceParticles2D& dp, int count)
+void allocateDeviceParticles(DeviceParticles3D& dp, int count)
 {
     freeDeviceParticles(dp);
 
@@ -54,7 +54,7 @@ void allocateDeviceParticles(DeviceParticles2D& dp, int count)
     CudaMem::allocIntArray(dp.phase, count);
 }
 
-void freeDeviceParticles(DeviceParticles2D& dp)
+void freeDeviceParticles(DeviceParticles3D& dp)
 {
     CudaMem::freeFloatArray(dp.x);
     CudaMem::freeFloatArray(dp.y);
@@ -82,7 +82,7 @@ void freeDeviceParticles(DeviceParticles2D& dp)
     dp.count = 0;
 }
 
-void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles2D& dp)
+void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles3D& dp)
 {
     if (dp.count != hp.count)
     {
@@ -113,7 +113,7 @@ void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles2D& dp)
     copyHostToDevice(dp.dz, hp.dz, hp.count);
 }
 
-void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles3D& hp)
+void downloadParticlesFromDevice(const DeviceParticles3D& dp, Particles3D& hp)
 {
     hp.resize(dp.count);
 

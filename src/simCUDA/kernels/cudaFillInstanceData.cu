@@ -29,7 +29,7 @@ __global__ void fillInstanceDataKernel(
 }
 
 void launchFillInstanceData(
-    const DeviceParticles2D& dp,
+    const DeviceParticles3D& dp,
     float* d_instanceBuffer,
     float radius)
 {

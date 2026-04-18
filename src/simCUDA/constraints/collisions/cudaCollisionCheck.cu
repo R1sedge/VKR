@@ -87,7 +87,7 @@ void resetDeviceCollisionCheck(DeviceCollisionCheck& cc)
 }
 
 void launchCheckParticleCollisions(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     DeviceCollisionCheck& cc,
     float particleRadius)

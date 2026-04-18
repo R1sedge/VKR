@@ -2,7 +2,7 @@
 
 #include "data/particleData.h"
 
-struct DeviceParticles2D
+struct DeviceParticles3D
 {
     int count = 0;
 
@@ -32,8 +32,8 @@ struct DeviceParticles2D
     float* omegaZ = nullptr;
 };
 
-void allocateDeviceParticles(DeviceParticles2D& dp, int count);
-void freeDeviceParticles(DeviceParticles2D& dp);
+void allocateDeviceParticles(DeviceParticles3D& dp, int count);
+void freeDeviceParticles(DeviceParticles3D& dp);
 
-void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles2D& dp);
-void downloadParticlesFromDevice(const DeviceParticles2D& dp, Particles3D& hp);
+void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles3D& dp);
+void downloadParticlesFromDevice(const DeviceParticles3D& dp, Particles3D& hp);

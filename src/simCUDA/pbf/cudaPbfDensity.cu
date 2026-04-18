@@ -49,7 +49,7 @@ namespace
 }
 
 void launchComputeDensity(
-    const DeviceParticles2D& particles,
+    const DeviceParticles3D& particles,
     const DeviceNeighborList& neighbors,
     float smoothingRadius)
 {
