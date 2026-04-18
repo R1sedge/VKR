@@ -6,6 +6,8 @@
 #include "render/renderer.h"
 #include "render/Camera3D.h"  
 
+#include "scene/SceneDescription.h"
+
 #include "sim/simulationBackend.h"
 #include "gui/userInterface.h"
 #include "input/inputManager.h"
@@ -58,6 +60,7 @@ private:
     InputManager m_input;
     AppState m_state;
 
+    SceneDescription m_activeSceneDesc;
     SceneRuntimeState m_sceneRuntime;
 
     bool m_running = false;

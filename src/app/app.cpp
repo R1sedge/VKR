@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 #include "common/config.h"
@@ -12,6 +13,22 @@ namespace
 {
     constexpr float kCameraOrbitSensitivity = 0.35f;      // град/пиксель
     constexpr float kVesselRotationSensitivity = 0.30f;   // град/пиксель
+
+    glm::mat4 buildVesselModelMatrix(const VesselBoundary& vessel)
+    {
+        const glm::mat4 T1 = glm::translate(glm::mat4(1.0f), vessel.pivot);
+        const glm::mat4 R  = glm::mat4_cast(vessel.orientation);
+        const glm::mat4 T2 = glm::translate(glm::mat4(1.0f), -vessel.pivot);
+        return T1 * R * T2;
+    }
+
+    glm::mat4 buildReferenceGridModelMatrix(float y, float extent)
+    {
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, y, 0.0f));
+        model = glm::scale(model, glm::vec3(extent, 1.0f, extent));
+        return model;
+    }
 }
 
 App::App()
@@ -218,16 +235,26 @@ void App::update(float dt)
 }
 
 void App::render()
-{  
-     m_renderer.updateCamera(m_camera); // Устанавливаем uView + uProj
+{
+    m_renderer.updateCamera(m_camera);
 
-    if (m_interopEnabled) {
-        // GPU-путь: данные уже в VBO, никакого memcpy
+    if (m_interopEnabled)
         m_renderer.renderFrameInterop(m_sim.getParticles().count);
-    } else {
-        // CPU-путь: старый код
+    else
         m_renderer.renderFrame(m_sim.getParticles());
-    }
+
+    VesselBoundary vessel = m_activeSceneDesc.vessel;
+    vessel.orientation = m_sceneRuntime.vesselOrientation;
+
+    const glm::mat4 vesselModel = buildVesselModelMatrix(vessel);
+    m_renderer.renderVesselWireframe(vesselModel, m_camera);
+
+    const float vesselRadius = std::max(1.0f, m_activeSceneDesc.vessel.computeBoundingRadius());
+    const float gridY = -vesselRadius - 0.15f;
+    const float gridExtent = vesselRadius * 1.75f;
+
+    const glm::mat4 gridModel = buildReferenceGridModelMatrix(gridY, gridExtent);
+    m_renderer.renderReferenceGrid(gridModel, m_camera);
 }
 
 void App::applyCommands(AppCommands& cmd)
@@ -253,7 +280,11 @@ void App::applyCommands(AppCommands& cmd)
     if (cmd.hasSetScene) 
     {
         m_state.activeSceneIndex = cmd.sceneIndex;
-        m_sim.loadScene(ScenePresets::getByIndex(cmd.sceneIndex));
+        m_activeSceneDesc = ScenePresets::getByIndex(cmd.sceneIndex);
+
+        m_sim.loadScene(m_activeSceneDesc);
+        m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+
         if (m_interopEnabled) 
         {
             m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
@@ -265,7 +296,9 @@ void App::applyCommands(AppCommands& cmd)
 
     if (cmd.reset)
     {
-        m_sim.loadScene(ScenePresets::getByIndex(m_state.activeSceneIndex));
+        m_sim.loadScene(m_activeSceneDesc);
+        m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+
         if (m_interopEnabled)
         {
             m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
@@ -366,7 +399,10 @@ bool App::initializeCamera()
 
 bool App::initializeScene(int idx)
 {
-    m_sim.loadScene(ScenePresets::getByIndex(idx));
+    m_activeSceneDesc = ScenePresets::getByIndex(idx);
+
+    m_sim.loadScene(m_activeSceneDesc);
+    m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
 
     if (m_backendType == SimulationBackendType::CUDA)
     {
@@ -376,7 +412,6 @@ bool App::initializeScene(int idx)
     }
 
     resetSceneRuntimeState();
-
     return true;
 }
 

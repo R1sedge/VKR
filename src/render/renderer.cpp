@@ -21,15 +21,18 @@ void Renderer::setWindow(GLFWwindow* wnd)
 	{
 		centerWindow();
 	
-		//glfwSetWindowUserPointer(window, this); // Пробрасываем указатель на экземпляр класса 
 		glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
 		initGL();
-		initShaders();
 
-		setMaxSpeed(2.5f); // Максимальная скорость для градиента цвета
+		initShaders();
+		initLineShaders();
+
+		setMaxSpeed(5.0f); // Максимальная скорость для градиента цвета
 
 		initGeometry();
+		initLineGeometry();
+		initReferenceGridGeometry();
 	}
 }
 
@@ -64,9 +67,6 @@ void Renderer::initGL()
 
 void Renderer::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-	// Достаём указатель на Renderer, который мы положили в user pointer
-	//auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window)); // Нужно т.к. нельзя просто передать метод класса
-
 	if (s_instance)
 		s_instance->onResize(width, height);
 }
@@ -318,7 +318,6 @@ void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без п
     lastInstanceCount = n;
 }
 
-
 void Renderer::renderFrameInterop(int particleCount) // Рендерим без загрузки данных — CUDA уже заполнила VBO
 {
     glClearColor(0.10f, 0.10f, 0.10f, 1.0f);
@@ -332,5 +331,218 @@ void Renderer::renderFrameInterop(int particleCount) // Рендерим без 
     glBindVertexArray(vao);
 	
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, particleCount);
+    glBindVertexArray(0);
+}
+
+void Renderer::uploadVesselWireframe(const VesselWireframe& wf)
+{
+    lineIndexCount = static_cast<int>(wf.lineIndices.size());
+
+    glBindVertexArray(lineVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        static_cast<GLsizeiptr>(wf.bodyVertices.size() * sizeof(glm::vec3)),
+        wf.bodyVertices.empty() ? nullptr : wf.bodyVertices.data(),
+        GL_STATIC_DRAW
+    );
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineEBO);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        static_cast<GLsizeiptr>(wf.lineIndices.size() * sizeof(uint32_t)),
+        wf.lineIndices.empty() ? nullptr : wf.lineIndices.data(),
+        GL_STATIC_DRAW
+    );
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(glm::vec3),
+        (void*)0
+    );
+
+    glBindVertexArray(0);
+}
+
+void Renderer::renderVesselWireframe(const glm::mat4& model, const Camera3D& cam)
+{
+    if (lineIndexCount <= 0)
+        return;
+
+    glUseProgram(lineShaderProgram);
+
+    const glm::mat4 view = cam.getViewMatrix();
+    const glm::mat4 proj = cam.getProjMatrix();
+
+    GLint modelLoc = glGetUniformLocation(lineShaderProgram, "uModel");
+    if (modelLoc != -1)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    GLint viewLoc = glGetUniformLocation(lineShaderProgram, "uView");
+    if (viewLoc != -1)
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+    GLint projLoc = glGetUniformLocation(lineShaderProgram, "uProj");
+    if (projLoc != -1)
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+    GLint colorLoc = glGetUniformLocation(lineShaderProgram, "uColor");
+    if (colorLoc != -1)
+        glUniform4f(colorLoc, 0.8f, 0.8f, 0.8f, 0.95f);
+
+    glBindVertexArray(lineVAO);
+
+    //const GLboolean depthWasEnabled = glIsEnabled(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
+
+    glDrawElements(GL_LINES, lineIndexCount, GL_UNSIGNED_INT, nullptr);
+
+    //if (depthWasEnabled)
+    //    glEnable(GL_DEPTH_TEST);
+
+    glBindVertexArray(0);
+}
+
+void Renderer::initLineShaders()
+{
+    std::string vertexSource = readShaderFile("shaders/wireframe.vert");
+    std::string fragmentSource = readShaderFile("shaders/wireframe.frag");
+
+    GLuint vertex = compileVertexShader(vertexSource);
+    GLuint fragment = compileFragmentShader(fragmentSource);
+
+    lineShaderProgram = glCreateProgram();
+    glAttachShader(lineShaderProgram, vertex);
+    glAttachShader(lineShaderProgram, fragment);
+    glLinkProgram(lineShaderProgram);
+
+    GLint success = 0;
+    glGetProgramiv(lineShaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        GLchar infoLog[512];
+        glGetProgramInfoLog(lineShaderProgram, 512, NULL, infoLog);
+        throw std::runtime_error(infoLog);
+    }
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+}
+
+void Renderer::initLineGeometry()
+{
+    glGenVertexArrays(1, &lineVAO);
+    glGenBuffers(1, &lineVBO);
+    glGenBuffers(1, &lineEBO);
+
+    glBindVertexArray(lineVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(glm::vec3),
+        (void*)0
+    );
+
+    glBindVertexArray(0);
+}
+
+void Renderer::initReferenceGridGeometry()
+{
+    std::vector<glm::vec3> lineVerts;
+
+    constexpr int divisions = 20;
+
+    for (int i = 0; i <= divisions; ++i)
+    {
+        const float t = -1.0f + 2.0f * (static_cast<float>(i) / static_cast<float>(divisions));
+
+        // линии вдоль Z
+        lineVerts.push_back({ t, 0.0f, -1.0f });
+        lineVerts.push_back({ t, 0.0f,  1.0f });
+
+        // линии вдоль X
+        lineVerts.push_back({ -1.0f, 0.0f, t });
+        lineVerts.push_back({  1.0f, 0.0f, t });
+    }
+
+    gridVertexCount = static_cast<int>(lineVerts.size());
+
+    glGenVertexArrays(1, &gridVAO);
+    glGenBuffers(1, &gridVBO);
+
+    glBindVertexArray(gridVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        static_cast<GLsizeiptr>(lineVerts.size() * sizeof(glm::vec3)),
+        lineVerts.data(),
+        GL_STATIC_DRAW
+    );
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(glm::vec3),
+        (void*)0
+    );
+
+    glBindVertexArray(0);
+}
+
+void Renderer::renderReferenceGrid(const glm::mat4& model, const Camera3D& cam)
+{
+    if (gridVertexCount <= 0)
+        return;
+
+    glUseProgram(lineShaderProgram);
+
+    const glm::mat4 view = cam.getViewMatrix();
+    const glm::mat4 proj = cam.getProjMatrix();
+
+    GLint modelLoc = glGetUniformLocation(lineShaderProgram, "uModel");
+    if (modelLoc != -1)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    GLint viewLoc = glGetUniformLocation(lineShaderProgram, "uView");
+    if (viewLoc != -1)
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+    GLint projLoc = glGetUniformLocation(lineShaderProgram, "uProj");
+    if (projLoc != -1)
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+    GLint colorLoc = glGetUniformLocation(lineShaderProgram, "uColor");
+    if (colorLoc != -1)
+        glUniform4f(colorLoc, 0.25f, 0.32f, 0.38f, 0.65f);
+
+    glBindVertexArray(gridVAO);
+
+    const GLboolean depthWasEnabled = glIsEnabled(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+
+    glDrawArrays(GL_LINES, 0, gridVertexCount);
+
+    if (depthWasEnabled)
+        glEnable(GL_DEPTH_TEST);
+
     glBindVertexArray(0);
 }

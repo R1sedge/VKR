@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#include "scene/boundary/vesselWireframe.h"
 #include "data/particleData.h"
 #include "render/Camera3D.h" 
 
@@ -13,12 +14,26 @@ private:
 	int windowHeight;
 	GLFWwindow* window;
 
+	// Частицы
 	unsigned int shaderProgram = 0;
 	unsigned int vbo = 0;
 	unsigned int instanceVBO = 0;
 	unsigned int vao = 0;
 
 	int lastInstanceCount = 0;
+
+	// Границы
+	unsigned int lineShaderProgram = 0;
+	unsigned int lineVAO = 0;
+	unsigned int lineVBO = 0;
+	unsigned int lineEBO = 0;
+
+	int lineIndexCount = 0;
+
+	// Опорная сетка по y оси
+	unsigned int gridVAO = 0;
+	unsigned int gridVBO = 0;
+	int gridVertexCount = 0;
 
 public:
 	Renderer(int width, int height, GLFWwindow* window);
@@ -36,6 +51,11 @@ public:
 	void setCircleRadius(float normalisedRadius);
 	void setMaxSpeed(float maxSpeed);
 
+	void uploadVesselWireframe(const VesselWireframe& wf);
+	void renderVesselWireframe(const glm::mat4& model, const Camera3D& cam);
+
+	void renderReferenceGrid(const glm::mat4& model, const Camera3D& cam);	
+
 private:
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 	void onResize(int width, int height);
@@ -48,4 +68,9 @@ private:
 	GLuint compileFragmentShader(const std::string fragmentSource);
 	void initShaders();
 	void initGeometry();
+
+	void initLineShaders();
+	void initLineGeometry();
+
+	void initReferenceGridGeometry();
 };

@@ -116,6 +116,20 @@ VesselBoundary VesselBoundary::makeBox(glm::vec3 h)
     add({ 0.f, 0.f, h.z},  { 0.f,  0.f, -1.f},  h.x,  h.y);  // грань +Z
     add({ 0.f, 0.f,-h.z},  { 0.f,  0.f,  1.f},  h.x,  h.y);  // грань -Z
 
+    // ────────── render wireframe ──────────
+    v.wireframe.bodyVertices = {
+        {-h.x, -h.y, -h.z}, { h.x, -h.y, -h.z},
+        { h.x,  h.y, -h.z}, {-h.x,  h.y, -h.z},
+        {-h.x, -h.y,  h.z}, { h.x, -h.y,  h.z},
+        { h.x,  h.y,  h.z}, {-h.x,  h.y,  h.z}
+    };
+
+    v.wireframe.lineIndices = {
+        0,1, 1,2, 2,3, 3,0,
+        4,5, 5,6, 6,7, 7,4,
+        0,4, 1,5, 2,6, 3,7
+    };
+
     return v;
 }
 
@@ -175,6 +189,31 @@ VesselBoundary VesselBoundary::makeConvexPrism(const std::vector<glm::vec2>& pol
         top.halfWidth = maxR;
         top.halfHeight = maxR;
         v.bodyPatches.push_back(top);
+    }
+
+    // ────────── render wireframe ──────────
+    v.wireframe.bodyVertices.reserve(n * 2);
+
+    for (int i = 0; i < n; ++i)
+        v.wireframe.bodyVertices.push_back({polygon[i].x, yMin, polygon[i].y});
+
+    for (int i = 0; i < n; ++i)
+        v.wireframe.bodyVertices.push_back({polygon[i].x, yMax, polygon[i].y});
+
+    for (int i = 0; i < n; ++i)
+    {
+        const uint32_t next = static_cast<uint32_t>((i + 1) % n);
+        const uint32_t i0 = static_cast<uint32_t>(i);
+        const uint32_t i1 = static_cast<uint32_t>(i + n);
+
+        v.wireframe.lineIndices.push_back(i0);
+        v.wireframe.lineIndices.push_back(next);
+
+        v.wireframe.lineIndices.push_back(i1);
+        v.wireframe.lineIndices.push_back(next + n);
+
+        v.wireframe.lineIndices.push_back(i0);
+        v.wireframe.lineIndices.push_back(i1);
     }
 
     return v;

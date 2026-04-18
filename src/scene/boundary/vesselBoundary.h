@@ -1,8 +1,12 @@
 #pragma once
-#include "BoundaryPlane.h"
+
 #include <glm/gtc/quaternion.hpp>
 #include <vector>
+
+#include "BoundaryPlane.h"
+
 #include "sim/structs.h"
+#include "scene/boundary/vesselWireframe.h"
 
 // Выпуклый сосуд — набор патчей в системе отсчёта тела (body-frame).
 // Вращение мышкой → обновить `orientation` → вызвать getWorldPlanes()
@@ -11,6 +15,8 @@ struct VesselBoundary
 {
 
     std::vector<BoundaryPatch> bodyPatches;  // патчи в body-frame, не меняются после создания
+    
+    VesselWireframe wireframe;
 
     glm::quat orientation = glm::quat(1.f, 0.f, 0.f, 0.f); // единичный кватернион (нет поворота)
     glm::vec3 pivot = {0.f, 0.f, 0.f}; // точка вращения
@@ -21,7 +27,7 @@ struct VesselBoundary
     // Возврашает true, если точка p находится внутри всех полуплоскостей.
     // Переводит p в body-space — не аллоцирует мировые плоскости.
     // margin: отступ от стенки внутрь.
-     bool contains(glm::vec3 p, float margin) const;
+    bool contains(glm::vec3 p, float margin) const;
 
     // Максимальное расстояние от pivot до любого угла любого патча.
     // Считается в body-frame и не зависит от orientation.
