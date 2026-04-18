@@ -59,15 +59,14 @@ namespace ScenePresets
     {
         const float spacing = Config::particleRadius * 2.1f;
 
-        // Выпуклый шестиугольник в плоскости XZ, CCW
+        // Прямоугольная трапеция в плоскости XZ, CCW
         const std::vector<glm::vec2> tankPolygon =
         {
-            { 2.20f,  0.00f},
-            { 1.10f,  1.30f},
-            {-1.10f,  1.30f},
-            {-2.20f,  0.00f},
-            {-1.10f, -1.30f},
-            { 1.10f, -1.30f}
+            { 2.0f,  -2.0f}, 
+            { 2.0f,  2.0f}, 
+            {-2.0f,  0.0f},
+            {-2.0f, -2.0f} 
+
         };
 
         return SceneBuilder::create("Fuel Tank")
