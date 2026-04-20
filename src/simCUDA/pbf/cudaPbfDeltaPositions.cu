@@ -85,15 +85,14 @@ namespace
         float* z,
         float* dx,
         float* dy,
-        float* dz,
-        float scale)
+        float* dz)
     {
         const int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i >= n) return;
 
-        x[i] += scale * dx[i];
-        y[i] += scale * dy[i];
-        z[i] += scale * dz[i];
+        x[i] += dx[i];
+        y[i] += dy[i];
+        z[i] += dz[i];
 
         dx[i] = 0.0f;
         dy[i] = 0.0f;
@@ -125,15 +124,14 @@ void launchComputeDeltaPositions(
     CUDA_CHECK(cudaGetLastError());
 }
 
-void launchApplyDeltaPositions(DeviceParticles3D& particles, float scale)
+void launchApplyDeltaPositions(DeviceParticles3D& particles)
 {
     if (particles.count <= 0) return;
 
     applyDeltaPositionsKernel<<<CudaUtils::gridSize(particles.count), CudaUtils::BLOCK_SIZE>>>(
         particles.count,
         particles.x, particles.y, particles.z,
-        particles.dx, particles.dy, particles.dz,
-        scale);
+        particles.dx, particles.dy, particles.dz);
 
     CUDA_CHECK(cudaGetLastError());
 }

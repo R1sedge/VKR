@@ -15,7 +15,7 @@ namespace CudaSPH
         return k * x * x * x;
     }
 
-    // 3D Spiky gradient: k = -15 / (π * h⁶)
+    // 3D Spiky gradient: k = -45 / (π * h⁶)
     __device__ __forceinline__ float spikyGradCoeff(float r, float h)
     {
         if (r <= 0.0f || r > h) return 0.0f;

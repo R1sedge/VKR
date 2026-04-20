@@ -20,7 +20,7 @@ namespace ScenePresets
 
     SceneDescription damBreak()
     {
-        const float spacing = Config::particleRadius * 2.1f;
+        const float spacing = Config::particleRadius * 2.5f;
 
         return SceneBuilder::create("Dam Break")
             .setBoxVessel(3.2f, 2.3f, 1.6f)

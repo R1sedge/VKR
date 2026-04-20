@@ -11,9 +11,6 @@ class Camera3D;
 struct AppState;
 struct AppCommands;
 
-
-//   Тонкий оркестратор: инициализирует ImGui, владеет панелями,
-//   делегирует отрисовку каждой панели своему классу.
 class UserInterface
 {
 public:
@@ -26,12 +23,13 @@ public:
     void buildUI(const AppState& state, const Camera3D& camera, AppCommands& commands);
     void endFrame();
 
-    // Передача метрик из app.cpp
     void setFrameTiming(double frameTimeSeconds);
     void setPhysicsTiming(double seconds);
     void setRenderTiming(double seconds);
 
     void setSimulationDt(float dt) { m_simDt = dt; }
+    void setParticleCount(int count) { m_fps.setParticleCount(count); }
+
     void setRestDensity(float rd) { m_settings.setRestDensity(rd); }
     void setArtPressure(bool enabled) { m_settings.setArtPressureEnabled(enabled); }
     void setVorticityEpsilon(float val) { m_settings.setVorticityEpsilon(val); }

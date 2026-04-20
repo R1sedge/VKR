@@ -6,5 +6,9 @@
 class FpsOverlay
 {
 public:
+    void setParticleCount(int count) { m_particleCount = count; }
     void draw(const FrameTimer& timer);
+
+private:
+    int m_particleCount = 0;
 };

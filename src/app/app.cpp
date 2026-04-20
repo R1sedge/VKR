@@ -197,6 +197,7 @@ void App::mainLoop()
             }
         }
 
+        m_gui.setParticleCount(m_sim.getParticles().count);
         m_gui.buildUI(m_state, m_camera, cmd);
 
         applyCommands(cmd);

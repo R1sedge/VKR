@@ -178,15 +178,8 @@ void SimulationBackendCUDA::update(float dt)
             m_artPressureK,    
             m_cachedWDeltaQ);
 
-        launchApplyDeltaPositions(m_deviceParticles, 1.0f);
+        launchApplyDeltaPositions(m_deviceParticles);
         
-        /*
-        launchProjectParticleCollisions(
-            m_deviceParticles,
-            m_neighbors,
-            Config::particleRadius
-        );
-        */
 
         if (m_dVesselPlanes && m_vesselPlaneCount > 0)
         {

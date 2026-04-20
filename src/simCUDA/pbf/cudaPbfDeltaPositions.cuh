@@ -12,4 +12,4 @@ void launchComputeDeltaPositions(
     float wDeltaQ
 );
 
-void launchApplyDeltaPositions(DeviceParticles3D& particles, float scale = 0.001f);
+void launchApplyDeltaPositions(DeviceParticles3D& particles);
