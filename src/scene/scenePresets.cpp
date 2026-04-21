@@ -24,8 +24,8 @@ namespace ScenePresets
 
         return SceneBuilder::create("Dam Break")
             .setBoxVessel(3.2f, 2.3f, 1.6f)
-            .addFluidBox(-1.75f, -0.40f, 0.0f,
-                    0.95f, 1.45f, 0.95f)
+            .addFluidBox(-2.0f, 0.00f, 0.0f,
+                    1.0f, 2.0f, 1.0f)
                 .withSpacing(spacing)
                 .withPhase(0)
                 .withFilterByBoundary(true)
@@ -57,7 +57,7 @@ namespace ScenePresets
 
     SceneDescription fuelTank()
     {
-        const float spacing = Config::particleRadius * 2.1f;
+        const float spacing = Config::particleRadius * 2.5f;
 
         // Прямоугольная трапеция в плоскости XZ, CCW
         const std::vector<glm::vec2> tankPolygon =
