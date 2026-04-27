@@ -28,6 +28,9 @@ struct DeviceUniformGrid
 
     void*  cubTemp      = nullptr;
     size_t cubTempBytes = 0;
+
+    void*  scanTemp      = nullptr;
+    size_t scanTempBytes = 0;
 };
 
 void allocateDeviceUniformGrid(DeviceUniformGrid& g, int n, int totalCells);

@@ -3,6 +3,7 @@
 #include <cub/cub.cuh>
 #include <cuda_runtime.h>
 #include <vector>
+#include <utility>
 
 #include "simCUDA/utils/cudaCheck.h"
 #include "simCUDA/utils/cudaUtils.cuh"
@@ -10,6 +11,25 @@
 
 namespace 
 {
+    void ensureTempBuffer(void*& ptr, size_t& capacityBytes, size_t requiredBytes)
+    {
+        if (requiredBytes == 0)
+            return;
+
+        if (ptr != nullptr && capacityBytes >= requiredBytes)
+            return;
+
+        if (ptr != nullptr)
+        {
+            CUDA_CHECK(cudaFree(ptr));
+            ptr = nullptr;
+            capacityBytes = 0;
+        }
+
+        CUDA_CHECK(cudaMalloc(&ptr, requiredBytes));
+        capacityBytes = requiredBytes;
+    }
+
     // Kernel 1: каждой частице ставим в соответствие 3D ячейку
     __global__ void assignCellsKernel(
         int n,
@@ -194,15 +214,39 @@ void allocateDeviceUniformGrid(DeviceUniformGrid& g, int n, int totalCells)
         CudaMem::allocIntArray(g.cellEnd, totalCells);
     }
 
-    // Запрос размера temp-буфера CUB
-    if(n > 0)
+    // Запрос размера temp-буфера CUB для radix sort.
+    // Буфер аллоцируется один раз при изменении числа частиц / сетки.
+    if (n > 0)
     {
-        cub::DeviceRadixSort::SortPairs(
-            nullptr, g.cubTempBytes,
-            g.particleCell, g.keysAlt,
-            g.sortedIds,    g.valsAlt, n);
+        size_t requiredSortBytes = 0;
 
-        CUDA_CHECK(cudaMalloc(&g.cubTemp, g.cubTempBytes));
+        CUDA_CHECK(cub::DeviceRadixSort::SortPairs(
+            nullptr, requiredSortBytes,
+            g.particleCell, g.keysAlt,
+            g.sortedIds,    g.valsAlt,
+            n));
+
+        ensureTempBuffer(g.cubTemp, g.cubTempBytes, requiredSortBytes);
+    }
+
+    if (n > 0)
+    {
+        // Запрос и аллокация CUB scan temp
+        size_t newScanBytes = 0;
+        cub::DeviceScan::ExclusiveSum(
+            nullptr, newScanBytes,
+            (int*)nullptr, (int*)nullptr, n + 1);
+
+        if (newScanBytes > g.scanTempBytes)
+        {
+            if (g.scanTemp) 
+            { 
+                cudaFree(g.scanTemp); 
+                g.scanTemp = nullptr; 
+            }
+            g.scanTempBytes = newScanBytes;
+            CUDA_CHECK(cudaMalloc(&g.scanTemp, g.scanTempBytes));
+        }
     }
 }
 
@@ -223,6 +267,15 @@ void freeDeviceUniformGrid(DeviceUniformGrid& g)
         g.cubTemp=nullptr; 
     }
 
+    if (g.scanTemp) 
+    { 
+        cudaFree(g.scanTemp); 
+        g.scanTemp = nullptr; 
+    }
+
+    g.cubTempBytes = 0;
+    g.scanTempBytes = 0;
+
     g.particleCapacity = 0;
     g.totalCells = 0;
 }
@@ -242,6 +295,12 @@ void buildNeighborsGridCUDA(
 {
     const int n = particles.count;
     if (n == 0)
+    {
+        nl.idsCount = 0;
+        return;
+    }
+
+    if (h <= 0.0f)
     {
         nl.idsCount = 0;
         return;
@@ -316,16 +375,31 @@ void buildNeighborsGridCUDA(
 
     CUDA_CHECK(cudaGetLastError());
 
+    CUDA_CHECK(cudaMemset(nl.counts + n, 0, sizeof(int)));
+
     //  6. Prefix sum через CUB (без синхронизации CPU)
-    size_t scanTmp = 0;
-    cub::DeviceScan::ExclusiveSum(nullptr, scanTmp, nl.counts, nl.offsets, n + 1);
-    void* dScanBuf;
+    CUDA_CHECK(cudaMemset(nl.counts + n, 0, sizeof(int)));
 
-    CUDA_CHECK(cudaMalloc(&dScanBuf, scanTmp));
+    size_t requiredScanBytes = 0;
 
-    cub::DeviceScan::ExclusiveSum(dScanBuf, scanTmp, nl.counts, nl.offsets, n + 1);
+    CUDA_CHECK(cub::DeviceScan::ExclusiveSum(
+        nullptr,
+        requiredScanBytes,
+        nl.counts,
+        nl.offsets,
+        n + 1));
 
-    cudaFree(dScanBuf);
+    ensureTempBuffer(grid.scanTemp, grid.scanTempBytes, requiredScanBytes);
+
+    size_t scanTempBytes = grid.scanTempBytes;
+
+    CUDA_CHECK(cub::DeviceScan::ExclusiveSum(
+        grid.scanTemp,
+        scanTempBytes,
+        nl.counts,
+        nl.offsets,
+        n + 1));
+
     CUDA_CHECK(cudaGetLastError());
 
     // totalIds = offsets[n] — читаем одно int с GPU
@@ -336,10 +410,10 @@ void buildNeighborsGridCUDA(
     if (totalIds > nl.idsCapacity)
     {
         CudaMem::freeIntArray(nl.ids);
-        nl.idsCapacity = totalIds;
-
-        if (totalIds > 0)
-            CudaMem::allocIntArray(nl.ids, totalIds);
+        // 25% запас — реаллокация нужна только при реальном росте плотности,
+        // а не каждый раз при незначительных колебаниях
+        nl.idsCapacity = (totalIds * 5) / 4;
+        CudaMem::allocIntArray(nl.ids, nl.idsCapacity);
     }
     nl.idsCount = totalIds;
     if (totalIds == 0) return;

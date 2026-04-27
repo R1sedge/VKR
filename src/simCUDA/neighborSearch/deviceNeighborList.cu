@@ -10,7 +10,7 @@ void allocateDeviceNeighborList(DeviceNeighborList& nl, int n)
     nl.particleCount = n;
     if (n > 0)
     { 
-        CudaMem::allocIntArray(nl.counts, n); 
+        CudaMem::allocIntArray(nl.counts, n + 1); 
         CudaMem::allocIntArray(nl.offsets, n + 1); 
     }
 }

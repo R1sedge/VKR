@@ -17,7 +17,6 @@
 #include "simCUDA/pbf/cudaVorticity.cuh"
 #include "simCUDA/pbf/cudaXSPH.cuh"
 
-#include "simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh"
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
@@ -34,7 +33,8 @@ SimulationBackendCUDA::SimulationBackendCUDA()
 SimulationBackendCUDA::~SimulationBackendCUDA()
 {
     releaseVesselPlanes();
-    freeDeviceCollisionCheck(m_collisionCheck);
+
+    freeDeviceUniformGrid(m_grid);
     freeDeviceNeighborList(m_neighbors);
     freeDeviceParticles(m_deviceParticles);
 }
@@ -149,26 +149,19 @@ void SimulationBackendCUDA::update(float dt)
         m_gridBounds.yMin, m_gridBounds.yMax,
         m_gridBounds.zMin, m_gridBounds.zMax);
 
-    
     for (int iter = 0; iter < iterations; ++iter)
-    {
-        launchCheckParticleCollisions(
-            m_deviceParticles, 
-            m_neighbors,                     
-            m_collisionCheck, 
-            Config::particleRadius);
-
+    {   
         launchComputeDensity(
             m_deviceParticles,
             m_neighbors,
             Config::smoothingRadius);
         
         launchComputeLambda(
-        m_deviceParticles,
-        m_neighbors,
-        Config::restDensity,
-        Config::epsilon,
-        Config::smoothingRadius);
+            m_deviceParticles,
+            m_neighbors,
+            Config::restDensity,
+            Config::epsilon,
+            Config::smoothingRadius);
 
         launchComputeDeltaPositions(
             m_deviceParticles,

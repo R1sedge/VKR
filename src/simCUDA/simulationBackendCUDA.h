@@ -10,7 +10,6 @@
 #include "scene/sceneDescription.h"
 #include "simCUDA/utils/cudaParticles.cuh"
 #include "simCUDA/utils/cudaBoundaryPlane.cuh"
-#include "simCUDA/constraints/collisions/cudaCollisionCheck.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl
@@ -59,7 +58,6 @@ private:
 
     DeviceUniformGrid m_grid;
     DeviceNeighborList m_neighbors;
-    DeviceCollisionCheck m_collisionCheck;
 
     cudaGraphicsResource_t m_vboResource = nullptr;
 

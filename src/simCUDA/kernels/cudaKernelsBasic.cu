@@ -39,13 +39,13 @@ namespace
 
         const float damp = 1.0f - velocityDamping;
 
-        vx[i] += gx * dt;
-        vy[i] += gy * dt;
-        vz[i] += gz * dt;
-
         vx[i] *= damp;
         vy[i] *= damp;
         vz[i] *= damp;
+
+        vx[i] += gx * dt;
+        vy[i] += gy * dt;
+        vz[i] += gz * dt;
 
         px[i] = x[i];
         py[i] = y[i];

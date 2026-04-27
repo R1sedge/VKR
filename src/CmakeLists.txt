@@ -95,11 +95,6 @@ add_executable(Simulation
     simCUDA/pbf/cudaXSPH.cuh
     simCUDA/pbf/cudaXSPH.cu
 
-    simCUda/constraints/collisions/cudaCollisionCheck.cuh
-    simCUda/constraints/collisions/cudaCollisionCheck.cu
-    simCUDA/constraints/collisions/cudaParticleCollisionProject.cuh
-    simCUDA/constraints/collisions/cudaParticleCollisionProject.cu
-
     simCUDA/kernels/cudaFillInstanceData.cu
 
     simCUDA/constraints/cudaKernelsBounds.cuh

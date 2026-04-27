@@ -12,7 +12,7 @@
 namespace
 {
     constexpr float kCameraOrbitSensitivity = 0.35f;      // град/пиксель
-    constexpr float kVesselRotationSensitivity = 0.30f;   // град/пиксель
+    constexpr float kVesselRotationSensitivity = 0.20f;   // град/пиксель
 
     glm::mat4 buildVesselModelMatrix(const VesselBoundary& vessel)
     {

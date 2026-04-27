@@ -5,7 +5,7 @@ struct DeviceNeighborList {
     int  particleCount = 0;
     int  idsCount      = 0;
     int  idsCapacity   = 0;
-    int* counts        = nullptr;  // [n]
+    int* counts        = nullptr;  // [n+1]
     int* offsets       = nullptr;  // [n+1]
     int* ids           = nullptr;  // [idsCount]
 };
