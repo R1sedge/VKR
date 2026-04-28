@@ -51,13 +51,26 @@ namespace
             const float dx = xi - x[j];
             const float dy = yi - y[j];
             const float dz = zi - z[j];
-            const float r2 = dx * dx + dy * dy + dz * dz;
 
-            if (r2 < gradEps)
-                continue;
+            float fdx = dx, fdy = dy, fdz = dz;
+            float r2  = fdx*fdx + fdy*fdy + fdz*fdz;
 
-            const float r = sqrtf(r2);
-            const float invR = 1.0f / r;
+            // Fallback для полностью совпавших позиций (r == 0):
+            // детерминированное направление по индексам частиц
+            if (r2 < 1e-12f) 
+            {
+                unsigned seed = (unsigned)(i ^ (j * 2654435761u));
+                fdx = (float)((seed >>  0) & 0xFF) - 127.5f;
+                fdy = (float)((seed >>  8) & 0xFF) - 127.5f;
+                fdz = (float)((seed >> 16) & 0xFF) - 127.5f;
+                r2 = fdx*fdx + fdy*fdy + fdz*fdz;
+            }
+            // Soft-min: гарантируем ненулевое r для нормировки,
+            // но kernel value (poly6) считаем от исходного r для корректной плотности
+            const float r2safe = fmaxf(r2, h * h * 1e-6f);
+            const float r = sqrtf(r2safe);
+            const float invR = rsqrtf(r2safe);
+
             const float gradW = CudaSPH::spikyGradCoeff(r, h);
 
             const float coeff = mass[j] * invRestDensity * gradW;

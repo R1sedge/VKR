@@ -115,7 +115,9 @@ namespace
             const float dx = xi - x[j];
             const float dy = yi - y[j];
             const float dz = zi - z[j];
+            
             const float r2 = fmaf(dx, dx, fmaf(dy, dy, dz * dz));
+            if (r2 < 1e-12f) continue;
 
             const float invR = rsqrtf(r2);
             const float r = r2 * invR;
