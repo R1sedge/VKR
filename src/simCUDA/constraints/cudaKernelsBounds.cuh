@@ -13,7 +13,18 @@ void launchProjectBounds(
     float back,
     float radius);
 
-void launchProjectToVesselPlanes(DeviceParticles3D& dp,
-                                 const DeviceBoundaryPlane* planes,
-                                 int planeCount,
-                                 float radius);
+void launchProjectToVesselPlanes(
+    DeviceParticles3D& dp,
+    const DeviceBoundaryPlane* planes,
+    int planeCount,
+    float radius);
+
+void launchApplyBoundaryVelocityResponse(
+    DeviceParticles3D& dp,
+    const DeviceBoundaryPlane* planes,
+    int planeCount,
+    float radius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,
+    float pivotX, float pivotY, float pivotZ);

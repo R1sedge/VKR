@@ -10,22 +10,25 @@ namespace Config
     inline float cameraDist = 5.0f;                 // Начальное расстояние камеры до цели
 
     // Константы симуляции
-    inline constexpr float dt = 1.0f / 60.0f;     // Шаг симуляции
+    inline constexpr float dt = 1.0f / 90.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                  // Гравитация по x
     inline float gravityY = -8.0f;                 // Гравитация по y
     inline float gravityZ = 0.0f;                  // Гравитация по z
 
-    inline constexpr float particleRadius = 0.03f; // В world units 
-    inline float particleMass = 0.2f;              // В kg
+    inline float wallRestitution = 0.80f;
+    inline float wallFriction = 0.05f;
+
+    inline constexpr float particleRadius = 0.025f; // В world units 
+    inline float particleMass = 0.1f;              // В kg
 
     // PBF константы
     inline float restDensity = 400.0f;                             // Плотность воды (3D)
-    inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
+    inline constexpr float smoothingRadius = particleRadius * 4.0f; // Радиус ядра сглаживания
     inline constexpr float epsilon = 150.f;                          // Регуляризация для lambda
 
     // Artificial Pressure
     inline constexpr float artificialPressureK = 0.001f;
-    inline constexpr float artificialPressureDeltaQ = 0.08f;
+    inline constexpr float artificialPressureDeltaQ = 0.06f;
 
     // Vorticity Confinement
     inline float vorticityEpsilon = 0.6f;
@@ -37,5 +40,5 @@ namespace Config
     inline constexpr int iterations = 4;
 
     // Ограничение скорости
-    inline float maxSpeed = 32.0f;
+    inline float maxSpeed = 16.0f;
 }

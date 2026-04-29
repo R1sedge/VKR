@@ -125,10 +125,29 @@ void SimulationBackendCUDA::fillInteropBuffer()
     CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_vboResource, 0));
 }
 
+void SimulationBackendCUDA::computeAngularVelocity(float dt)
+{
+    const glm::quat dq = m_vessel.orientation * glm::inverse(m_prevVesselOrientation);
+    const float sinHalfAngle = glm::length(glm::vec3(dq.x, dq.y, dq.z));
+    if (sinHalfAngle > 1e-6f && dt > 1e-6f)
+    {
+        const float angle = 2.0f * std::atan2(sinHalfAngle, dq.w);
+        const glm::vec3 axis = glm::vec3(dq.x, dq.y, dq.z) / sinHalfAngle;
+        m_vesselAngularVelocity = axis * (angle / dt);
+    }
+    else
+    {
+        m_vesselAngularVelocity = {0.0f, 0.0f, 0.0f};
+    }
+    m_prevVesselOrientation = m_vessel.orientation;
+}
+
 void SimulationBackendCUDA::update(float dt)
 {
     if (m_deviceParticles.count <= 0)
         return;
+    
+    computeAngularVelocity(dt);
 
     launchClearDerived(m_deviceParticles);
 
@@ -210,6 +229,22 @@ void SimulationBackendCUDA::update(float dt)
 
     launchApplyXSPH(m_deviceParticles, m_neighbors,
                     m_xsphViscosity, Config::smoothingRadius);
+
+    if (m_dVesselPlanes && m_vesselPlaneCount > 0)
+    {
+        const glm::vec3 pivot = m_vessel.pivot;  // или {0,0,0} если поля нет
+        launchApplyBoundaryVelocityResponse(
+            m_deviceParticles,
+            m_dVesselPlanes,
+            m_vesselPlaneCount,
+            Config::particleRadius,
+            Config::wallRestitution,
+            Config::wallFriction,
+            m_vesselAngularVelocity.x,
+            m_vesselAngularVelocity.y,
+            m_vesselAngularVelocity.z,
+            pivot.x, pivot.y, pivot.z);
+    }
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
     if (m_vboResource) 

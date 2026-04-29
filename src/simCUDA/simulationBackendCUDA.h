@@ -48,6 +48,8 @@ private:
     void setVesselPlanes(const std::vector<BoundaryPlane>& planes);
     void releaseVesselPlanes();
 
+    void computeAngularVelocity(float dt);
+
     void refreshCachedKernelConstants();
 
 private:
@@ -67,6 +69,9 @@ private:
 
     DeviceBoundaryPlane* m_dVesselPlanes = nullptr;
     int m_vesselPlaneCount = 0;
+
+    glm::quat m_prevVesselOrientation = glm::quat(1, 0, 0, 0);
+    glm::vec3 m_vesselAngularVelocity = {0.0f, 0.0f, 0.0f};
 
     SceneDescription m_loadedScene;
     bool m_hasLoadedScene = false;

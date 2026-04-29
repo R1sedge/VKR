@@ -6,6 +6,80 @@
 #include "simCUDA/utils/cudaUtils.cuh"
 namespace
 {
+    __global__ void applyBoundaryVelocityResponseKernel(
+    int n,
+    float* __restrict__ vx,
+    float* __restrict__ vy,
+    float* __restrict__ vz,
+    const float* __restrict__ x,
+    const float* __restrict__ y,
+    const float* __restrict__ z,
+    const DeviceBoundaryPlane* __restrict__ planes,
+    int planeCount,
+    float radius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,   // угловая скорость сосуда (world space)
+    float pivotX, float pivotY, float pivotZ) // точка вращения
+    {
+        const int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n) return;
+
+        float vi_x = vx[i], vi_y = vy[i], vi_z = vz[i];
+        const float xi = x[i], yi = y[i], zi = z[i];
+
+        for (int planeIdx = 0; planeIdx < planeCount; ++planeIdx)
+        {
+            const DeviceBoundaryPlane plane = planes[planeIdx];
+            const float dist = plane.nx * (xi - plane.px)
+                            + plane.ny * (yi - plane.py)
+                            + plane.nz * (zi - plane.pz);
+
+            // Применяем только к частицам у стенки (не дальше 1.5*radius)
+            if (dist > 1.5f * radius) continue;
+
+            // Скорость стенки в точке контакта: v_wall = ω × (pos − pivot)
+            const float rpx = xi - pivotX;
+            const float rpy = yi - pivotY;
+            const float rpz = zi - pivotZ;
+            const float wallVx = angVy * rpz - angVz * rpy;
+            const float wallVy = angVz * rpx - angVx * rpz;
+            const float wallVz = angVx * rpy - angVy * rpx;
+
+            // Относительная скорость частицы относительно стенки
+            const float vRelX = vi_x - wallVx;
+            const float vRelY = vi_y - wallVy;
+            const float vRelZ = vi_z - wallVz;
+
+            const float vn = vRelX * plane.nx + vRelY * plane.ny + vRelZ * plane.nz;
+
+            // Response только если летим в стенку (vn < 0)
+            if (vn >= 0.0f) continue;
+
+            // Нормальная и касательная компоненты относительной скорости
+            const float vnX = vn * plane.nx;
+            const float vnY = vn * plane.ny;
+            const float vnZ = vn * plane.nz;
+            const float vtX = vRelX - vnX;
+            const float vtY = vRelY - vnY;
+            const float vtZ = vRelZ - vnZ;
+
+            // v_rel_new = -restitution * vN + (1 - friction) * vT
+            const float newRelX = -restitution * vnX + (1.0f - friction) * vtX;
+            const float newRelY = -restitution * vnY + (1.0f - friction) * vtY;
+            const float newRelZ = -restitution * vnZ + (1.0f - friction) * vtZ;
+
+            // Переводим обратно в мировое пространство
+            vi_x = newRelX + wallVx;
+            vi_y = newRelY + wallVy;
+            vi_z = newRelZ + wallVz;
+        }
+
+        vx[i] = vi_x;
+        vy[i] = vi_y;
+        vz[i] = vi_z;
+    }
+
     __global__ void projectBoundsKernel(
         int n,
         float* x,
@@ -48,22 +122,25 @@ namespace
 
         // Для inward-facing planes считаем particle center валидным,
         // если signedDist >= radius. Иначе двигаем центр по нормали внутрь.
-        for (int planeIdx = 0; planeIdx < planeCount; ++planeIdx)
+        for (int pass = 0; pass < 2; ++pass)
         {
-            const DeviceBoundaryPlane plane = planes[planeIdx];
-
-            const float dist =
-                plane.nx * (px - plane.px) +
-                plane.ny * (py - plane.py) +
-                plane.nz * (pz - plane.pz);
-
-            if (dist < radius)
+            bool any = false;
+            for (int planeIdx = 0; planeIdx < planeCount; ++planeIdx)
             {
-                const float correction = radius - dist;
-                px += correction * plane.nx;
-                py += correction * plane.ny;
-                pz += correction * plane.nz;
+                const DeviceBoundaryPlane plane = planes[planeIdx];
+
+                const float dist = plane.nx * (px - plane.px) + plane.ny * (py - plane.py) + plane.nz * (pz - plane.pz);
+
+                if (dist < radius)
+                {
+                    const float correction = radius - dist;
+                    px += correction * plane.nx;
+                    py += correction * plane.ny;
+                    pz += correction * plane.nz;
+                    any = true;
+                }
             }
+            if (!any) break;
         }
 
         x[i] = px;
@@ -116,6 +193,30 @@ void launchProjectToVesselPlanes(DeviceParticles3D& dp,
         planes,
         planeCount,
         radius);
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
+void launchApplyBoundaryVelocityResponse(
+    DeviceParticles3D& dp,
+    const DeviceBoundaryPlane* planes,
+    int planeCount,
+    float radius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,
+    float pivotX, float pivotY, float pivotZ)
+{
+    if (dp.count <= 0 || planes == nullptr || planeCount <= 0) return;
+
+    applyBoundaryVelocityResponseKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
+        dp.count,
+        dp.vx, dp.vy, dp.vz,
+        dp.x,  dp.y,  dp.z,
+        planes, planeCount, radius,
+        restitution, friction,
+        angVx, angVy, angVz,
+        pivotX, pivotY, pivotZ);
 
     CUDA_CHECK(cudaGetLastError());
 }
