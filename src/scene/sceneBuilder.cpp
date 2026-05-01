@@ -1,7 +1,10 @@
 #include "scene/sceneBuilder.h"
-#include "scene/boundary/boundaryPlane.h"
+
 #include <cassert>
 #include <iostream>
+
+#include "scene/boundary/boundaryPlane.h"
+#include "scene/boundary/vesselWireframe.h"
 
 // Фабрика 
 SceneBuilder SceneBuilder::create(const std::string& name) 
@@ -122,6 +125,9 @@ SceneBuilder& SceneBuilder::addInternalRectBaffle(const glm::vec3& point, const 
     auto patch = buildBafflePatch(point, normal, upHint, halfWidth, halfHeight, thickness);
     patch.apertureType = InternalApertureType::None;
     mdesc.vessel.internalPatches.push_back(patch);
+
+    appendBaffleWireframe(mdesc.vessel.wireframe, patch);
+
     return *this;
 }
 
@@ -133,6 +139,9 @@ SceneBuilder& SceneBuilder::addInternalBaffleWithCircularHole(const glm::vec3& p
     patch.apertureCenter = holeCenter;
     patch.apertureRadius = holeRadius;
     mdesc.vessel.internalPatches.push_back(patch);
+
+    appendBaffleWireframe(mdesc.vessel.wireframe, patch);
+
     return *this;
 }
 
