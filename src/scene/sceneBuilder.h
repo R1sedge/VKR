@@ -6,7 +6,7 @@ public:
     // Фабрика 
     static SceneBuilder create(const std::string& name);
 
-    // ───────────────────── Этап 1: Сосуд ─────────────────────
+    // ───────────────────── Сосуд ─────────────────────
 
     /// Прямоугольный параллелепипед с центром в pivot
     SceneBuilder& setBoxVessel(float halfX, float halfY, float halfZ);
@@ -17,7 +17,13 @@ public:
     /// Добавить патч к телу сосуда вручную
     SceneBuilder& addVesselPatch(const BoundaryPatch& patch);
 
-    // ───────────────────── Этап 2: Регионы частиц ─────────────────────
+    SceneBuilder& addInternalRectBaffle(const glm::vec3& point, const glm::vec3& normal, const glm::vec3& upHint,
+        float halfWidth, float halfHeight, float thickness);
+
+    SceneBuilder& addInternalBaffleWithCircularHole( const glm::vec3& point, const glm::vec3& normal, const glm::vec3& upHint, 
+        float halfWidth, float halfHeight, float thickness, const glm::vec2& holeCenter, float holeRadius);
+
+    // ─────────────────────  Регионы частиц ─────────────────────
     SceneBuilder& addFluidBox(float cx, float cy, float cz,
                          float halfX, float halfY, float halfZ = 0.f);
 
@@ -29,7 +35,6 @@ public:
     SceneBuilder& withPhase(int phase);
     SceneBuilder& withFilterByBoundary(bool enabled);
 
-    // ───────────────────── Финал ─────────────────────
     SceneDescription build();
 
 private:

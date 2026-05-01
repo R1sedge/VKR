@@ -66,7 +66,6 @@ void SceneFiller::appendParticle(const FluidRegion& region,
     out.vy.push_back(region.vy);
     out.vz.push_back(region.vz);
 
-    //TODO нужно добавлять массу в зависимости от фазы жидкости
     out.mass.push_back(Config::particleMass);
 
     out.density.push_back(0.0f);

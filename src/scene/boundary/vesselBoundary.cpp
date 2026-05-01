@@ -218,3 +218,23 @@ VesselBoundary VesselBoundary::makeConvexPrism(const std::vector<glm::vec2>& pol
 
     return v;
 }
+
+std::vector<InternalBoundaryPatch> VesselBoundary::getWorldInternalPatches() const
+{
+    std::vector<InternalBoundaryPatch> result;
+    result.reserve(internalPatches.size());
+
+    for (const auto& patch : internalPatches)
+    {
+        InternalBoundaryPatch wp = patch; // копируем размеры и отверстие
+
+        wp.normal = orientation * patch.normal;
+        wp.u = orientation * patch.u;
+        wp.v = orientation * patch.v;
+        wp.point = pivot + orientation * (patch.point - pivot);
+
+        result.push_back(wp);
+    }
+
+    return result;
+}

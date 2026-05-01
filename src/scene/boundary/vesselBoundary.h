@@ -15,6 +15,7 @@ struct VesselBoundary
 {
 
     std::vector<BoundaryPatch> bodyPatches;  // патчи в body-frame, не меняются после создания
+    std::vector<InternalBoundaryPatch> internalPatches;
     
     VesselWireframe wireframe;
 
@@ -23,6 +24,9 @@ struct VesselBoundary
 
     // Трансформировать все body-frame патчи в мировые плоскости.
    std::vector<BoundaryPlane> getWorldPlanes() const;
+   
+   // Применяет orientation и pivot к point/normal/u/v каждого патча
+    std::vector<InternalBoundaryPatch> getWorldInternalPatches() const;
 
     // Возврашает true, если точка p находится внутри всех полуплоскостей.
     // Переводит p в body-space — не аллоцирует мировые плоскости.

@@ -23,3 +23,25 @@ struct BoundaryPatch : BoundaryPlane
     float halfWidth = 1.f;
     float halfHeight = 1.f;
 };
+
+enum class InternalApertureType
+{
+    None = 0,
+    Circle = 1
+};
+
+struct InternalBoundaryPatch
+{
+    glm::vec3 point;   // Центр перегородки (body-space)
+    glm::vec3 normal;  // Нормаль к плоскости (body-space)
+    glm::vec3 u;       // Локальная ось X в плоскости патча
+    glm::vec3 v;       // Локальная ось Y в плоскости патча
+
+    float halfWidth;
+    float halfHeight;
+    float thickness;   // Физическая толщина стенки
+
+    InternalApertureType apertureType = InternalApertureType::None;
+    glm::vec2 apertureCenter = { 0.f, 0.f }; // В локальных координатах u/v
+    float apertureRadius = 0.f;
+};
