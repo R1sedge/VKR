@@ -222,6 +222,88 @@ namespace
         y[i] = posY;
         z[i] = posZ;
     }
+
+    __global__ void applyInternalBaffleVelocityResponseKernel(
+    int n,
+    float* __restrict__ vx,
+    float* __restrict__ vy,
+    float* __restrict__ vz,
+    const float* __restrict__ x,
+    const float* __restrict__ y,
+    const float* __restrict__ z,
+    float particleRadius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,
+    float pivotX, float pivotY, float pivotZ)
+    {
+        const int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n) return;
+
+        float vix = vx[i], viy = vy[i], viz = vz[i];
+        const float xi = x[i], yi = y[i], zi = z[i];
+
+        for (int k = 0; k < c_internalPatchCount; ++k)
+        {
+            const CudaInternalBoundaryPatch& p = c_internalPatches[k];
+
+            // Расстояние до плоскости перегородки
+            const float relX = xi - p.pointX;
+            const float relY = yi - p.pointY;
+            const float relZ = zi - p.pointZ;
+            const float dist = relX * p.normalX + relY * p.normalY + relZ * p.normalZ;
+
+            // Реагируем только в зоне вблизи поверхности
+            if (fabsf(dist) > 1.5f * (p.thickness * 0.5f + particleRadius)) continue;
+
+            // Проверяем локальные координаты — в пределах прямоугольника
+            const float localU = relX * p.uX + relY * p.uY + relZ * p.uZ;
+            const float localV = relX * p.vX + relY * p.vY + relZ * p.vZ;
+            if (fabsf(localU) > p.halfWidth)  continue;
+            if (fabsf(localV) > p.halfHeight) continue;
+
+            // Частица в отверстии — пропускаем
+            if (insideAperture(localU, localV, p, particleRadius)) continue;
+
+            // Скорость поверхности перегородки: v_wall = omega × (pos - pivot)
+            // Идентично applyBoundaryVelocityResponseKernel
+            const float rpx = xi - pivotX;
+            const float rpy = yi - pivotY;
+            const float rpz = zi - pivotZ;
+            const float wallVx = angVy * rpz - angVz * rpy;
+            const float wallVy = angVz * rpx - angVx * rpz;
+            const float wallVz = angVx * rpy - angVy * rpx;
+
+            // Относительная скорость частицы к поверхности
+            const float vRelX = vix - wallVx;
+            const float vRelY = viy - wallVy;
+            const float vRelZ = viz - wallVz;
+
+            // Проекция относительной скорости на нормаль
+            const float vn = vRelX * p.normalX + vRelY * p.normalY + vRelZ * p.normalZ;
+
+            // Реагируем только если частица движется НАВСТРЕЧУ стенке
+            // dist > 0 → частица с положительной стороны → нормаль "на неё" → vn < 0
+            if (vn >= 0.0f) continue;
+
+            // Нормальная и касательная компоненты
+            const float vnX = vn * p.normalX;
+            const float vnY = vn * p.normalY;
+            const float vnZ = vn * p.normalZ;
+            const float vtX = vRelX - vnX;
+            const float vtY = vRelY - vnY;
+            const float vtZ = vRelZ - vnZ;
+            
+            vix = -restitution * vnX + (1.0f - friction) * vtX + wallVx;
+            viy = -restitution * vnY + (1.0f - friction) * vtY + wallVy;
+            viz = -restitution * vnZ + (1.0f - friction) * vtZ + wallVz;
+        }
+
+        vx[i] = vix;
+        vy[i] = viy;
+        vz[i] = viz;
+    }
+
 }
 
 void launchProjectBounds(DeviceParticles3D& dp,
@@ -312,5 +394,35 @@ void launchProjectToInternalPatches(DeviceParticles3D dp, float particleRadius)
         particleRadius
     );
     
+    CUDA_CHECK(cudaGetLastError());
+}
+
+void launchApplyInternalBaffleVelocityResponse(
+    DeviceParticles3D dp,
+    float particleRadius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,
+    float pivotX, float pivotY, float pivotZ)
+{
+    if (dp.count == 0) return;
+
+    int hostCount = 0;
+    CUDA_CHECK(cudaMemcpyFromSymbol(&hostCount, c_internalPatchCount, sizeof(int)));
+    if (hostCount == 0) return;
+
+    applyInternalBaffleVelocityResponseKernel<<<
+        CudaUtils::gridSize(dp.count),
+        CudaUtils::BLOCK_SIZE
+    >>>(
+        dp.count,
+        dp.vx, dp.vy, dp.vz,
+        dp.x,  dp.y,  dp.z,
+        particleRadius,
+        restitution,
+        friction,
+        angVx, angVy, angVz,
+        pivotX, pivotY, pivotZ
+    );
     CUDA_CHECK(cudaGetLastError());
 }

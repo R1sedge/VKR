@@ -31,3 +31,11 @@ void launchApplyBoundaryVelocityResponse(
     float pivotX, float pivotY, float pivotZ);
 
 void launchProjectToInternalPatches(DeviceParticles3D dp, float particleRadius);
+
+void launchApplyInternalBaffleVelocityResponse(
+    DeviceParticles3D dp,
+    float particleRadius,
+    float restitution,
+    float friction,
+    float angVx, float angVy, float angVz,
+    float pivotX, float pivotY, float pivotZ);

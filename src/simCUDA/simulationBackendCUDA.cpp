@@ -263,6 +263,14 @@ void SimulationBackendCUDA::update(float dt)
             m_vesselAngularVelocity.y,
             m_vesselAngularVelocity.z,
             pivot.x, pivot.y, pivot.z);
+
+        launchApplyInternalBaffleVelocityResponse(
+            m_deviceParticles,
+            Config::particleRadius,
+            Config::wallRestitution,
+            Config::wallFriction,
+            m_vesselAngularVelocity.x, m_vesselAngularVelocity.y, m_vesselAngularVelocity.z,
+            pivot.x, pivot.y, pivot.z);
     }
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
