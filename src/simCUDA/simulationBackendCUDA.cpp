@@ -230,6 +230,8 @@ void SimulationBackendCUDA::update(float dt)
                 m_gridBounds.zMax,
                 Config::particleRadius);
         }
+
+        launchProjectToInternalPatches(m_deviceParticles, Config::particleRadius);
     }
 
     launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed, Config::particleRadius);

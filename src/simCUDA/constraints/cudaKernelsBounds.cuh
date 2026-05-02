@@ -2,6 +2,7 @@
 
 #include "simCUDA/utils/cudaParticles.cuh"
 #include "simCUDA/utils/cudaBoundaryPlane.cuh"
+#include "simCUDA/utils/cudaInternalBoundaryStorage.cuh" 
 
 void launchProjectBounds(
     DeviceParticles3D& dp,
@@ -28,3 +29,5 @@ void launchApplyBoundaryVelocityResponse(
     float friction,
     float angVx, float angVy, float angVz,
     float pivotX, float pivotY, float pivotZ);
+
+void launchProjectToInternalPatches(DeviceParticles3D dp, float particleRadius);

@@ -79,7 +79,7 @@ namespace ScenePresets
                 glm::vec3(0.f, 1.f, 0.f),   // upHint
                 4/3.0f,                        // halfWidth 
                 1.f,                       // halfHeight
-                0.04f,                      // thickness
+                0.00f,                      // thickness
                 glm::vec2(0.f, 0.f),        // отверстие по центру
                 0.35f)                      // радиус отверстия
             
@@ -89,7 +89,7 @@ namespace ScenePresets
                 glm::vec3(0.f, 1.f, 0.f),
                 5/3.0f,
                 1.f,
-                0.04f,
+                0.00f,
                 glm::vec2(0.f, 0.f),
                 0.35f)
 

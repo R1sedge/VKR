@@ -1,17 +1,8 @@
 #pragma once
+#include "simCUDA/utils/cudaBoundaryPlane.cuh"
 
-#include <vector>
+extern __constant__ CudaInternalBoundaryPatch c_internalPatches[MAX_INTERNAL_PATCHES];
+extern __constant__ int c_internalPatchCount;
 
-#include "cudaBoundaryPlane.cuh"
-#include "scene/boundary/BoundaryPlane.h"
-
-// Загрузить перегородки в __constant__ память GPU
-void uploadInternalPatchesToConstantMemory(
-    const CudaInternalBoundaryPatch* hostPatches,
-    int count);
-
-// Обнулить счётчик перегородок, для смены сцены
+void uploadInternalPatchesToConstantMemory(const CudaInternalBoundaryPatch* patches, int count);
 void clearInternalPatchesConstantMemory();
-
-// Cконвертировать host-структуры в CUDA-структуры
-CudaInternalBoundaryPatch toCuda(const InternalBoundaryPatch& p);

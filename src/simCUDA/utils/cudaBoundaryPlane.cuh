@@ -45,16 +45,37 @@ inline std::vector<DeviceBoundaryPlane> makeDeviceBoundaryPlanes(const std::vect
 
 struct CudaInternalBoundaryPatch
 {
-    float3 point;
-    float3 normal;
-    float3 u;
-    float3 v;
+    float pointX,  pointY,  pointZ;   // центр
+    float normalX, normalY, normalZ;  // нормаль
 
-    float halfWidth;
-    float halfHeight;
+    float uX, uY, uZ;                 // локальный базис U
+    float vX, vY, vZ;                 // локальный базис V
+
+    float halfWidth, halfHeight;
     float thickness;
 
-    int apertureType;   // 0 = None, 1 = Circle
-    float2 apertureCenter; // В локальных координатах u/v
+    int apertureType;               // 0=нет, 1=круг
+    float apertureCenterU, apertureCenterV;
     float apertureRadius;
 };
+
+// Конвертер host → device
+inline CudaInternalBoundaryPatch toCuda(const InternalBoundaryPatch& p)
+{
+    CudaInternalBoundaryPatch out{};
+    out.pointX = p.point.x;  out.pointY = p.point.y; out.pointZ  = p.point.z;
+    out.normalX = p.normal.x; out.normalY = p.normal.y; out.normalZ = p.normal.z;
+
+    out.uX = p.u.x; out.uY = p.u.y; out.uZ = p.u.z;
+    out.vX = p.v.x; out.vY = p.v.y; out.vZ = p.v.z;
+
+    out.halfWidth = p.halfWidth;
+    out.halfHeight = p.halfHeight;
+    out.thickness = p.thickness;
+
+    out.apertureType = static_cast<int>(p.apertureType);
+    out.apertureCenterU = p.apertureCenter.x;
+    out.apertureCenterV = p.apertureCenter.y;
+    out.apertureRadius = p.apertureRadius;
+    return out;
+}

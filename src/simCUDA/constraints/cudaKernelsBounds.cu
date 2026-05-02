@@ -4,6 +4,20 @@
 
 #include "simCUDA/utils/cudaCheck.h"
 #include "simCUDA/utils/cudaUtils.cuh"
+
+__device__ __forceinline__ bool insideAperture(
+    float localU, float localV,
+    const CudaInternalBoundaryPatch& patch,
+    float particleRadius)
+{
+    if (patch.apertureType != 1) return false;
+    const float du = localU - patch.apertureCenterU;
+    const float dv = localV - patch.apertureCenterV;
+    // Центр частицы не может войти в кольцо шириной r вокруг края:
+    const float effectiveR = fmaxf(0.0f, patch.apertureRadius - particleRadius);
+    return (du * du + dv * dv <= effectiveR * effectiveR);
+}
+
 namespace
 {
     __global__ void applyBoundaryVelocityResponseKernel(
@@ -147,6 +161,67 @@ namespace
         y[i] = py;
         z[i] = pz;
     }
+
+    __global__ void projectToInternalPatchesKernel(
+    int     n,
+    float* __restrict__ x,
+    float* __restrict__ y,
+    float* __restrict__ z,
+    const float* __restrict__ px,  // позиция на начало шага
+    const float* __restrict__ py,
+    const float* __restrict__ pz,
+    float   particleRadius)
+    {
+        const int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n) return;
+
+        float posX = x[i], posY = y[i], posZ = z[i];
+        const float prevX = px[i], prevY = py[i], prevZ = pz[i];
+
+        for (int k = 0; k < c_internalPatchCount; ++k)
+        {
+            const CudaInternalBoundaryPatch& p = c_internalPatches[k];
+
+            // Вектор pos - point
+            const float relX = posX - p.pointX;
+            const float relY = posY - p.pointY;
+            const float relZ = posZ - p.pointZ;
+
+            // Расстояние по нормали
+            const float side = relX * p.normalX + relY * p.normalY + relZ * p.normalZ;
+
+            // Быстрый отсев: вне вертикальной зоны
+            if (fabsf(side) >= p.thickness * 0.5f + particleRadius) continue;
+
+            // Локальные координаты в плоскости
+            const float localU = relX * p.uX + relY * p.uY + relZ * p.uZ;
+            const float localV = relX * p.vX + relY * p.vY + relZ * p.vZ;
+
+            // Вне прямоугольника перегородки
+            if (fabsf(localU) > p.halfWidth)  continue;
+            if (fabsf(localV) > p.halfHeight) continue;
+
+            // Попала в отверстие — пропускаем
+            if (insideAperture(localU, localV, p, particleRadius)) continue;
+
+            // Сторона по prevPos — откуда пришла частица
+            const float prevSide =
+                (prevX - p.pointX) * p.normalX +
+                (prevY - p.pointY) * p.normalY +
+                (prevZ - p.pointZ) * p.normalZ;
+            const float sign = (prevSide >= 0.0f) ? 1.0f : -1.0f;
+
+            // Выталкиваем на нужную сторону
+            const float correction = p.thickness * 0.5f + particleRadius - sign * side;
+            posX += correction * p.normalX * sign;
+            posY += correction * p.normalY * sign;
+            posZ += correction * p.normalZ * sign;
+        }
+
+        x[i] = posX;
+        y[i] = posY;
+        z[i] = posZ;
+    }
 }
 
 void launchProjectBounds(DeviceParticles3D& dp,
@@ -218,5 +293,24 @@ void launchApplyBoundaryVelocityResponse(
         angVx, angVy, angVz,
         pivotX, pivotY, pivotZ);
 
+    CUDA_CHECK(cudaGetLastError());
+}
+
+void launchProjectToInternalPatches(DeviceParticles3D dp, float particleRadius)
+{
+    if (dp.count == 0) return;
+
+    // Ранний выход без запуска ядра
+    int hostCount = 0;
+    CUDA_CHECK(cudaMemcpyFromSymbol(&hostCount, c_internalPatchCount, sizeof(int)));
+    if (hostCount == 0) return;
+
+    projectToInternalPatchesKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
+        dp.count,
+        dp.x, dp.y, dp.z,
+        dp.px, dp.py, dp.pz,
+        particleRadius
+    );
+    
     CUDA_CHECK(cudaGetLastError());
 }
