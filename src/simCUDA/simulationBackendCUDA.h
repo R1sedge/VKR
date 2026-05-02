@@ -10,6 +10,7 @@
 #include "scene/sceneDescription.h"
 #include "simCUDA/utils/cudaParticles.cuh"
 #include "simCUDA/utils/cudaBoundaryPlane.cuh"
+#include "simCUDA/utils/cudaInternalBoundaryStorage.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
 class SimulationBackendCUDA final : public ISimulationBackendImpl
@@ -47,6 +48,8 @@ private:
 
     void setVesselPlanes(const std::vector<BoundaryPlane>& planes);
     void releaseVesselPlanes();
+    
+    void uploadInternalPatches(const std::vector<InternalBoundaryPatch>& patches);
 
     void computeAngularVelocity(float dt);
 

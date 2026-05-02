@@ -40,3 +40,21 @@ inline std::vector<DeviceBoundaryPlane> makeDeviceBoundaryPlanes(const std::vect
 
     return out;
 }
+
+#define MAX_INTERNAL_PATCHES 5
+
+struct CudaInternalBoundaryPatch
+{
+    float3 point;
+    float3 normal;
+    float3 u;
+    float3 v;
+
+    float halfWidth;
+    float halfHeight;
+    float thickness;
+
+    int apertureType;   // 0 = None, 1 = Circle
+    float2 apertureCenter; // В локальных координатах u/v
+    float apertureRadius;
+};

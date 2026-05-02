@@ -50,6 +50,23 @@ void SimulationBackendCUDA::releaseVesselPlanes()
     m_vesselPlaneCount = 0;
 }
 
+void SimulationBackendCUDA::uploadInternalPatches(
+    const std::vector<InternalBoundaryPatch>& patches)
+{
+    if (patches.empty())
+    {
+        clearInternalPatchesConstantMemory();
+        return;
+    }
+
+    std::vector<CudaInternalBoundaryPatch> cudaPatches;
+    cudaPatches.reserve(patches.size());
+    for (const auto& p : patches)
+        cudaPatches.push_back(toCuda(p));
+
+    uploadInternalPatchesToConstantMemory(cudaPatches.data(), static_cast<int>(cudaPatches.size()));
+}
+
 void SimulationBackendCUDA::refreshCachedKernelConstants()
 {
     // h и deltaQ сейчас берутся из Config и фактически глобальны для backend.
@@ -332,6 +349,9 @@ void SimulationBackendCUDA::loadScene(const SceneDescription& desc)
 
     // 7. Загружаем плоскости на GPU
     setVesselPlanes(m_worldPlanesCache);
+    
+    // 8. Внутренние перегородки → constant memory
+    uploadInternalPatches(desc.vessel.getWorldInternalPatches());
 
     // interop-VBO ресайзит App после вызова: ensureInstanceBufferSize(n) + resetInterop(vbo)
 }
@@ -341,6 +361,7 @@ void SimulationBackendCUDA::setVesselOrientation(const glm::quat& orientation)
     m_vessel.orientation = glm::normalize(orientation);
     m_worldPlanesCache = m_vessel.getWorldPlanes();
     setVesselPlanes(m_worldPlanesCache);
+    uploadInternalPatches(m_vessel.getWorldInternalPatches());
 }
 
 void SimulationBackendCUDA::applyMouseForce(float worldX, float worldY,

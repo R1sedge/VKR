@@ -78,6 +78,8 @@ add_executable(Simulation
     simCUDA/utils/cudaUtils.cuh
     simCUDA/utils/cudaParticles.cu
     simCUDA/utils/cudaParticles.cuh
+    simCUDA/utils/cudaInternalBoundaryStorage.cuh
+    simCUDA/utils/cudaInternalBoundaryStorage.cu
 
     simCUDA/kernels/cudaKernelsBasic.cuh
     simCUDA/kernels/cudaKernelsBasic.cu
