@@ -10,7 +10,7 @@ namespace Config
     inline float cameraDist = 5.0f;                 // Начальное расстояние камеры до цели
 
     // Константы симуляции
-    inline constexpr float dt = 1.0f / 90.0f;     // Шаг симуляции
+    inline constexpr float dt = 1.0f / 100.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                  // Гравитация по x
     inline float gravityY = -8.0f;                 // Гравитация по y
     inline float gravityZ = 0.0f;                  // Гравитация по z
@@ -41,4 +41,7 @@ namespace Config
 
     // Ограничение скорости
     inline float maxSpeed = 16.0f;
+
+     // Внутренние перегородки
+    inline bool enableBafflePairFiltering = true;
 }

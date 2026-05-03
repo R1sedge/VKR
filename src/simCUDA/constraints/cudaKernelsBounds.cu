@@ -4,19 +4,7 @@
 
 #include "simCUDA/utils/cudaCheck.h"
 #include "simCUDA/utils/cudaUtils.cuh"
-
-__device__ __forceinline__ bool insideAperture(
-    float localU, float localV,
-    const CudaInternalBoundaryPatch& patch,
-    float particleRadius)
-{
-    if (patch.apertureType != 1) return false;
-    const float du = localU - patch.apertureCenterU;
-    const float dv = localV - patch.apertureCenterV;
-    // Центр частицы не может войти в кольцо шириной r вокруг края:
-    const float effectiveR = fmaxf(0.0f, patch.apertureRadius - particleRadius);
-    return (du * du + dv * dv <= effectiveR * effectiveR);
-}
+#include "simCUDA/utils/cudaInternalBoundaryUtils.cuh"
 
 namespace
 {

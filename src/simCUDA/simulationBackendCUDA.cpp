@@ -183,7 +183,8 @@ void SimulationBackendCUDA::update(float dt)
         Config::smoothingRadius,
         m_gridBounds.xMin, m_gridBounds.xMax,
         m_gridBounds.yMin, m_gridBounds.yMax,
-        m_gridBounds.zMin, m_gridBounds.zMax);
+        m_gridBounds.zMin, m_gridBounds.zMax,
+        Config::particleRadius, Config::enableBafflePairFiltering);
 
     for (int iter = 0; iter < iterations; ++iter)
     {   
