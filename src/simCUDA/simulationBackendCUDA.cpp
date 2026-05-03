@@ -138,7 +138,7 @@ void SimulationBackendCUDA::fillInteropBuffer()
     CUDA_CHECK(cudaGraphicsResourceGetMappedPointer(
         (void**)&d_ptr, &sz, m_vboResource));
         
-    launchFillInstanceData(m_deviceParticles, d_ptr, Config::particleRadius);
+    launchFillInstanceData(m_deviceParticles, d_ptr);
     CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_vboResource, 0));
 }
 
@@ -283,7 +283,7 @@ void SimulationBackendCUDA::update(float dt)
         CUDA_CHECK(cudaGraphicsMapResources(1, &m_vboResource, 0));
         CUDA_CHECK(cudaGraphicsResourceGetMappedPointer((void**)&d_ptr, &sz, m_vboResource));
 
-        launchFillInstanceData(m_deviceParticles, d_ptr, Config::particleRadius);
+        launchFillInstanceData(m_deviceParticles, d_ptr);
 
         // cudaGraphicsUnmapResources сам синхронизирует стрим перед return
         CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_vboResource, 0));

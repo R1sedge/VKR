@@ -28,7 +28,7 @@ void Renderer::setWindow(GLFWwindow* wnd)
 		initShaders();
 		initLineShaders();
 
-		setMaxSpeed(3.0f); // Максимальная скорость для градиента цвета
+		setMaxSpeed(Config::maxGradSpeed); // Максимальная скорость для градиента цвета
 
 		initGeometry();
 		initLineGeometry();
@@ -189,7 +189,7 @@ void Renderer::initGeometry()
 	);
 	
 
-	// instance: location=1 (vec4: x,y,z,radius), location=2 (float: speed)
+	// instance: location=1 (vec4: x,y,z,phase), location=2 (float: speed)
 	glGenBuffers(1, &instanceVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
 	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STREAM_DRAW);
@@ -197,7 +197,7 @@ void Renderer::initGeometry()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(
 		1,                      // location в шейдере
-        4,                      // x, y, z, radius
+        4,                      // x, y, z, phase
         GL_FLOAT,
         GL_FALSE,
         5 * sizeof(float),      // шаг между вершинами
@@ -230,7 +230,7 @@ void Renderer::renderFrame(const Particles3D& particles)
 
 	glUseProgram(shaderProgram);
 	
-	setCircleRadius(1.0f);
+	//setCircleRadius(1.0f);
 
 	// Собираем данные (x, y, z=0, radius, speed)
 	std::vector<float> instanceData;
@@ -240,13 +240,14 @@ void Renderer::renderFrame(const Particles3D& particles)
 	for (int i = 0; i < n; ++i)
     {
 		float vx = particles.vx[i];
-		float vy = particles.vy[i];
-		float speed = std::sqrt(vx * vx + vy * vy);
+        float vy = particles.vy[i];
+        float vz = particles.vz[i];
+        float speed = std::sqrt(vx*vx + vy*vy + vz*vz);
 
 		instanceData[5 * i + 0] = particles.x[i];
 		instanceData[5 * i + 1] = particles.y[i];
 		instanceData[5 * i + 2] = particles.z[i];
-		instanceData[5 * i + 3] = radius;
+		instanceData[5 * i + 3] = static_cast<float>(particles.phase[i]);
 		instanceData[5 * i + 4] = speed;
 	}
 
@@ -263,13 +264,6 @@ void Renderer::renderFrame(const Particles3D& particles)
 
 }
 
-void Renderer::setCircleRadius(float normalisedRadius)
-{
-	glUseProgram(shaderProgram);
-	GLint loc = glGetUniformLocation(shaderProgram, "uRadius");
-	if (loc != -1) glUniform1f(loc, normalisedRadius);
-}
-
 void Renderer::setMaxSpeed(float maxSpeed)
 {
 		glUseProgram(shaderProgram);
@@ -284,8 +278,8 @@ void Renderer::updateCamera(Camera3D& cam)
     cam.setAspect(static_cast<float>(windowWidth) / static_cast<float>(windowHeight));
 
     glUseProgram(shaderProgram);
-
-	glm::mat4 view = cam.getViewMatrix();
+    
+    glm::mat4 view = cam.getViewMatrix();
     GLint viewLoc = glGetUniformLocation(shaderProgram, "uView");
     if (viewLoc != -1)
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -295,17 +289,36 @@ void Renderer::updateCamera(Camera3D& cam)
     if (projLoc != -1)
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
 
-	// Передаём оси камеры для billboard-рендеринга
-	glm::vec3 right = cam.getRight();
-	GLint rightLoc = glGetUniformLocation(shaderProgram, "uCameraRight");
-	if (rightLoc != -1)
-		glUniform3f(rightLoc, right.x, right.y, right.z);
+    // Передаём оси камеры для billboard-рендеринга
+    glm::vec3 right = cam.getRight();
+    GLint rightLoc = glGetUniformLocation(shaderProgram, "uCameraRight");
+    if (rightLoc != -1)
+        glUniform3fv(rightLoc, 1, glm::value_ptr(right));
 
-	glm::vec3 camUp = cam.getCamUp();
-	GLint camUpLoc = glGetUniformLocation(shaderProgram, "uCameraUp");
-	if (camUpLoc != -1)
-		glUniform3f(camUpLoc, camUp.x, camUp.y, camUp.z);
+    glm::vec3 up = cam.getCamUp();
+    GLint upLoc = glGetUniformLocation(shaderProgram, "uCameraUp");
+    if (upLoc != -1)
+        glUniform3fv(upLoc, 1, glm::value_ptr(up));
+
+    // Радиус частицы — теперь через uniform, не через instance data
+    GLint radLoc = glGetUniformLocation(shaderProgram, "uParticleRadius");
+    if (radLoc != -1)
+        glUniform1f(radLoc, Config::particleRadius);
+
+    // Цвета фаз — обновляем каждый кадр (меняются через UI)
+    GLint loc0 = glGetUniformLocation(shaderProgram, "uPhase0Color");
+    if (loc0 != -1)
+        glUniform4fv(loc0, 1, glm::value_ptr(Config::phase0Color));
+
+    GLint loc1 = glGetUniformLocation(shaderProgram, "uPhase1Color");
+    if (loc1 != -1)
+        glUniform4fv(loc1, 1, glm::value_ptr(Config::phase1Color));
+
+    GLint modeLoc = glGetUniformLocation(shaderProgram, "uColorMode");
+    if (modeLoc != -1)
+        glUniform1i(modeLoc, Config::particleColorMode);
 }
+
 
 void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без перерегистрации (регистрация — в CUDA backend)
 {
@@ -326,7 +339,7 @@ void Renderer::renderFrameInterop(int particleCount) // Рендерим без 
     if (particleCount <= 0) return;
 
     glUseProgram(shaderProgram);
-    setCircleRadius(1.0f);
+    //setCircleRadius(1.0f);
 
     glBindVertexArray(vao);
 	

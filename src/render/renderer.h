@@ -48,7 +48,6 @@ public:
 
 	void updateCamera(Camera3D& cam);
 
-	void setCircleRadius(float normalisedRadius);
 	void setMaxSpeed(float maxSpeed);
 
 	void uploadVesselWireframe(const VesselWireframe& wf);

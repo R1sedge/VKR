@@ -14,8 +14,9 @@ __global__ void fillInstanceDataKernel(
     const float* __restrict__ vx,
     const float* __restrict__ vy,
     const float* __restrict__ vz,
-    float* __restrict__ out,    // layout: [x, y, z, radius, speed] * n
-    float radius)
+    const int*   __restrict__ phase,
+    float* __restrict__ out)    // layout: [x, y, z, phase, speed] * n
+
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= n) return;
@@ -24,20 +25,18 @@ __global__ void fillInstanceDataKernel(
     out[i*5 + 0] = x[i];
     out[i*5 + 1] = y[i];
     out[i*5 + 2] = z ? z[i] : 0.0f;
-    out[i*5 + 3] = radius;
+    out[i*5 + 3] = static_cast<float>(phase[i]);
     out[i*5 + 4] = speed;
 }
 
-void launchFillInstanceData(
-    const DeviceParticles3D& dp,
-    float* d_instanceBuffer,
-    float radius)
+void launchFillInstanceData(const DeviceParticles3D& dp, float* d_instanceBuffer)
 {
     if (dp.count <= 0) return;
 
     fillInstanceDataKernel<<<CudaUtils::gridSize(dp.count), CudaUtils::BLOCK_SIZE>>>(
-        dp.count, dp.x, dp.y, dp.z, dp.vx, dp.vy, dp.vz,
-        d_instanceBuffer, radius);
+        dp.count, dp.x, dp.y, dp.z,
+        dp.vx, dp.vy, dp.vz,
+        dp.phase, d_instanceBuffer);
 
     CUDA_CHECK(cudaGetLastError());
 }

@@ -111,6 +111,8 @@ void uploadParticlesToDevice(const Particles3D& hp, DeviceParticles3D& dp)
     copyHostToDevice(dp.dx, hp.dx, hp.count);
     copyHostToDevice(dp.dy, hp.dy, hp.count);
     copyHostToDevice(dp.dz, hp.dz, hp.count);
+
+    CUDA_CHECK(cudaMemcpy(dp.phase, hp.phase.data(), sizeof(int) * hp.count, cudaMemcpyHostToDevice));
 }
 
 void downloadParticlesFromDevice(const DeviceParticles3D& dp, Particles3D& hp)

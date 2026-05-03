@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/glm.hpp>
 
 namespace Config
 {
@@ -9,22 +10,29 @@ namespace Config
     inline float fovY = 60.0f;                      // Угол обзора камеры (градусы)
     inline float cameraDist = 5.0f;                 // Начальное расстояние камеры до цели
 
+    inline glm::vec4 phase0Color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    inline glm::vec4 phase1Color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+    inline float maxGradSpeed = 4.0f;
+
+    inline int particleColorMode = 0; // 0 = speed colormap, 1 = phase colors
+
     // Константы симуляции
-    inline constexpr float dt = 1.0f / 100.0f;     // Шаг симуляции
+    inline constexpr float dt = 1.0f / 90.0f;     // Шаг симуляции
     inline float gravityX = 0.0f;                  // Гравитация по x
-    inline float gravityY = -8.0f;                 // Гравитация по y
+    inline float gravityY = -9.81f;                 // Гравитация по y
     inline float gravityZ = 0.0f;                  // Гравитация по z
 
     inline float wallRestitution = 0.80f;
     inline float wallFriction = 0.05f;
 
     inline constexpr float particleRadius = 0.025f; // В world units 
-    inline float particleMass = 0.1f;              // В kg
+    inline float particleMass = 0.25f;              // В kg
 
     // PBF константы
-    inline float restDensity = 400.0f;                             // Плотность воды (3D)
-    inline constexpr float smoothingRadius = particleRadius * 4.0f; // Радиус ядра сглаживания
-    inline constexpr float epsilon = 150.f;                          // Регуляризация для lambda
+    inline float restDensity = 1000.0f;                             // Плотность воды (3D)
+    inline constexpr float smoothingRadius = particleRadius * 5.0f; // Радиус ядра сглаживания
+    inline constexpr float epsilon = 500.f;                          // Регуляризация для lambda
 
     // Artificial Pressure
     inline constexpr float artificialPressureK = 0.001f;
@@ -37,7 +45,7 @@ namespace Config
     inline float xsphViscosity = 0.01f;
 
     // Настройки PBD решателя
-    inline constexpr int iterations = 4;
+    inline constexpr int iterations = 2;
 
     // Ограничение скорости
     inline float maxSpeed = 16.0f;
