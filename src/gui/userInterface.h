@@ -36,8 +36,6 @@ public:
     void setXsphViscosity(float val) { m_settings.setXsphViscosity(val); }
 
     void setSceneIndex(int idx) { m_scenes.setSceneIndex(idx); }
-    void setInteractionMode(int mode) { m_settings.setInteractionMode(mode); }
-    void setMouseForceRadius(float radius) { m_settings.setMouseForceRadius(radius); }
 
 private:
     bool initialized = false;

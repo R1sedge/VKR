@@ -82,7 +82,7 @@ void SettingsPanel::draw(const AppState& state, const Camera3D& camera, AppComma
     ImGui::Separator();
     ImGui::Spacing();
 
-    drawInteractionSection(state, commands);
+    drawControlsSection();
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -229,51 +229,36 @@ void SettingsPanel::drawSimSection(const AppState& state, AppCommands& commands)
         commands.reset = true;
 }
 
-//  Секция взаимодействия мышью
-void SettingsPanel::drawInteractionSection(const AppState& state, AppCommands& commands)
+void SettingsPanel::drawControlsSection()
 {
-    m_interactionMode = state.interactionMode;
-    m_mouseForceRadius = state.mouseForceRadius;
-
-    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Mouse Interaction");
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Controls");
     ImGui::Spacing();
 
-    const float innerW = kPanelW - 20.0f;
+    ImGui::TextDisabled("LMB");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Rotate camera");
 
-    // Mode selector
-    const char* modes[] = {
-                            "Camera Control",
-                            "Vessel Rotation",
-                            "Force Application"
-                          };
-    ImGui::SetNextItemWidth(innerW);
-    if (ImGui::Combo("##InteractionMode", &m_interactionMode, modes, 3)) 
-    {
-    commands.hasSetInteractionMode = true;
-    commands.interactionMode = m_interactionMode;
-    }
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::SetTooltip(
-            "Camera: LMB orbit, MMB pan, Wheel zoom\n"
-            "Vessel: LMB rotate vessel\n"
-            "Force: LMB apply force"
-        );
-    }
+    ImGui::TextDisabled("RMB");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Rotate vessel");
+
+    ImGui::TextDisabled("MMB");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Pan camera");
+
+    ImGui::TextDisabled("Wheel");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Zoom");
 
     ImGui::Spacing();
 
-    // Radius slider (only enabled in Force mode)
-    ImGui::BeginDisabled(m_interactionMode != InteractionModeForceApplication);
-    ImGui::SetNextItemWidth(innerW);
-    if (ImGui::SliderFloat("##ForceRadius", &m_mouseForceRadius, 0.5f, 3.0f, "Radius: %.2f")) 
-    {
-        commands.hasSetMouseForceRadius = true;
-        commands.mouseForceRadius = m_mouseForceRadius;
-    }
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Mouse force application radius\nAdjust with scroll wheel");
-    ImGui::EndDisabled();
+    ImGui::TextDisabled("Space");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Pause");
+
+    ImGui::TextDisabled("R");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Reset");
 }
 
 //  Секция камеры

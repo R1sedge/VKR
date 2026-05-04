@@ -54,9 +54,6 @@ bool UserInterface::initialize(GLFWwindow* window)
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) return false;
     if (!ImGui_ImplOpenGL3_Init("#version 450"))      return false;
 
-    m_settings.setInteractionMode(InteractionModeCameraControl);
-    m_settings.setMouseForceRadius(1.0f);
-
     initialized = true;
     return true;
 }

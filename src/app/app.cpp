@@ -148,52 +148,34 @@ void App::mainLoop()
         if (m_input.justPressed(GLFW_KEY_R)) cmd.reset = true;
 
         // Отклик на мышь
+        // ЛКМ — вращение камеры
+        // ПКМ — вращение сосуда
+        // ЦКМ — смещение камеры
+        // Колёсико — зум
         const ImGuiIO& io = ImGui::GetIO();
         if (!io.WantCaptureMouse)
         {
             const float dx = static_cast<float>(m_input.getDeltaX());
             const float dy = static_cast<float>(m_input.getDeltaY());
 
-            switch (m_state.interactionMode)
+            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
             {
-                case InteractionModeCameraControl:
-                {
-                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
-                    {
-                        m_camera.orbit(-dx * kCameraOrbitSensitivity,
-                                        dy * kCameraOrbitSensitivity);
-                    }
+                m_camera.orbit(-dx * kCameraOrbitSensitivity, dy * kCameraOrbitSensitivity);
+            }
 
-                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
-                    {
-                        m_camera.pan(dx, -dy);
-                    }
+            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
+            {
+                rotateVesselFromMouseDrag(dx, dy);
+            }
 
-                    if (io.MouseWheel != 0.0f)
-                    {
-                        m_camera.zoom(io.MouseWheel * 0.6f);
-                    }
-                    break;
-                }
+            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
+            {
+                m_camera.pan(dx, -dy);
+            }
 
-                case InteractionModeVesselRotation:
-                {
-                    if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
-                    {
-                        rotateVesselFromMouseDrag(dx, dy);
-                    }
-                    break;
-                }
-
-                case InteractionModeForceApplication:
-                {
-                    // Здесь камера мышью не управляется.
-                    // Сама логика применения силы остаётся отдельной.
-                    break;
-                }
-
-                default:
-                    break;
+            if (io.MouseWheel != 0.0f)
+            {
+                m_camera.zoom(io.MouseWheel * 0.6f);
             }
         }
 
@@ -205,15 +187,7 @@ void App::mainLoop()
         double startPhysicsTime = glfwGetTime();
         if (!m_state.paused || cmd.stepOnce)
         {
-           const int effectiveInteractionMode = cmd.hasSetInteractionMode ? cmd.interactionMode : m_state.interactionMode;
-
-        if (cmd.hasMouseForce && effectiveInteractionMode == InteractionModeForceApplication)
-        {
-            m_sim.applyMouseForce(cmd.mouseForceWorldX, cmd.mouseForceWorldY,
-                                cmd.mouseForceRadius, cmd.mouseForceStrength,
-                                cmd.mouseForceType);
-        }
-           update(dt);
+            update(dt);
         }
         double endPhysicsTime = glfwGetTime();
 
@@ -307,14 +281,6 @@ void App::applyCommands(AppCommands& cmd)
         }
 
         resetSceneRuntimeState();
-    }
-
-    if (cmd.hasSetInteractionMode) {
-        m_state.interactionMode = cmd.interactionMode;
-    }
-
-    if (cmd.hasSetMouseForceRadius) {
-        m_state.mouseForceRadius = cmd.mouseForceRadius;
     }
 
     if (cmd.resetCamera) {
