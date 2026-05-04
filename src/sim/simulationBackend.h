@@ -26,11 +26,6 @@ public:
     virtual void setVorticityEpsilon(float e) {}
     virtual void setXsphViscosity(float c) {}
 
-    // Mouse interaction
-    virtual void applyMouseForce(float worldX, float worldY,
-                                 float radius, float strength,
-                                 int forceType) {}
-
     virtual void setVesselOrientation(const glm::quat& orientation) {}
 
     virtual void loadScene(const SceneDescription& desc) = 0;
@@ -56,10 +51,6 @@ public:
     void setArtificialPressureK(float k);
     void setVorticityEpsilon(float e);
     void setXsphViscosity(float c);
-
-    void applyMouseForce(float worldX, float worldY,
-                        float radius, float strength,
-                        int forceType);
     
     void setVesselOrientation(const glm::quat& orientation);
 

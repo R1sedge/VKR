@@ -83,8 +83,6 @@ add_executable(Simulation
 
     simCUDA/kernels/cudaKernelsBasic.cuh
     simCUDA/kernels/cudaKernelsBasic.cu
-    simCUDA/kernels/cudaMouseForce.cuh
-    simCUDA/kernels/cudaMouseForce.cu
 
     simCUDA/pbf/cudaPbfDensity.cuh
     simCUDA/pbf/cudaPbfDensity.cu

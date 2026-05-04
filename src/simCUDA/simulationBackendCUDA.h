@@ -27,10 +27,6 @@ public:
     void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
     void setXsphViscosity(float c) override { m_xsphViscosity = c; }
 
-    void applyMouseForce(float worldX, float worldY,
-                         float radius, float strength,
-                         int forceType) override;
-
     const Particles3D& getParticles() const override;
 
     // Interop

@@ -20,7 +20,6 @@
 #include "simCUDA/constraints/cudaKernelsBounds.cuh"
 
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
-#include "simCUDA/kernels/cudaMouseForce.cuh"
 
 #include "scene/SceneFiller.h"
 
@@ -375,10 +374,3 @@ void SimulationBackendCUDA::setVesselOrientation(const glm::quat& orientation)
     uploadInternalPatches(m_vessel.getWorldInternalPatches());
 }
 
-void SimulationBackendCUDA::applyMouseForce(float worldX, float worldY,
-                                            float radius, float strength,
-                                            int forceType)
-{
-    launchApplyMouseForce(m_deviceParticles, worldX, worldY,
-                         radius, strength, forceType);
-}

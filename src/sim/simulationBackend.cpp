@@ -73,14 +73,6 @@ void SimulationBackend::setXsphViscosity(float v)
     m_impl->setXsphViscosity(v);
 }
 
-void SimulationBackend::applyMouseForce(float worldX, float worldY,
-                                        float radius, float strength,
-                                        int forceType)
-{
-    if (m_impl)
-        m_impl->applyMouseForce(worldX, worldY, radius, strength, forceType);
-}
-
 void SimulationBackend::loadScene(const SceneDescription& desc)
 {
     m_impl->loadScene(desc);
