@@ -15,6 +15,7 @@ void InputManager::update()
 
     upd(GLFW_KEY_SPACE);
     upd(GLFW_KEY_R);
+    upd(GLFW_KEY_RIGHT);
 
     // Mouse buttons
     mousePrev = mouseCurr;

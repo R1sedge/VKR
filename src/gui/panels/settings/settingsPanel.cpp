@@ -8,34 +8,37 @@
 #include <cmath>
 #include <algorithm>
 
+void SettingsPanel::drawSectionHeader(const char* label)
+{
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "%s", label);
+    ImGui::Spacing();
+}
+
 void SettingsPanel::draw(const AppState& state, const Camera3D& camera, AppCommands& commands)
 {
     const ImGuiIO& io = ImGui::GetIO();
     const float dt = io.DeltaTime;
 
-    // Держим панель открытой если:
-    //  - курсор в зоне триггера у левого края, ИЛИ
-    //  - ImGui сейчас обрабатывает активный элемент (слайдер захвачен, кнопка зажата)
-    const float visibleEdge = kPanelW * m_anim;  // реальный правый край панели
+    const float visibleEdge = kPanelW * m_anim;
     const float triggerEdge = std::max(kTriggerX, visibleEdge);
     const bool mouseNear = io.MousePos.x < triggerEdge;
 
-    const float target = mouseNear ? 1.0f : 0.0f;
+    const bool imguiActive = ImGui::IsAnyItemActive(); // слайдер зажат, кнопка держится
+    const bool popupOpen = ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel); // любой popup открыт 
 
-    m_anim += (target - m_anim) * (1.0f - std::exp(-kAnimSpeed * dt));
+    const bool keepOpen = mouseNear || imguiActive || popupOpen;
+    const float target  = keepOpen ? 1.0f : 0.0f;
 
-    // Рисуем хинт у левого края когда панель скрыта
-    if (m_anim < 0.95f)
-        drawEdgeHint(io, mouseNear);
+    if (popupOpen)
+        m_anim = 1.0f;
+    else
+        m_anim += (target - m_anim) * (1.0f - std::exp(-kAnimSpeed * dt));
 
+    if (m_anim < 0.95f) drawEdgeHint(io, mouseNear);
     if (m_anim < 0.002f) return;
 
-    // Позиция: выезжает из-за левого края
-    const float xPos = -kPanelW + kPanelW * m_anim;
-    const float panelH = io.DisplaySize.y;
-
-    ImGui::SetNextWindowPos(ImVec2(xPos, 0.0f),      ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(kPanelW, panelH), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(-kPanelW + kPanelW * m_anim, 0.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(kPanelW, io.DisplaySize.y), ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.88f);
 
     ImGui::Begin("##SettingsPanel", nullptr,
@@ -46,49 +49,34 @@ void SettingsPanel::draw(const AppState& state, const Camera3D& camera, AppComma
         ImGuiWindowFlags_NoFocusOnAppearing
     );
 
-    // Кастомный accent bar на левом краю панели
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImVec2 winPos = ImGui::GetWindowPos();
-    ImVec2 winSize = ImGui::GetWindowSize();
-
-    drawList->AddRectFilledMultiColor(
-        winPos,
-        ImVec2(winPos.x + 3.0f, winPos.y + winSize.y),
-        IM_COL32(60, 120, 200, 255),
-        IM_COL32(60, 120, 200, 255),
-        IM_COL32(40, 80, 160, 255),
-        IM_COL32(40, 80, 160, 255)
+    // Accent bar слева
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImVec2 wp = ImGui::GetWindowPos(), ws = ImGui::GetWindowSize();
+    dl->AddRectFilledMultiColor(
+        wp, ImVec2(wp.x + 3.0f, wp.y + ws.y),
+        IM_COL32(60,120,200,255), IM_COL32(60,120,200,255),
+        IM_COL32(40, 80,160,255), IM_COL32(40, 80,160,255)
     );
 
     ImGui::Spacing();
     {
-        const float titleW = ImGui::CalcTextSize("Settings").x;
-        ImGui::SetCursorPosX((kPanelW - titleW) * 0.5f);
+        const float tw = ImGui::CalcTextSize("Settings").x;
+        ImGui::SetCursorPosX((kPanelW - tw) * 0.5f);
         ImGui::TextColored(ImVec4(0.60f, 0.80f, 1.00f, 1.0f), "Settings");
     }
     ImGui::Spacing();
     ImGui::Separator();
-    ImGui::Spacing();
 
-    drawPbfSection(commands);
+    // ── Блоки в фиксированном порядке ────────────────────────────
+    auto sep = [](){ ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); };
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    drawSimSection(state, commands);
-
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    drawControlsSection();
-
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    drawCameraSection(camera, commands);
+    sep(); drawPbfSection(commands);
+    sep(); drawRuntimeSection(commands);
+    sep(); drawRenderSection(commands);
+    sep(); drawSimSection(state, commands);
+    sep(); drawCameraSection(camera, commands);
+    sep(); drawControlsSection();
+    sep(); drawConstantsSection();
 
     ImGui::Spacing();
     ImGui::End();
@@ -164,7 +152,7 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
 
     ImGui::SetNextItemWidth(innerW);
     if (ImGui::SliderFloat("##RestDensity", &m_restDensity,
-                           500.0f, 2000.0f, "Rest density: %.0f"))
+                           300.0f, 1000.0f, "Rest density: %.0f"))
     {
         commands.hasSetRestDensity = true;
         commands.restDensityValue  = m_restDensity;
@@ -181,6 +169,15 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
     }
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Reduces particle clustering\nat low density regions");
+    
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat("##artificialPressureK", &m_artificialPressureK, 0.0005f, 0.005f, "artificialPressureK: %.4f")) 
+    {
+        commands.hasSetArtificialPressureK = true;
+        commands.artificialPressureK = m_artificialPressureK;
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Artificial pressure strength.\n");
 
     ImGui::Spacing();
     ImGui::SetNextItemWidth(innerW);
@@ -193,7 +190,8 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
         ImGui::SetTooltip("Vorticity Confinement strength.\n"
                         "0 = off\n"
                         "Restores rotational detail lost by numerical damping.");
-    
+
+    ImGui::Spacing();
     ImGui::SetNextItemWidth(innerW);
     if (ImGui::SliderFloat("##XSPH Viscosity", &m_xsphViscosity, 0.0f, 0.6f, "Viscosity: %.2f")) 
     {
@@ -256,6 +254,10 @@ void SettingsPanel::drawControlsSection()
     ImGui::SameLine(80.0f);
     ImGui::Text("Pause");
 
+    ImGui::TextDisabled("Right");
+    ImGui::SameLine(80.0f);
+    ImGui::Text("Step once");
+
     ImGui::TextDisabled("R");
     ImGui::SameLine(80.0f);
     ImGui::Text("Reset");
@@ -282,4 +284,121 @@ void SettingsPanel::drawCameraSection(const Camera3D& camera, AppCommands& comma
         commands.resetCamera = true;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Reset camera to default position");
+}
+
+void SettingsPanel::drawRuntimeSection(AppCommands& commands)
+{
+    const float innerW = kPanelW - 20.0f;
+
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Runtime");
+    ImGui::Spacing();
+
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat3("Gravity", m_gravity, -9.81f, 9.81f))
+    {
+        commands.hasSetGravity = true;
+        commands.gravityX = m_gravity[0];
+        commands.gravityY = m_gravity[1];
+        commands.gravityZ = m_gravity[2];
+    }
+
+    ImGui::Spacing();
+
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat("##MaxSpeed", &m_maxSpeed,
+                           1.0f, 16.0f, "Max speed: %.1f"))
+    {
+        commands.hasSetMaxSpeed = true;
+        commands.maxSpeed = m_maxSpeed;
+    }
+
+    ImGui::Spacing();
+
+    ImGui::SetNextItemWidth(innerW);
+    bool wallChanged = false;
+
+    wallChanged |= ImGui::SliderFloat("##WallRestitution", &m_wallRestitution, 0.0f, 1.0f, "Restitution: %.2f");
+    
+    ImGui::SetNextItemWidth(innerW);
+    wallChanged |= ImGui::SliderFloat("##WallFriction", &m_wallFriction, 0.0f, 1.0f, "Friction: %.2f");
+
+    if (wallChanged)
+    {
+        commands.hasSetWallResponse = true;
+        commands.wallRestitution = m_wallRestitution;
+        commands.wallFriction = m_wallFriction;
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Checkbox("Baffle pair filtering", &m_baffleFiltering))
+    {
+        commands.hasSetBaffleFiltering = true;
+        commands.baffleFilteringEnabled = m_baffleFiltering;
+    }
+}
+
+void SettingsPanel::drawRenderSection(AppCommands& commands)
+{
+    const float innerW = kPanelW - 20.0f;
+
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Rendering");
+    ImGui::Spacing();
+
+    const char* colorModes[] = {
+        "Speed gradient",
+        "Phase colors"
+    };
+
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::Combo("Color mode", &m_particleColorMode, colorModes, 2))
+    {
+        commands.hasSetParticleColorMode = true;
+        commands.particleColorMode = m_particleColorMode;
+    }
+
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::SliderFloat("##MaxGradSpeed", &m_maxGradSpeed,
+                           0.1f, 20.0f, "Speed color scale: %.1f"))
+    {
+        commands.hasSetMaxGradSpeed = true;
+        commands.maxGradSpeed = m_maxGradSpeed;
+    }
+
+    bool colorsChanged = false;
+    colorsChanged |= ImGui::ColorEdit4("Phase 0", m_phase0Color);
+    colorsChanged |= ImGui::ColorEdit4("Phase 1", m_phase1Color);
+
+    if (colorsChanged)
+    {
+        commands.hasSetPhaseColors = true;
+
+        commands.phase0Color = glm::vec4(
+            m_phase0Color[0],
+            m_phase0Color[1],
+            m_phase0Color[2],
+            m_phase0Color[3]
+        );
+
+        commands.phase1Color = glm::vec4(
+            m_phase1Color[0],
+            m_phase1Color[1],
+            m_phase1Color[2],
+            m_phase1Color[3]
+        );
+    }
+}
+
+void SettingsPanel::drawConstantsSection()
+{
+    ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Fixed constants");
+    ImGui::Spacing();
+
+    ImGui::TextDisabled("Particle radius: %.4f", Config::particleRadius);
+    ImGui::TextDisabled("Smoothing radius: %.4f", Config::smoothingRadius);
+    ImGui::TextDisabled("Lambda epsilon: %.1f", Config::epsilon);
+    ImGui::TextDisabled("Iterations: %d", Config::iterations);
+    ImGui::TextDisabled("Artificial deltaQ: %.3f", Config::artificialPressureDeltaQ);
+    ImGui::TextDisabled("Particle mass: %.3f", Config::particleMass);
+    ImGui::TextDisabled("dt: %.5f", Config::dt);
 }

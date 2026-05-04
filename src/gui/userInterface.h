@@ -35,6 +35,11 @@ public:
     void setVorticityEpsilon(float val) { m_settings.setVorticityEpsilon(val); }
     void setXsphViscosity(float val) { m_settings.setXsphViscosity(val); }
 
+    void setGravity(float x, float y, float z) { m_settings.setGravity(x, y, z); }
+    void setMaxSpeed(float val) { m_settings.setMaxSpeed(val); }
+    void setWallResponse(float r, float f) { m_settings.setWallResponse(r, f); }
+    void setArtificialPressureK(float val) { m_settings.setArtificialPressureK(val); }
+
     void setSceneIndex(int idx) { m_scenes.setSceneIndex(idx); }
 
 private:

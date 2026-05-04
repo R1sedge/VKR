@@ -146,6 +146,9 @@ void App::mainLoop()
 
         if (m_input.justPressed(GLFW_KEY_SPACE)) cmd.togglePause = true;
         if (m_input.justPressed(GLFW_KEY_R)) cmd.reset = true;
+        if (m_input.justPressed(GLFW_KEY_RIGHT)) cmd.stepOnce = true;
+
+        const bool pausedForInput = cmd.togglePause ? !m_state.paused : m_state.paused;
 
         // Отклик на мышь
         // ЛКМ — вращение камеры
@@ -163,7 +166,7 @@ void App::mainLoop()
                 m_camera.orbit(-dx * kCameraOrbitSensitivity, dy * kCameraOrbitSensitivity);
             }
 
-            if (m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
+            if (!pausedForInput && m_input.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
             {
                 rotateVesselFromMouseDrag(dx, dy);
             }
@@ -236,7 +239,7 @@ void App::applyCommands(AppCommands& cmd)
 {
     if (cmd.togglePause) m_state.paused = !m_state.paused;
     if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
-
+    
     if (cmd.hasSetRestDensity)
         Config::restDensity = cmd.restDensityValue;
 
@@ -247,10 +250,16 @@ void App::applyCommands(AppCommands& cmd)
     }
 
     if (cmd.hasSetVorticity)
-        m_sim.setVorticityEpsilon(cmd.vorticityEpsilon);
+    {
+        Config::vorticityEpsilon = cmd.vorticityEpsilon;
+        m_sim.setVorticityEpsilon(Config::vorticityEpsilon);
+    }
 
     if (cmd.hasSetXSPH)
-        m_sim.setXsphViscosity(cmd.xsphViscosity);
+    {
+        Config::xsphViscosity = cmd.xsphViscosity;
+        m_sim.setXsphViscosity(Config::xsphViscosity);
+    }
 
     if (cmd.hasSetScene) 
     {
@@ -267,6 +276,7 @@ void App::applyCommands(AppCommands& cmd)
         }
 
         resetSceneRuntimeState();
+        syncGuiWithConfig();
     }
 
     if (cmd.reset)
@@ -281,10 +291,65 @@ void App::applyCommands(AppCommands& cmd)
         }
 
         resetSceneRuntimeState();
+        syncGuiWithConfig();
     }
 
     if (cmd.resetCamera) {
         m_camera.reset();
+    }
+
+    if (cmd.hasSetGravity)
+    {
+        Config::gravityX = cmd.gravityX;
+        Config::gravityY = cmd.gravityY;
+        Config::gravityZ = cmd.gravityZ;
+
+        m_sceneRuntime.gravityWorld = {
+            cmd.gravityX,
+            cmd.gravityY,
+            cmd.gravityZ
+        };
+    }
+
+    if (cmd.hasSetArtificialPressureK)
+    {
+        Config::artificialPressureK = cmd.artificialPressureK;
+
+        if (m_state.artPressureEnabled)
+            m_sim.setArtificialPressureK(Config::artificialPressureK);
+    }
+
+    if (cmd.hasSetMaxSpeed)
+    {
+        Config::maxSpeed = cmd.maxSpeed;
+    }
+
+    if (cmd.hasSetWallResponse)
+    {
+        Config::wallRestitution = cmd.wallRestitution;
+        Config::wallFriction = cmd.wallFriction;
+    }
+
+    if (cmd.hasSetBaffleFiltering)
+    {
+        Config::enableBafflePairFiltering = cmd.baffleFilteringEnabled;
+    }
+
+    if (cmd.hasSetParticleColorMode)
+    {
+        Config::particleColorMode = cmd.particleColorMode;
+    }
+
+    if (cmd.hasSetMaxGradSpeed)
+    {
+        Config::maxGradSpeed = cmd.maxGradSpeed;
+        m_renderer.setMaxSpeed(Config::maxGradSpeed);
+    }
+
+    if (cmd.hasSetPhaseColors)
+    {
+        Config::phase0Color = cmd.phase0Color;
+        Config::phase1Color = cmd.phase1Color;
     }
 }
 
@@ -380,6 +445,17 @@ bool App::initializeScene(int idx)
 
     resetSceneRuntimeState();
     return true;
+}
+
+void App::syncGuiWithConfig()
+{
+    m_gui.setRestDensity(Config::restDensity);
+    m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
+    m_gui.setXsphViscosity(Config::xsphViscosity);
+    m_gui.setGravity(Config::gravityX, Config::gravityY, Config::gravityZ);
+    m_gui.setMaxSpeed(Config::maxSpeed);
+    m_gui.setWallResponse(Config::wallRestitution, Config::wallFriction);
+    m_gui.setArtificialPressureK(Config::artificialPressureK);
 }
 
 void App::rotateVesselFromMouseDrag(float dxPixels, float dyPixels)

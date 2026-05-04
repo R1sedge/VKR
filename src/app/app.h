@@ -39,6 +39,8 @@ private:
     bool setWindow();
     bool initializeIMGUI(int idx);
     bool initializeCamera();
+
+    void syncGuiWithConfig();
     
     bool initializeScene(int idx);
     
