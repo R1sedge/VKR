@@ -3,12 +3,14 @@
 #include <vector>
 
 #include "common/Config.h"
+#include "data/particleData.h"
+#include "scene/boundary/boundaryPlane.h"
+#include "scene/boundary/vesselBoundary.h"
+#include "scene/sceneDescription.h"
 #include "sim/simulationBackend.h"
 #include "sim/structs.h"
-#include "simCPU/neighborSearch/pairsGrid.h"
 #include "simCPU/constraints/boxBounds.h"
-#include "simCPU/constraints/circleCollision.h"
-#include "scene/SceneFiller.h"
+#include "simCPU/neighborSearch/pairsGrid.h"
 
 class SimulationBackendCPU final : public ISimulationBackendImpl
 {
@@ -17,48 +19,69 @@ public:
 
     void reset() override;
     void update(float dt) override;
-    void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
-    void loadScene(const SceneDescription& desc) override;
 
-    const Particles3D& getParticles() const override { return particles; }
+    void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
+
+    void loadScene(const SceneDescription& desc) override;
+    void setVesselOrientation(const glm::quat& orientation) override;
+
+    void setArtificialPressureK(float k) override { m_artPressureK = k; }
+    void setVorticityEpsilon(float e) override { m_vorticityEpsilon = e; }
+    void setXsphViscosity(float c) override { m_xsphViscosity = c; }
+
+    const Particles3D& getParticles() const override { return m_particles; }
 
     void setIterations(int iter) { iterations = iter; }
     void configureGrid(float left, float right, float bottom, float top, float cellSize);
-    void setVelocityDamping(float d) { velocityDamping = d; }
+    void setVelocityDamping(float d) { m_velocityDamping = d; }
 
     const std::vector<int>& getNeighborOffsets() const { return neighborOffsets; }
     const std::vector<int>& getNeighborIds() const { return neighborIds; }
 
 private:
-    int iterations = Config::iterations;
-    float velocityDamping = 0.003f;
+    void refreshSceneCaches();
+    void refreshCachedKernelConstants();
 
-    Particles3D particles;
-    BoxBoundsConstraint2D boxConstraint;
-    CircleCollisionConstraint2D circleCollision;
-
-    std::vector<CollisionPair> collisionPairs;
-    UniformGrid2D grid;
-
-    // CSR Список соседей для PBF:
-    // Соседи частицы i в промежутке [neighborOffsets[i], neighborOffsets[i + 1])
-    std::vector<int> neighborOffsets;
-    std::vector<int> neighborIds;
-
-private:
-    // общие PBD/PBF стадии 
     void beginStep();
     void predictPositions(float dt);
 
     void buildBroadphase();
-    void buildCollisionPairs();
     void buildNeighbors();
 
     void finalizeVelocities(float dt);
 
-    // PBF стадии
-    void computeDensity();
-    void computeLambda();
-    void computeDeltaPositions();
-    void applyDeltaPositions();
+private:
+    int iterations = Config::iterations;
+
+    Particles3D m_particles;
+
+    // Legacy CPU bounds. На этапе 4 заменим на CPU projection to vessel planes.
+    BoxBoundsConstraint2D m_boxConstraint;
+
+    // Пока legacy 2D grid, но neighbor distance уже 3D.
+    // На этапе 2 заменим на UniformGrid3D.
+    UniformGrid2D m_grid;
+
+    // CSR список соседей:
+    // соседи частицы i лежат в [neighborOffsets[i], neighborOffsets[i + 1]).
+    std::vector<int> neighborOffsets;
+    std::vector<int> neighborIds;
+
+    VesselBoundary m_vessel;
+    std::vector<BoundaryPlane> m_worldPlanesCache;
+    std::vector<InternalBoundaryPatch> m_worldInternalPatchesCache;
+
+    AABB m_gridBounds = { -3.0f, 3.0f, -3.0f, 3.0f, -2.0f, 2.0f };
+
+    SceneDescription m_loadedScene;
+    bool m_hasLoadedScene = false;
+
+    float m_velocityDamping = 0.0001f;
+
+    float m_artPressureK = Config::artificialPressureK;
+    float m_cachedWDeltaQ = 0.0f;
+
+    // Пока не используются. Будут подключены на этапе 5.
+    float m_vorticityEpsilon = Config::vorticityEpsilon;
+    float m_xsphViscosity = Config::xsphViscosity;
 };

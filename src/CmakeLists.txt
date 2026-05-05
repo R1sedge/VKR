@@ -25,10 +25,11 @@ add_executable(Simulation
     scene/boundary/boundaryPlane.h
     scene/boundary/vesselBoundary.h
     scene/boundary/vesselBoundary.cpp
+    scene/boundary/vesselWireframe.h
 
     gui/userInterface.h
     gui/userInterface.cpp
-    
+
     gui/panels/fps/fpsOverlay.h
     gui/panels/fps/fpsOverlay.cpp
     gui/panels/settings/settingsPanel.h
@@ -44,7 +45,7 @@ add_executable(Simulation
     render/renderer.h
     render/renderer.cpp
     render/Camera3D.h
-    render/Camera3D.cpp
+    render/camera3D.cpp
 
     Input/inputManager.cpp
     Input/inputManager.h
@@ -59,6 +60,9 @@ add_executable(Simulation
 
     simCPU/fluid/sphKernels.h
 
+    simCPU/kernels/cpuKernelsBasic.cpp
+    simCPU/kernels/cpuKernelsBasic.h
+
     simCPU/neighborSearch/pairsGrid.cpp
     simCPU/neighborSearch/pairsGrid.h
     simCPU/neighborSearch/pairsNaive.cpp
@@ -69,10 +73,19 @@ add_executable(Simulation
     simCPU/constraints/circleCollision.cpp
     simCPU/constraints/circleCollision.h
 
-    
+    simCPU/pbf/cpuPbfDeltaPositions.cpp
+    simCPU/pbf/cpuPbfDeltaPositions.h
+    simCPU/pbf/cpuPbfDensity.cpp
+    simCPU/pbf/cpuPbfDensity.h
+    simCPU/pbf/cpuPbfLambda.cpp
+    simCPU/pbf/cpuPbfLambda.h
+
+    simCPU/utils/cpuSphKernels.h
+
     simCUDA/simulationBackendCUDA.cpp
     simCUDA/simulationBackendCUDA.h
 
+    simCUDA/utils/cudaBoundaryPlane.cuh
     simCUDA/utils/cudaCheck.h
     simCUDA/utils/cudaMemUtils.cuh
     simCUDA/utils/cudaUtils.cuh
@@ -80,9 +93,14 @@ add_executable(Simulation
     simCUDA/utils/cudaParticles.cuh
     simCUDA/utils/cudaInternalBoundaryStorage.cuh
     simCUDA/utils/cudaInternalBoundaryStorage.cu
+    simCUDA/utils/cudaInternalBoundarySymbols.cuh
+    simCUDA/utils/cudaInternalBoundaryUtils.cuh
+    simCUDA/utils/cudaSphKernels.cuh
 
     simCUDA/kernels/cudaKernelsBasic.cuh
     simCUDA/kernels/cudaKernelsBasic.cu
+    simCUDA/kernels/cudaFillInstanceData.cuh
+    simCUDA/kernels/cudaFillInstanceData.cu
 
     simCUDA/pbf/cudaPbfDensity.cuh
     simCUDA/pbf/cudaPbfDensity.cu
@@ -94,8 +112,6 @@ add_executable(Simulation
     simCUDA/pbf/cudaVorticity.cu
     simCUDA/pbf/cudaXSPH.cuh
     simCUDA/pbf/cudaXSPH.cu
-
-    simCUDA/kernels/cudaFillInstanceData.cu
 
     simCUDA/constraints/cudaKernelsBounds.cuh
     simCUDA/constraints/cudaKernelsBounds.cu
@@ -111,13 +127,14 @@ add_executable(Simulation
 # Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)
 target_link_libraries(Simulation
     PRIVATE
-        glfw               # glfw3::glfw может называться просто glfw 
-        glad::glad         # загрузчик OpenGL 
-        glm::glm           # математика для рендера 
-        Eigen3::Eigen      # математика для физики 
+        glfw               # glfw3::glfw может называться просто glfw
+        glad::glad         # загрузчик OpenGL
+        glm::glm           # математика для рендера
+        Eigen3::Eigen      # математика для физики
         OpenGL::GL         # сам OpenGL
-        imgui::imgui 
+        imgui::imgui
         CUDA::cudart
+        OpenMP::OpenMP_CXX
 )
 
 target_compile_definitions(Simulation PRIVATE SIM_WITH_IMGUI=1)
@@ -129,6 +146,21 @@ set_target_properties(Simulation PROPERTIES
     CUDA_STANDARD 17
     CUDA_STANDARD_REQUIRED ON
 )
+
+if(MSVC)
+    target_compile_options(Simulation PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:/O2>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:/fp:fast>
+        $<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>
+        $<$<COMPILE_LANGUAGE:CXX>:/openmp>
+    )
+else()
+    target_compile_options(Simulation PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:-O3>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:-ffast-math>
+        $<$<COMPILE_LANGUAGE:CXX>:-march=native>
+    )
+endif()
 
 # Общие include-пути, чтобы можно было писать #include "app/app.h" и т.п.
 target_include_directories(Simulation

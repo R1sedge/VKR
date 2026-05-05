@@ -33,7 +33,7 @@ namespace
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
-      m_backendType(SimulationBackendType::CUDA),
+      m_backendType(SimulationBackendType::CPU),
       m_sim(m_backendType),
       m_gui(),
       m_input(),
@@ -122,7 +122,6 @@ bool App::initialize()
 void App::mainLoop()
 {
     const double dt = Config::dt;
-    const double maxFrameTime = 0.25;
 
     m_previousTime = glfwGetTime();
 
@@ -134,10 +133,7 @@ void App::mainLoop()
         double currentTime = glfwGetTime();
         double frameTime = currentTime - m_previousTime;
         m_previousTime = currentTime;
-
-        if (frameTime > maxFrameTime) 
-            frameTime = maxFrameTime;
-
+        
         m_gui.setFrameTiming(frameTime);
 
         AppCommands cmd;
