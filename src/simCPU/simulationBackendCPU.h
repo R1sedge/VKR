@@ -9,7 +9,6 @@
 #include "scene/sceneDescription.h"
 #include "sim/simulationBackend.h"
 #include "sim/structs.h"
-#include "simCPU/constraints/boxBounds.h"
 #include "simCPU/neighborSearch/neighborsGrid.h"
 
 class SimulationBackendCPU final : public ISimulationBackendImpl
@@ -53,13 +52,12 @@ private:
 
     void finalizeVelocities(float dt);
 
+    void projectBoundaries();
+
 private:
     int iterations = Config::iterations;
 
     Particles3D m_particles;
-
-    // Legacy CPU bounds. На этапе 4 заменим на CPU projection to vessel planes.
-    BoxBoundsConstraint2D m_boxConstraint;
 
     UniformGrid3D m_grid;
 

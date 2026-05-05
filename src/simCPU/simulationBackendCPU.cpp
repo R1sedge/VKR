@@ -9,13 +9,13 @@
 #include "scene/SceneFiller.h"
 
 #include "simCPU/kernels/cpuKernelsBasic.h"
+#include "simCPU/constraints/cpuKernelsBounds.h"
 #include "simCPU/pbf/cpuPbfDensity.h"
 #include "simCPU/pbf/cpuPbfLambda.h"
 #include "simCPU/pbf/cpuPbfDeltaPositions.h"
 #include "simCPU/utils/cpuSphKernels.h"
 
 SimulationBackendCPU::SimulationBackendCPU()
-    : m_boxConstraint(0.0f, 0.0f, 0.0f, 0.0f)
 {
     refreshCachedKernelConstants();
     reset();
@@ -60,8 +60,6 @@ void SimulationBackendCPU::setWorldBounds(float left, float right,
         bottom, top,
         front, back
     };
-
-    m_boxConstraint.setBounds(left, right, bottom, top);
 
     const float cellSize = Config::smoothingRadius;
 
@@ -115,9 +113,7 @@ void SimulationBackendCPU::update(float dt)
 
         CpuPBF::applyDeltaPositions(m_particles);
 
-        // Временный legacy fallback.
-        // На этапе 4 заменим на projectToVesselPlanes + internal patches.
-        m_boxConstraint.project(m_particles);
+        projectBoundaries();
     }
 
     finalizeVelocities(dt);
@@ -163,6 +159,34 @@ void SimulationBackendCPU::buildNeighbors()
         m_worldInternalPatchesCache,
         neighborOffsets,
         neighborIds);
+}
+
+void SimulationBackendCPU::projectBoundaries()
+{
+    if (!m_worldPlanesCache.empty())
+    {
+        CpuBounds::projectToVesselPlanes(
+            m_particles,
+            m_worldPlanesCache,
+            Config::particleRadius);
+    }
+    else
+    {
+        CpuBounds::projectBounds(
+            m_particles,
+            m_gridBounds.xMin,
+            m_gridBounds.xMax,
+            m_gridBounds.yMin,
+            m_gridBounds.yMax,
+            m_gridBounds.zMin,
+            m_gridBounds.zMax,
+            Config::particleRadius);
+    }
+
+    CpuBounds::projectToInternalPatches(
+        m_particles,
+        m_worldInternalPatchesCache,
+        Config::particleRadius);
 }
 
 void SimulationBackendCPU::loadScene(const SceneDescription& desc)

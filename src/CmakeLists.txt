@@ -73,7 +73,9 @@ add_executable(Simulation
     simCPU/constraints/boxBounds.h
     simCPU/constraints/circleCollision.cpp
     simCPU/constraints/circleCollision.h
-
+    simCPU/constraints/cpuKernelsBounds.h
+    simCPU/constraints/cpuKernelsBounds.cpp
+    
     simCPU/pbf/cpuPbfDeltaPositions.cpp
     simCPU/pbf/cpuPbfDeltaPositions.h
     simCPU/pbf/cpuPbfDensity.cpp
