@@ -31,6 +31,8 @@ SimulationBackendCUDA::SimulationBackendCUDA()
 
 SimulationBackendCUDA::~SimulationBackendCUDA()
 {
+    unregisterInterop();
+
     releaseVesselPlanes();
 
     freeDeviceUniformGrid(m_grid);
@@ -49,8 +51,7 @@ void SimulationBackendCUDA::releaseVesselPlanes()
     m_vesselPlaneCount = 0;
 }
 
-void SimulationBackendCUDA::uploadInternalPatches(
-    const std::vector<InternalBoundaryPatch>& patches)
+void SimulationBackendCUDA::uploadInternalPatches(const std::vector<InternalBoundaryPatch>& patches)
 {
     if (patches.empty())
     {

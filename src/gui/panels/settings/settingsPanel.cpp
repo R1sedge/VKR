@@ -207,7 +207,39 @@ void SettingsPanel::drawPbfSection(AppCommands& commands)
 //  Секция управления симуляцией
 void SettingsPanel::drawSimSection(const AppState& state, AppCommands& commands)
 {
+    const float innerW = kPanelW - 20.0f;
+
     ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.00f, 1.0f), "Simulation");
+    ImGui::Spacing();
+
+    m_backendType = state.backendType;
+
+    const char* backendNames[] = {
+        "CPU",
+        "CUDA"
+    };
+
+    int backendIndex = (m_backendType == SimulationBackendType::CUDA) ? 1 : 0;
+
+    ImGui::SetNextItemWidth(innerW);
+    if (ImGui::Combo("Backend", &backendIndex, backendNames, 2))
+    {
+        m_backendType = (backendIndex == 1)
+            ? SimulationBackendType::CUDA
+            : SimulationBackendType::CPU;
+
+        commands.hasSetBackend = true;
+        commands.backendType = m_backendType;
+    }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip(
+            "CPU backend uses host Particles3D and fallback VBO upload.\n"
+            "CUDA backend uses CUDA kernels and CUDA-OpenGL interop."
+        );
+    }
+
     ImGui::Spacing();
 
     bool pausedLocal = state.paused;
@@ -220,9 +252,12 @@ void SettingsPanel::drawSimSection(const AppState& state, AppCommands& commands)
     ImGui::Spacing();
 
     const float btnW = (kPanelW - 28.0f) * 0.5f;
+
     if (ImGui::Button("Step once", ImVec2(btnW, 0)))
         commands.stepOnce = true;
+
     ImGui::SameLine();
+
     if (ImGui::Button("Reset (R)", ImVec2(btnW, 0)))
         commands.reset = true;
 }

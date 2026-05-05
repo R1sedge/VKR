@@ -28,6 +28,15 @@ void SimulationBackend::createImplementation()
     }
 }
 
+void SimulationBackend::switchTo(SimulationBackendType type)
+{
+    if (m_type == type && m_impl)
+        return;
+
+    m_type = type;
+    createImplementation();
+}
+
 void SimulationBackend::reset()
 {
     m_impl->reset();

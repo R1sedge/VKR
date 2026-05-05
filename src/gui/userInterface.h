@@ -1,6 +1,8 @@
 #pragma once
 #include <GLFW/glfw3.h>
 
+#include "sim/simulationBackendType.h"
+
 #include "gui/timing/frameTimer.h"
 #include "gui/panels/fps/fpsOverlay.h"
 #include "gui/panels/stats/statsPanel.h"
@@ -26,6 +28,8 @@ public:
     void setFrameTiming(double frameTimeSeconds);
     void setPhysicsTiming(double seconds);
     void setRenderTiming(double seconds);
+
+    void setBackendType(SimulationBackendType type) { m_settings.setBackendType(type); }
 
     void setSimulationDt(float dt) { m_simDt = dt; }
     void setParticleCount(int count) { m_fps.setParticleCount(count); }

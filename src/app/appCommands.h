@@ -3,6 +3,7 @@
 #include <glm/vec4.hpp>
 
 #include "common/Config.h"
+#include "sim/simulationBackendType.h"
 
 struct AppCommands
 {
@@ -14,6 +15,10 @@ struct AppCommands
 
     bool stepOnce = false;
     bool reset = false;
+
+    // Backend
+    bool hasSetBackend = false;
+    SimulationBackendType backendType = SimulationBackendType::CUDA;
 
     // PBF
     bool hasSetRestDensity = false;
@@ -67,5 +72,5 @@ struct AppCommands
     bool hasSetBaffleFiltering = false;
     bool baffleFilteringEnabled = Config::enableBafflePairFiltering;
 
-    void clear() {*this = AppCommands();}
+    void clear() { *this = AppCommands(); }
 };

@@ -76,7 +76,8 @@ add_executable(Simulation
     simCPU/pbf/cpuVorticity.h
     simCPU/pbf/cpuXSPH.cpp
     simCPU/pbf/cpuXSPH.h
-
+    
+    simCPU/utils/cpuInternalBoundaryUtils.h
     simCPU/utils/cpuSphKernels.h
 
     simCUDA/simulationBackendCUDA.cpp

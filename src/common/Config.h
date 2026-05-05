@@ -10,8 +10,8 @@ namespace Config
     inline float fovY = 60.0f;         // Угол обзора камеры (градусы)
     inline float cameraDist = 5.0f;    // Начальное расстояние камеры до цели
 
-    inline glm::vec4 phase0Color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-    inline glm::vec4 phase1Color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    inline glm::vec4 phase0Color = glm::vec4(0.1f, 0.6f, 0.9f, 1.0f);
+    inline glm::vec4 phase1Color = glm::vec4(0.92f, 0.88f, 0.7f, 1.0f);
 
     inline float maxGradSpeed = 4.0f;
 

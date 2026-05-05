@@ -3,6 +3,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include <cmath>
+#include <vector>
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
@@ -221,47 +223,48 @@ void Renderer::initGeometry()
 
 void Renderer::renderFrame(const Particles3D& particles)
 {
-	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);;
+    glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	int n = particles.count;
-    if (n == 0)
+    const int n = particles.count;
+    if (n <= 0)
         return;
 
-	glUseProgram(shaderProgram);
-	
-	//setCircleRadius(1.0f);
+    glUseProgram(shaderProgram);
 
-	// Собираем данные (x, y, z=0, radius, speed)
-	std::vector<float> instanceData;
-	instanceData.resize(n * 5);
+    ensureInstanceBufferSize(n);
 
-	float radius = Config::particleRadius;
-	for (int i = 0; i < n; ++i)
+    std::vector<float> instanceData;
+    instanceData.resize(static_cast<size_t>(n) * 5u);
+
+    for (int i = 0; i < n; ++i)
     {
-		float vx = particles.vx[i];
-        float vy = particles.vy[i];
-        float vz = particles.vz[i];
-        float speed = std::sqrt(vx*vx + vy*vy + vz*vz);
+        const float vx = particles.vx[i];
+        const float vy = particles.vy[i];
+        const float vz = particles.vz[i];
 
-		instanceData[5 * i + 0] = particles.x[i];
-		instanceData[5 * i + 1] = particles.y[i];
-		instanceData[5 * i + 2] = particles.z[i];
-		instanceData[5 * i + 3] = static_cast<float>(particles.phase[i]);
-		instanceData[5 * i + 4] = speed;
-	}
+        const float speed = std::sqrt(vx * vx + vy * vy + vz * vz);
 
-	// Переносим данные в InstanceVBO
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, 
-				 instanceData.size() * sizeof(float),
-				 instanceData.data(),
-				 GL_STREAM_DRAW);
+        instanceData[5 * i + 0] = particles.x[i];
+        instanceData[5 * i + 1] = particles.y[i];
+        instanceData[5 * i + 2] = particles.z[i];
+        instanceData[5 * i + 3] = static_cast<float>(particles.phase[i]);
+        instanceData[5 * i + 4] = speed;
+    }
 
-	// Рисуем
-	glBindVertexArray(vao);
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, n);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferSubData(
+        GL_ARRAY_BUFFER,
+        0,
+        static_cast<GLsizeiptr>(instanceData.size() * sizeof(float)),
+        instanceData.data()
+    );
 
+    glBindVertexArray(vao);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, n);
+    glBindVertexArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Renderer::setMaxSpeed(float maxSpeed)

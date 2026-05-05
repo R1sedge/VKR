@@ -234,6 +234,12 @@ void App::render()
 void App::applyCommands(AppCommands& cmd)
 {
     if (cmd.togglePause) m_state.paused = !m_state.paused;
+
+    if (cmd.hasSetBackend)
+    {
+        switchBackend(cmd.backendType);
+    }
+
     if (cmd.hasSetPaused) m_state.paused = cmd.setPausedValue;
     
     if (cmd.hasSetRestDensity)
@@ -257,36 +263,20 @@ void App::applyCommands(AppCommands& cmd)
         m_sim.setXsphViscosity(Config::xsphViscosity);
     }
 
-    if (cmd.hasSetScene) 
+    if (cmd.hasSetScene)
     {
         m_state.activeSceneIndex = cmd.sceneIndex;
         m_activeSceneDesc = ScenePresets::getByIndex(cmd.sceneIndex);
 
-        m_sim.loadScene(m_activeSceneDesc);
-        m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+        reloadActiveScene(true);
 
-        if (m_interopEnabled) 
-        {
-            m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
-            m_sim.resetInterop(m_renderer.getInstanceVBO());
-        }
-
-        resetSceneRuntimeState();
         syncGuiWithConfig();
     }
 
     if (cmd.reset)
     {
-        m_sim.loadScene(m_activeSceneDesc);
-        m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+        reloadActiveScene(true);
 
-        if (m_interopEnabled)
-        {
-            m_renderer.ensureInstanceBufferSize(m_sim.getParticles().count);
-            m_sim.resetInterop(m_renderer.getInstanceVBO());
-        }
-
-        resetSceneRuntimeState();
         syncGuiWithConfig();
     }
 
@@ -409,6 +399,7 @@ bool App::initializeIMGUI(int idx)
     m_gui.setRestDensity(Config::restDensity);
     m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
     m_gui.setXsphViscosity(Config::xsphViscosity);
+    m_gui.setBackendType(m_backendType);
 
     m_gui.setSceneIndex(idx);
 
@@ -427,19 +418,13 @@ bool App::initializeCamera()
 
 bool App::initializeScene(int idx)
 {
+    m_state.activeSceneIndex = idx;
+    m_state.backendType = m_backendType;
+
     m_activeSceneDesc = ScenePresets::getByIndex(idx);
 
-    m_sim.loadScene(m_activeSceneDesc);
-    m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+    reloadActiveScene(true);
 
-    if (m_backendType == SimulationBackendType::CUDA)
-    {
-        int n = m_sim.getParticles().count;
-        m_renderer.ensureInstanceBufferSize(n);
-        m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
-    }
-
-    resetSceneRuntimeState();
     return true;
 }
 
@@ -448,6 +433,8 @@ void App::syncGuiWithConfig()
     m_gui.setRestDensity(Config::restDensity);
     m_gui.setVorticityEpsilon(Config::vorticityEpsilon);
     m_gui.setXsphViscosity(Config::xsphViscosity);
+    m_gui.setBackendType(m_backendType);
+
     m_gui.setGravity(Config::gravityX, Config::gravityY, Config::gravityZ);
     m_gui.setMaxSpeed(Config::maxSpeed);
     m_gui.setWallResponse(Config::wallRestitution, Config::wallFriction);
@@ -494,4 +481,62 @@ void App::setRuntimeVesselOrientation(const glm::quat& q)
 {
     m_sceneRuntime.vesselOrientation = glm::normalize(q);
     applySceneRuntimeState();
+}
+
+void App::reloadActiveScene(bool resetRuntimeState)
+{
+    m_sim.loadScene(m_activeSceneDesc);
+    m_renderer.uploadVesselWireframe(m_activeSceneDesc.vessel.wireframe);
+
+    if (resetRuntimeState)
+        resetSceneRuntimeState();
+    else
+        applySceneRuntimeState();
+
+    syncBackendWithConfig();
+    setupInteropForCurrentBackend();
+}
+
+void App::setupInteropForCurrentBackend()
+{
+    m_interopEnabled = false;
+
+    if (m_backendType != SimulationBackendType::CUDA)
+        return;
+
+    const int n = m_sim.getParticles().count;
+
+    m_renderer.ensureInstanceBufferSize(n);
+    m_interopEnabled = m_sim.setupInterop(m_renderer.getInstanceVBO());
+}
+
+void App::syncBackendWithConfig()
+{
+    m_sim.setArtificialPressureK(
+        m_state.artPressureEnabled ? Config::artificialPressureK : 0.0f
+    );
+
+    m_sim.setVorticityEpsilon(Config::vorticityEpsilon);
+    m_sim.setXsphViscosity(Config::xsphViscosity);
+
+    m_renderer.setMaxSpeed(Config::maxGradSpeed);
+}
+
+void App::switchBackend(SimulationBackendType type)
+{
+    if (m_backendType == type)
+        return;
+
+    m_interopEnabled = false;
+
+    m_backendType = type;
+    m_state.backendType = type;
+
+    m_sim.switchTo(type);
+
+    m_gui.setBackendType(type);
+
+    // Сцену перезагружаем, но runtime-состояние сосуда сохраняем:
+    // это удобно для сравнения CPU/CUDA на одной ориентации.
+    reloadActiveScene(false);
 }

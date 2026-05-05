@@ -36,8 +36,11 @@ class SimulationBackend
 public:
     explicit SimulationBackend(SimulationBackendType type = SimulationBackendType::CUDA);
 
+    void switchTo(SimulationBackendType type);
+
     void reset();
     void update(float dt);
+
     void setWorldBounds(float left, float right, float bottom, float top, float front, float back);
 
     const Particles3D& getParticles() const;
@@ -47,11 +50,11 @@ public:
 
     bool setupInterop(unsigned int vbo);
     void resetInterop(unsigned int vbo);
-    
+
     void setArtificialPressureK(float k);
     void setVorticityEpsilon(float e);
     void setXsphViscosity(float c);
-    
+
     void setVesselOrientation(const glm::quat& orientation);
 
     void loadScene(const SceneDescription& desc);

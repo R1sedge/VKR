@@ -30,7 +30,7 @@ private:
     void mainLoop();
     void update(float dt);
     void render();
-    
+
     void applyCommands(AppCommands& cmd);
 
     bool initializeGLFW();
@@ -41,9 +41,13 @@ private:
     bool initializeCamera();
 
     void syncGuiWithConfig();
-    
+    void syncBackendWithConfig();
+
     bool initializeScene(int idx);
-    
+    void reloadActiveScene(bool resetRuntimeState);
+    void setupInteropForCurrentBackend();
+    void switchBackend(SimulationBackendType type);
+
     void rotateVesselFromMouseDrag(float dxPixels, float dyPixels);
 
     void resetSceneRuntimeState();
