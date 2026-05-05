@@ -10,7 +10,7 @@
 #include "sim/simulationBackend.h"
 #include "sim/structs.h"
 #include "simCPU/constraints/boxBounds.h"
-#include "simCPU/neighborSearch/pairsGrid.h"
+#include "simCPU/neighborSearch/neighborsGrid.h"
 
 class SimulationBackendCPU final : public ISimulationBackendImpl
 {
@@ -32,7 +32,10 @@ public:
     const Particles3D& getParticles() const override { return m_particles; }
 
     void setIterations(int iter) { iterations = iter; }
-    void configureGrid(float left, float right, float bottom, float top, float cellSize);
+    void configureGrid(float left, float right,
+                   float bottom, float top,
+                   float front, float back,
+                   float cellSize);
     void setVelocityDamping(float d) { m_velocityDamping = d; }
 
     const std::vector<int>& getNeighborOffsets() const { return neighborOffsets; }
@@ -58,9 +61,7 @@ private:
     // Legacy CPU bounds. На этапе 4 заменим на CPU projection to vessel planes.
     BoxBoundsConstraint2D m_boxConstraint;
 
-    // Пока legacy 2D grid, но neighbor distance уже 3D.
-    // На этапе 2 заменим на UniformGrid3D.
-    UniformGrid2D m_grid;
+    UniformGrid3D m_grid;
 
     // CSR список соседей:
     // соседи частицы i лежат в [neighborOffsets[i], neighborOffsets[i + 1]).

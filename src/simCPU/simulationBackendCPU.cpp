@@ -63,16 +63,17 @@ void SimulationBackendCPU::setWorldBounds(float left, float right,
 
     m_boxConstraint.setBounds(left, right, bottom, top);
 
-    // В CUDA grid cell size = smoothingRadius.
-    // Пока CPU еще использует legacy UniformGrid2D, но bounds/cellSize уже синхронизированы
-    // с CUDA-подходом; полноценный 3D grid будет на этапе 2.
     const float cellSize = Config::smoothingRadius;
-    configureGrid(left, right, bottom, top, cellSize);
+
+    configureGrid(left, right, bottom, top, front, back, cellSize);
 }
 
-void SimulationBackendCPU::configureGrid(float left, float right, float bottom, float top, float cellSize)
+void SimulationBackendCPU::configureGrid(float left, float right,
+                                         float bottom, float top,
+                                         float front, float back,
+                                         float cellSize)
 {
-    m_grid.rebuild(left, right, bottom, top, cellSize);
+    m_grid.rebuild(left, right, bottom, top, front, back, cellSize);
 }
 
 void SimulationBackendCPU::update(float dt)
@@ -153,114 +154,15 @@ void SimulationBackendCPU::buildBroadphase()
 
 void SimulationBackendCPU::buildNeighbors()
 {
-    const int n = m_particles.count;
-    neighborOffsets.assign(n + 1, 0);
-    neighborIds.clear();
-
-    if (n == 0)
-        return;
-
-    const float h = Config::smoothingRadius;
-    const float h2 = h * h;
-
-    if (m_grid.totalCells == 0 || m_grid.cellSize <= 0.0f)
-        return;
-
-    const int searchRadiusCells =
-        std::max(1, static_cast<int>(std::ceil(h / m_grid.cellSize)));
-
-    std::vector<int> counts(n, 0);
-
-    for (int i = 0; i < n; ++i)
-    {
-        const int cell = m_grid.particleCell[i];
-        const int cx = cell % m_grid.cellsX;
-        const int cy = cell / m_grid.cellsX;
-
-        int count = 0;
-
-        const int minCy = std::max(0, cy - searchRadiusCells);
-        const int maxCy = std::min(m_grid.cellsY - 1, cy + searchRadiusCells);
-        const int minCx = std::max(0, cx - searchRadiusCells);
-        const int maxCx = std::min(m_grid.cellsX - 1, cx + searchRadiusCells);
-
-        for (int ny = minCy; ny <= maxCy; ++ny)
-        {
-            for (int nx = minCx; nx <= maxCx; ++nx)
-            {
-                const int neighborCell = ny * m_grid.cellsX + nx;
-                const int begin = m_grid.cellStarts[neighborCell];
-                const int end = m_grid.cellEnds[neighborCell];
-
-                for (int k = begin; k < end; ++k)
-                {
-                    const int j = m_grid.sortedParticleIds[k];
-                    if (j == i)
-                        continue;
-
-                    const float dx = m_particles.x[i] - m_particles.x[j];
-                    const float dy = m_particles.y[i] - m_particles.y[j];
-                    const float dz = m_particles.z[i] - m_particles.z[j];
-
-                    const float dist2 = dx * dx + dy * dy + dz * dz;
-
-                    if (dist2 < h2)
-                        ++count;
-                }
-            }
-        }
-
-        counts[i] = count;
-    }
-
-    int offset = 0;
-    for (int i = 0; i < n; ++i)
-    {
-        neighborOffsets[i] = offset;
-        offset += counts[i];
-    }
-    neighborOffsets[n] = offset;
-
-    neighborIds.resize(offset);
-    std::vector<int> cursor = neighborOffsets;
-
-    for (int i = 0; i < n; ++i)
-    {
-        const int cell = m_grid.particleCell[i];
-        const int cx = cell % m_grid.cellsX;
-        const int cy = cell / m_grid.cellsX;
-
-        const int minCy = std::max(0, cy - searchRadiusCells);
-        const int maxCy = std::min(m_grid.cellsY - 1, cy + searchRadiusCells);
-        const int minCx = std::max(0, cx - searchRadiusCells);
-        const int maxCx = std::min(m_grid.cellsX - 1, cx + searchRadiusCells);
-
-        for (int ny = minCy; ny <= maxCy; ++ny)
-        {
-            for (int nx = minCx; nx <= maxCx; ++nx)
-            {
-                const int neighborCell = ny * m_grid.cellsX + nx;
-                const int begin = m_grid.cellStarts[neighborCell];
-                const int end = m_grid.cellEnds[neighborCell];
-
-                for (int k = begin; k < end; ++k)
-                {
-                    const int j = m_grid.sortedParticleIds[k];
-                    if (j == i)
-                        continue;
-
-                    const float dx = m_particles.x[i] - m_particles.x[j];
-                    const float dy = m_particles.y[i] - m_particles.y[j];
-                    const float dz = m_particles.z[i] - m_particles.z[j];
-
-                    const float dist2 = dx * dx + dy * dy + dz * dz;
-
-                    if (dist2 < h2)
-                        neighborIds[cursor[i]++] = j;
-                }
-            }
-        }
-    }
+    CpuNeighborSearch::buildNeighborList3D(
+        m_particles,
+        m_grid,
+        Config::smoothingRadius,
+        Config::particleRadius,
+        Config::enableBafflePairFiltering,
+        m_worldInternalPatchesCache,
+        neighborOffsets,
+        neighborIds);
 }
 
 void SimulationBackendCPU::loadScene(const SceneDescription& desc)
@@ -280,8 +182,6 @@ void SimulationBackendCPU::loadScene(const SceneDescription& desc)
     m_gridBounds = m_vessel.computeGridAABB(gridMargin);
 
     // 4. Прокидываем новый grid AABB.
-    // Пока CPU grid legacy-2D, поэтому внутри setWorldBounds используются X/Y bounds,
-    // но полный 3D AABB уже сохранен в m_gridBounds для следующего этапа.
     setWorldBounds(m_gridBounds.xMin, m_gridBounds.xMax,
                    m_gridBounds.yMin, m_gridBounds.yMax,
                    m_gridBounds.zMin, m_gridBounds.zMax);

@@ -7,9 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-# CUDA architecture
+# RTX 3050 — архитектура Ampere, sm_86
 if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES 75)
+    set(CMAKE_CUDA_ARCHITECTURES 86)
 endif()
 
 # Поиск пакетов
@@ -21,7 +21,10 @@ find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
+# OpenMP: LLVM-рантайм для поддержки omp atomic update на MSVC
+if(MSVC)
+    set(OpenMP_RUNTIME_MSVC "llvm" CACHE STRING "" FORCE)
+endif()
 find_package(OpenMP REQUIRED)
 
-# Подключение исходников
 add_subdirectory(src)

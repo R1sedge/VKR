@@ -1,4 +1,3 @@
-# Исполняемый файл
 add_executable(Simulation
     main.cpp
 
@@ -67,6 +66,8 @@ add_executable(Simulation
     simCPU/neighborSearch/pairsGrid.h
     simCPU/neighborSearch/pairsNaive.cpp
     simCPU/neighborSearch/pairsNaive.h
+    simCPU/neighborSearch/neighborsGrid.h
+    simCPU/neighborSearch/neighborsGrid.cpp
 
     simCPU/constraints/boxBounds.cpp
     simCPU/constraints/boxBounds.h
@@ -124,14 +125,13 @@ add_executable(Simulation
     simCUDA/neighborSearch/deviceNeighborList.cu
 )
 
-# Линковка библиотек (имена — как их даёт vcpkg find_package в корневом CMake)
 target_link_libraries(Simulation
     PRIVATE
-        glfw               # glfw3::glfw может называться просто glfw
-        glad::glad         # загрузчик OpenGL
-        glm::glm           # математика для рендера
-        Eigen3::Eigen      # математика для физики
-        OpenGL::GL         # сам OpenGL
+        glfw
+        glad::glad
+        glm::glm
+        Eigen3::Eigen
+        OpenGL::GL
         imgui::imgui
         CUDA::cudart
         OpenMP::OpenMP_CXX
@@ -149,28 +149,37 @@ set_target_properties(Simulation PROPERTIES
 
 if(MSVC)
     target_compile_options(Simulation PRIVATE
+        # C++ файлы — флаги напрямую
+        $<$<COMPILE_LANGUAGE:CXX>:/openmp:llvm>
+        $<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:/O2>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:/fp:fast>
-        $<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>
-        $<$<COMPILE_LANGUAGE:CXX>:/openmp>
+
+        # CUDA файлы — флаги через -Xcompiler для host-части
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/openmp:llvm>
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/arch:AVX2>
+        $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Release>>:-Xcompiler=/O2>
+        $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Release>>:-Xcompiler=/fp:fast>
     )
 else()
     target_compile_options(Simulation PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-march=native>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:-O3>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:-ffast-math>
-        $<$<COMPILE_LANGUAGE:CXX>:-march=native>
+
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-march=native>
+        $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Release>>:-Xcompiler=-O3>
+        $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Release>>:-Xcompiler=-ffast-math>
     )
 endif()
 
-# Общие include-пути, чтобы можно было писать #include "app/app.h" и т.п.
 target_include_directories(Simulation
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# Копирование шейдеров к .exe
 add_custom_command(TARGET Simulation POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/shaders"
-    "$<TARGET_FILE_DIR:Simulation>/shaders"
+        "${CMAKE_SOURCE_DIR}/shaders"
+        "$<TARGET_FILE_DIR:Simulation>/shaders"
 )
