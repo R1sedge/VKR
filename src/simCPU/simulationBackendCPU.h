@@ -2,13 +2,15 @@
 
 #include <vector>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 #include "common/Config.h"
 #include "data/particleData.h"
 #include "scene/boundary/boundaryPlane.h"
 #include "scene/boundary/vesselBoundary.h"
 #include "scene/sceneDescription.h"
 #include "sim/simulationBackend.h"
-#include "sim/structs.h"
 #include "simCPU/neighborSearch/neighborsGrid.h"
 
 class SimulationBackendCPU final : public ISimulationBackendImpl
@@ -19,7 +21,9 @@ public:
     void reset() override;
     void update(float dt) override;
 
-    void setWorldBounds(float left, float right, float bottom, float top, float front, float back) override;
+    void setWorldBounds(float left, float right,
+                        float bottom, float top,
+                        float front, float back) override;
 
     void loadScene(const SceneDescription& desc) override;
     void setVesselOrientation(const glm::quat& orientation) override;
@@ -31,10 +35,12 @@ public:
     const Particles3D& getParticles() const override { return m_particles; }
 
     void setIterations(int iter) { iterations = iter; }
+
     void configureGrid(float left, float right,
-                   float bottom, float top,
-                   float front, float back,
-                   float cellSize);
+                       float bottom, float top,
+                       float front, float back,
+                       float cellSize);
+
     void setVelocityDamping(float d) { m_velocityDamping = d; }
 
     const std::vector<int>& getNeighborOffsets() const { return neighborOffsets; }
@@ -44,15 +50,21 @@ private:
     void refreshSceneCaches();
     void refreshCachedKernelConstants();
 
+    void computeAngularVelocity(float dt);
+
     void beginStep();
     void predictPositions(float dt);
 
     void buildBroadphase();
     void buildNeighbors();
 
-    void finalizeVelocities(float dt);
+    void projectConstraints();
 
-    void projectBoundaries();
+    void finalizeVelocities(float dt);
+    void applyVelocityResponse();
+
+    void applyVorticity(float dt);
+    void applyXsph();
 
 private:
     int iterations = Config::iterations;
@@ -61,8 +73,6 @@ private:
 
     UniformGrid3D m_grid;
 
-    // CSR список соседей:
-    // соседи частицы i лежат в [neighborOffsets[i], neighborOffsets[i + 1]).
     std::vector<int> neighborOffsets;
     std::vector<int> neighborIds;
 
@@ -80,7 +90,9 @@ private:
     float m_artPressureK = Config::artificialPressureK;
     float m_cachedWDeltaQ = 0.0f;
 
-    // Пока не используются. Будут подключены на этапе 5.
     float m_vorticityEpsilon = Config::vorticityEpsilon;
     float m_xsphViscosity = Config::xsphViscosity;
+
+    glm::quat m_prevVesselOrientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    glm::vec3 m_vesselAngularVelocity = glm::vec3(0.0f);
 };

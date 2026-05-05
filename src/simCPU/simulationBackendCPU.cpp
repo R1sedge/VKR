@@ -8,11 +8,13 @@
 #include "common/Config.h"
 #include "scene/SceneFiller.h"
 
-#include "simCPU/kernels/cpuKernelsBasic.h"
 #include "simCPU/constraints/cpuKernelsBounds.h"
+#include "simCPU/kernels/cpuKernelsBasic.h"
 #include "simCPU/pbf/cpuPbfDensity.h"
 #include "simCPU/pbf/cpuPbfLambda.h"
 #include "simCPU/pbf/cpuPbfDeltaPositions.h"
+#include "simCPU/pbf/cpuVorticity.h"
+#include "simCPU/pbf/cpuXSPH.h"
 #include "simCPU/utils/cpuSphKernels.h"
 
 SimulationBackendCPU::SimulationBackendCPU()
@@ -79,6 +81,8 @@ void SimulationBackendCPU::update(float dt)
     if (m_particles.count == 0)
         return;
 
+    computeAngularVelocity(dt);
+
     beginStep();
 
     predictPositions(dt);
@@ -113,10 +117,15 @@ void SimulationBackendCPU::update(float dt)
 
         CpuPBF::applyDeltaPositions(m_particles);
 
-        projectBoundaries();
+        projectConstraints();
     }
 
     finalizeVelocities(dt);
+
+    applyVorticity(dt);
+    applyXsph();
+
+    applyVelocityResponse();
 }
 
 void SimulationBackendCPU::beginStep()
@@ -161,7 +170,27 @@ void SimulationBackendCPU::buildNeighbors()
         neighborIds);
 }
 
-void SimulationBackendCPU::projectBoundaries()
+void SimulationBackendCPU::computeAngularVelocity(float dt)
+{
+    const glm::quat dq = m_vessel.orientation * glm::inverse(m_prevVesselOrientation);
+    const float sinHalfAngle = glm::length(glm::vec3(dq.x, dq.y, dq.z));
+
+    if (sinHalfAngle > 1e-6f && dt > 1e-6f)
+    {
+        const float angle = 2.0f * std::atan2(sinHalfAngle, dq.w);
+        const glm::vec3 axis = glm::vec3(dq.x, dq.y, dq.z) / sinHalfAngle;
+
+        m_vesselAngularVelocity = axis * (angle / dt);
+    }
+    else
+    {
+        m_vesselAngularVelocity = glm::vec3(0.0f);
+    }
+
+    m_prevVesselOrientation = m_vessel.orientation;
+}
+
+void SimulationBackendCPU::projectConstraints()
 {
     if (!m_worldPlanesCache.empty())
     {
@@ -189,6 +218,62 @@ void SimulationBackendCPU::projectBoundaries()
         Config::particleRadius);
 }
 
+void SimulationBackendCPU::applyVelocityResponse()
+{
+    if (m_worldPlanesCache.empty())
+        return;
+
+    const glm::vec3 pivot = m_vessel.pivot;
+
+    CpuBounds::applyBoundaryVelocityResponse(
+        m_particles,
+        m_worldPlanesCache,
+        Config::particleRadius,
+        Config::wallRestitution,
+        Config::wallFriction,
+        m_vesselAngularVelocity,
+        pivot);
+
+    CpuBounds::applyInternalBaffleVelocityResponse(
+        m_particles,
+        m_worldInternalPatchesCache,
+        Config::particleRadius,
+        Config::wallRestitution,
+        Config::wallFriction,
+        m_vesselAngularVelocity,
+        pivot);
+}
+
+void SimulationBackendCPU::applyVorticity(float dt)
+{
+    if (m_vorticityEpsilon <= 0.0f)
+        return;
+
+    CpuVorticity::computeVorticity(
+        m_particles,
+        neighborOffsets,
+        neighborIds,
+        Config::smoothingRadius);
+
+    CpuVorticity::applyVorticityConfinement(
+        m_particles,
+        neighborOffsets,
+        neighborIds,
+        dt,
+        m_vorticityEpsilon,
+        Config::smoothingRadius);
+}
+
+void SimulationBackendCPU::applyXsph()
+{
+    CpuXSPH::applyXSPH(
+        m_particles,
+        neighborOffsets,
+        neighborIds,
+        m_xsphViscosity,
+        Config::smoothingRadius);
+}
+
 void SimulationBackendCPU::loadScene(const SceneDescription& desc)
 {
     m_loadedScene = desc;
@@ -196,6 +281,8 @@ void SimulationBackendCPU::loadScene(const SceneDescription& desc)
 
     // 1. Сохраняем геометрию сосуда
     m_vessel = desc.vessel;
+    m_prevVesselOrientation = m_vessel.orientation;
+    m_vesselAngularVelocity = glm::vec3(0.0f);
 
     // 2. Строим частицы из новой scene-модели
     m_particles = SceneFiller::fill(desc);

@@ -57,22 +57,12 @@ add_executable(Simulation
     simCPU/simulationBackendCPU.cpp
     simCPU/simulationBackendCPU.h
 
-    simCPU/fluid/sphKernels.h
-
     simCPU/kernels/cpuKernelsBasic.cpp
     simCPU/kernels/cpuKernelsBasic.h
 
-    simCPU/neighborSearch/pairsGrid.cpp
-    simCPU/neighborSearch/pairsGrid.h
-    simCPU/neighborSearch/pairsNaive.cpp
-    simCPU/neighborSearch/pairsNaive.h
     simCPU/neighborSearch/neighborsGrid.h
     simCPU/neighborSearch/neighborsGrid.cpp
 
-    simCPU/constraints/boxBounds.cpp
-    simCPU/constraints/boxBounds.h
-    simCPU/constraints/circleCollision.cpp
-    simCPU/constraints/circleCollision.h
     simCPU/constraints/cpuKernelsBounds.h
     simCPU/constraints/cpuKernelsBounds.cpp
     
@@ -82,6 +72,10 @@ add_executable(Simulation
     simCPU/pbf/cpuPbfDensity.h
     simCPU/pbf/cpuPbfLambda.cpp
     simCPU/pbf/cpuPbfLambda.h
+    simCPU/pbf/cpuVorticity.cpp
+    simCPU/pbf/cpuVorticity.h
+    simCPU/pbf/cpuXSPH.cpp
+    simCPU/pbf/cpuXSPH.h
 
     simCPU/utils/cpuSphKernels.h
 

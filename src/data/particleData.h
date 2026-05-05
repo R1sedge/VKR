@@ -1,13 +1,14 @@
 #pragma once
+
 #include <vector>
 
 struct Particles3D
 {
     int count = 0;
-    
+
     // Позиции
-    std::vector<float> x, y, z;   // Предсказанные / Текущие позиции
-    std::vector<float> px, py, pz; // Позиции на начало шага
+    std::vector<float> x, y, z;     // Предсказанные / текущие позиции
+    std::vector<float> px, py, pz;  // Позиции на начало шага
 
     // Скорости
     std::vector<float> vx, vy, vz;
@@ -15,12 +16,18 @@ struct Particles3D
     // Масса
     std::vector<float> mass;
 
-    // PBF буфферы
-    std::vector<float> density; // Плотности
-    std::vector<float> lambda;  // Множители Лагранжа
-    std::vector<float> dx, dy, dz;  // коррекции позиции
+    // PBF буферы
+    std::vector<float> density;
+    std::vector<float> lambda;
+    std::vector<float> dx, dy, dz;
 
-    std::vector<int> phase; // id типы жидкости
+    // Vorticity confinement
+    std::vector<float> omegaX;
+    std::vector<float> omegaY;
+    std::vector<float> omegaZ;
+
+    // id типа жидкости
+    std::vector<int> phase;
 
     void resize(int n);
     void clearDerived();
