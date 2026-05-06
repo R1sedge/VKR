@@ -27,7 +27,6 @@ namespace
         if (i >= n) return;
 
         const float invRestDensity = 1.0f / restDensity;
-        const float gradEps = 1e-6f;
 
         const float rhoi = density[i];
         const float Ci = rhoi * invRestDensity - 1.0f;

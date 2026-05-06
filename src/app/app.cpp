@@ -33,7 +33,7 @@ namespace
 
 App::App()
     : m_renderer(Config::windowWidth, Config::windowHeight, nullptr),
-      m_backendType(SimulationBackendType::CPU),
+      m_backendType(SimulationBackendType::CUDA),
       m_sim(m_backendType),
       m_gui(),
       m_input(),
@@ -366,7 +366,7 @@ bool App::createWindow()
 	}
 
     glfwMakeContextCurrent(m_window);
-	glfwSwapInterval(1); // v-sync
+	glfwSwapInterval(0); // v-sync
 
     return true;
 }

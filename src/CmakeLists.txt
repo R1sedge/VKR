@@ -125,11 +125,11 @@ add_executable(Simulation
 target_link_libraries(Simulation
     PRIVATE
         glfw
-        glad::glad
+        glad
         glm::glm
         Eigen3::Eigen
         OpenGL::GL
-        imgui::imgui
+        imgui
         CUDA::cudart
         OpenMP::OpenMP_CXX
 )

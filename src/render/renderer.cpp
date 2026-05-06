@@ -10,6 +10,19 @@
 #include <sstream>
 #include <iostream>
 
+namespace
+{
+    constexpr float kBackgroundR = 0.10f;
+    constexpr float kBackgroundG = 0.10f;
+    constexpr float kBackgroundB = 0.10f;
+    constexpr float kBackgroundA = 1.00f;
+
+    void clearMainFramebuffer()
+    {
+        glClearColor(kBackgroundR, kBackgroundG, kBackgroundB, kBackgroundA);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+}
 
 Renderer::Renderer(int width, int height, GLFWwindow* window):windowWidth(width), windowHeight(height), window(window) { }
 
@@ -223,8 +236,7 @@ void Renderer::initGeometry()
 
 void Renderer::renderFrame(const Particles3D& particles)
 {
-    glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    clearMainFramebuffer();
 
     const int n = particles.count;
     if (n <= 0)
@@ -336,8 +348,7 @@ void Renderer::ensureInstanceBufferSize(int n) // Ресайзим VBO без п
 
 void Renderer::renderFrameInterop(int particleCount) // Рендерим без загрузки данных — CUDA уже заполнила VBO
 {
-    glClearColor(0.10f, 0.10f, 0.10f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);;
+    clearMainFramebuffer();
 
     if (particleCount <= 0) return;
 
