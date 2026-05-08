@@ -16,13 +16,15 @@
 #include "app/appCommands.h"
 #include "app/sceneRuntimeState.h"
 
+#include "bench/BenchmarkConfig.h"
+
 class App
 {
 public:
     App();
     ~App();
 
-    bool initialize();
+    bool initialize(int argc, char** argv);
     void shutDown();
     void run();
 
@@ -54,6 +56,9 @@ private:
     void applySceneRuntimeState();
     void setRuntimeVesselOrientation(const glm::quat& q);
 
+    void parseBenchmarkArgs(int argc, char** argv);
+    void runBenchmarkMode();
+
 private:
     GLFWwindow* m_window = nullptr;
     Renderer m_renderer;
@@ -73,4 +78,7 @@ private:
     int frameCount = 0;
     double m_previousTime = 0.0;
     bool m_interopEnabled = false;
+
+    bool m_benchmarkMode = false;
+    BenchmarkConfig m_benchmarkCfg;    
 };

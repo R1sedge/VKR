@@ -13,6 +13,8 @@
 #include "sim/simulationBackend.h"
 #include "simCPU/neighborSearch/neighborsGrid.h"
 
+#include "bench/FrameTiming.h"
+
 class SimulationBackendCPU final : public ISimulationBackendImpl
 {
 public:
@@ -34,7 +36,9 @@ public:
 
     const Particles3D& getParticles() const override { return m_particles; }
 
-    void setIterations(int iter) { iterations = iter; }
+    void setIterations(int iter) override { iterations = iter; }
+
+    FrameTiming getLastFrameTiming() const override { return m_lastTiming; }
 
     void configureGrid(float left, float right,
                        float bottom, float top,
@@ -95,4 +99,6 @@ private:
 
     glm::quat m_prevVesselOrientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 m_vesselAngularVelocity = glm::vec3(0.0f);
+
+    FrameTiming m_lastTiming;
 };

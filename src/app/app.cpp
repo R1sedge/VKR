@@ -2,12 +2,17 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <string>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 #include "common/config.h"
 #include "scene/ScenePresets.h"
+
+#include "bench/BenchmarkRunner.h"
+#include "scene/benchmarkScenes.h"
+#include "bench/CsvWriter.h"
 
 namespace
 {
@@ -17,7 +22,7 @@ namespace
     glm::mat4 buildVesselModelMatrix(const VesselBoundary& vessel)
     {
         const glm::mat4 T1 = glm::translate(glm::mat4(1.0f), vessel.pivot);
-        const glm::mat4 R  = glm::mat4_cast(vessel.orientation);
+        const glm::mat4 R = glm::mat4_cast(vessel.orientation);
         const glm::mat4 T2 = glm::translate(glm::mat4(1.0f), -vessel.pivot);
         return T1 * R * T2;
     }
@@ -43,7 +48,7 @@ App::App()
 
 App::~App() = default;
 
-bool App::initialize()
+bool App::initialize(int argc, char** argv)
 { 
     // 1. Инициализация GLFW (оконная система, события)
     if (!initializeGLFW())
@@ -75,6 +80,8 @@ bool App::initialize()
         return false;
     }
 
+    parseBenchmarkArgs(argc, argv);
+
     // 5. ImGui: создание контекста, привязка к GLFW + OpenGL backend
     if (!initializeIMGUI(0))
     {
@@ -98,6 +105,7 @@ bool App::initialize()
     }
 
     m_running = true;
+
     return true;
 }
 
@@ -116,14 +124,31 @@ bool App::initialize()
  void App::run()
  {
     if(!m_running) return;
+
+    if (m_benchmarkMode) 
+    {
+        // Один рендер-кадр для инициализации OpenGL-состояния (ImGui, VAO и т.д.)
+        glfwPollEvents();
+        m_gui.beginFrame();
+        AppCommands cmd; 
+        m_gui.buildUI(m_state, m_camera, cmd);
+        render();
+        m_gui.endFrame();
+        glfwSwapBuffers(m_window);
+
+        runBenchmarkMode();
+        return; // выходим сразу, без mainLoop
+    }
+
     mainLoop();
  }
 
 void App::mainLoop()
 {
     const double dt = Config::dt;
-
     m_previousTime = glfwGetTime();
+
+    bool benchmarkStarted = false;
 
     while (m_running && !glfwWindowShouldClose(m_window))
     {   
@@ -539,4 +564,156 @@ void App::switchBackend(SimulationBackendType type)
     // Сцену перезагружаем, но runtime-состояние сосуда сохраняем:
     // это удобно для сравнения CPU/CUDA на одной ориентации.
     reloadActiveScene(false);
+}
+
+void App::parseBenchmarkArgs(int argc, char** argv) 
+{
+    for (int i = 1; i < argc; ++i) 
+    {
+        std::string arg = argv[i];
+        auto next = [&]() -> std::string 
+        {
+            return (i + 1 < argc) ? argv[++i] : "";
+        };
+
+        if (arg == "--benchmark") 
+        { 
+            m_benchmarkMode = true;                             
+            m_benchmarkCfg.testName = next(); 
+        }
+        else if (arg == "--backend") 
+        { 
+            auto v = next();
+            m_benchmarkCfg.backend = (v == "cpu") ? SimulationBackendType::CPU : SimulationBackendType::CUDA; 
+        }
+        else if (arg == "--particles") { m_benchmarkCfg.targetParticles = std::stoi(next()); }
+        else if (arg == "--iterations") { m_benchmarkCfg.iterations = std::stoi(next()); }
+        else if (arg == "--scene") { m_benchmarkCfg.sceneName = next(); }
+        else if (arg == "--warmup") { m_benchmarkCfg.warmupFrames = std::stoi(next()); }
+        else if (arg == "--frames") { m_benchmarkCfg.measureFrames = std::stoi(next()); }
+        else if (arg == "--repeats") { m_benchmarkCfg.repeats = std::stoi(next()); }
+        else if (arg == "--output") { m_benchmarkCfg.outputPath = next(); }
+    }
+}
+
+void App::runBenchmarkMode() 
+{
+    m_sceneRuntime = SceneRuntimeState{};
+    m_state.paused = false;
+    switchBackend(m_benchmarkCfg.backend);
+
+    // --- выбор сцены ---
+    SceneDescription scene;
+    const auto& sn = m_benchmarkCfg.sceneName;
+    if (sn == "benchmark_box")  scene = BenchmarkScenes::makeBox(m_benchmarkCfg.targetParticles);
+    else if (sn == "benchmark_dambreak") scene = BenchmarkScenes::makeDamBreak(m_benchmarkCfg.targetParticles);
+    else 
+    {
+        int idx = 0;
+        for (int i = 0; i < ScenePresets::count(); ++i)
+            if (std::string(ScenePresets::names()[i]) == sn) { idx = i; break; }
+        scene = ScenePresets::getByIndex(idx);
+    }
+    m_activeSceneDesc = scene;
+    m_renderer.uploadVesselWireframe(scene.vessel.wireframe);
+    // ---
+
+    BenchmarkRunner runner;
+    for (int rep = 0; rep < m_benchmarkCfg.repeats; ++rep) 
+    {
+        m_sceneRuntime = SceneRuntimeState{};
+        m_sim.loadScene(m_activeSceneDesc);
+        m_benchmarkCfg.actualParticles = m_sim.getParticles().count;
+        m_sim.setIterations(m_benchmarkCfg.iterations);
+        applySceneRuntimeState();
+        setupInteropForCurrentBackend();
+
+        std::cout << "[Benchmark] rep " << rep+1 << "/" << m_benchmarkCfg.repeats
+                  << "  particles=" << m_benchmarkCfg.actualParticles << "  warming up...\n";
+
+        // --- Warmup с рендером каждые 10 кадров ---
+        m_sim.setBenchmarkSkipReadback(m_benchmarkCfg.skipReadback);
+        for (int i = 0; i < m_benchmarkCfg.warmupFrames; ++i) 
+        {
+            m_sim.update(m_benchmarkCfg.dt);
+            if (i % 10 == 0) 
+            {
+                glfwPollEvents();
+                m_gui.beginFrame();
+                AppCommands cmd;
+                m_gui.buildUI(m_state, m_camera, cmd);
+                render();
+                m_gui.endFrame();
+                glfwSwapBuffers(m_window);
+            }
+        }
+
+        // --- Measurement с рендером каждые 10 кадров ---
+        const bool perFrame = (m_benchmarkCfg.testName == "perf_stability");
+
+        std::vector<FrameTiming> timings;
+        timings.reserve(m_benchmarkCfg.measureFrames);
+
+        for (int i = 0; i < m_benchmarkCfg.measureFrames; ++i)
+        {
+            m_sim.update(m_benchmarkCfg.dt);
+            timings.push_back(m_sim.getLastFrameTiming());
+
+            if (perFrame)
+            {
+                BenchmarkResult fr;
+                fr.testName = m_benchmarkCfg.testName;
+                fr.backend = (m_benchmarkCfg.backend == SimulationBackendType::CUDA) ? "cuda" : "cpu";
+                fr.sceneName = m_benchmarkCfg.sceneName;
+                fr.actualParticles = m_benchmarkCfg.actualParticles;
+                fr.iterations = m_benchmarkCfg.iterations;
+                fr.repeatId = i;   // ← номер кадра, а не повтора
+
+                const FrameTiming& ft = timings.back();
+                fr.avgStepMs = ft.totalStepMs;
+                fr.medianStepMs = ft.totalStepMs;
+                fr.p95StepMs = ft.totalStepMs;
+                fr.stdStepMs = 0.0;
+                fr.physicsFps = ft.totalStepMs > 0.0 ? 1000.0 / ft.totalStepMs : 0.0;
+                fr.avgPredictMs = ft.predictMs;
+                fr.avgNeighborMs = ft.neighborMs;
+                fr.avgSolverMs = ft.solverMs;
+                fr.avgVelocityCorrectMs = ft.velocityCorrectMs;
+
+                CsvWriter::append(m_benchmarkCfg.outputPath, fr);
+            }
+
+            if (i % 10 == 0)
+            {
+                glfwPollEvents();
+                m_gui.beginFrame();
+                AppCommands cmd;
+                m_gui.buildUI(m_state, m_camera, cmd);
+                render();
+                m_gui.endFrame();
+                glfwSwapBuffers(m_window);
+            }
+        }
+
+        m_sim.setBenchmarkSkipReadback(false);
+
+        if (!perFrame)
+        {
+            BenchmarkResult result = runner.aggregate(timings, m_benchmarkCfg, rep);
+            result.testName = m_benchmarkCfg.testName;
+            result.backend = (m_benchmarkCfg.backend == SimulationBackendType::CUDA) ? "cuda" : "cpu";
+            result.sceneName = m_benchmarkCfg.sceneName;
+            result.actualParticles = m_benchmarkCfg.actualParticles;
+            CsvWriter::append(m_benchmarkCfg.outputPath, result);
+
+            std::cout << "  rep " << rep + 1
+                    << "  particles=" << result.actualParticles
+                    << "  avg=" << result.avgStepMs << " ms\n";
+        }
+        else
+        {
+            std::cout << "  [perf_stability] rep " << rep + 1
+                    << "  записано " << timings.size() << " кадров\n";
+        }
+    }
 }

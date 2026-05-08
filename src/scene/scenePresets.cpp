@@ -126,4 +126,14 @@ namespace ScenePresets
             default: return defaultFluid();
         }
     }
+
+    int findByName(std::string name)
+    {
+        for (int i = 0; i < count(); i++)
+        {
+            if (name == s_names[i])
+                return i;
+        }
+        return 0;
+    }
 }

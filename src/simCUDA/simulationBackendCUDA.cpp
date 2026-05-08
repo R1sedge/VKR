@@ -27,6 +27,15 @@
 SimulationBackendCUDA::SimulationBackendCUDA()
 {
     refreshCachedKernelConstants();
+
+    CUDA_CHECK(cudaEventCreate(&m_evPredictStart));
+    CUDA_CHECK(cudaEventCreate(&m_evPredictStop));
+    CUDA_CHECK(cudaEventCreate(&m_evNeighborStart));
+    CUDA_CHECK(cudaEventCreate(&m_evNeighborStop));
+    CUDA_CHECK(cudaEventCreate(&m_evSolverStart));
+    CUDA_CHECK(cudaEventCreate(&m_evSolverStop));
+    CUDA_CHECK(cudaEventCreate(&m_evVelCorrectStart));
+    CUDA_CHECK(cudaEventCreate(&m_evVelCorrectStop));
 }
 
 SimulationBackendCUDA::~SimulationBackendCUDA()
@@ -38,6 +47,15 @@ SimulationBackendCUDA::~SimulationBackendCUDA()
     freeDeviceUniformGrid(m_grid);
     freeDeviceNeighborList(m_neighbors);
     freeDeviceParticles(m_deviceParticles);
+
+    cudaEventDestroy(m_evPredictStart);
+    cudaEventDestroy(m_evPredictStop);
+    cudaEventDestroy(m_evNeighborStart);
+    cudaEventDestroy(m_evNeighborStop);
+    cudaEventDestroy(m_evSolverStart); 
+    cudaEventDestroy(m_evSolverStop);
+    cudaEventDestroy(m_evVelCorrectStart);
+    cudaEventDestroy(m_evVelCorrectStop);
 }
 
 void SimulationBackendCUDA::releaseVesselPlanes()
@@ -168,6 +186,8 @@ void SimulationBackendCUDA::update(float dt)
 
     launchClearDerived(m_deviceParticles);
 
+    // ── Этап 1: Predict ──────────────────────────────────────────────────────
+    cudaEventRecord(m_evPredictStart);
     launchPredictPositions(
         m_deviceParticles,
         dt,
@@ -175,7 +195,10 @@ void SimulationBackendCUDA::update(float dt)
         Config::gravityY,
         Config::gravityZ,
         m_velocityDamping);
-
+    cudaEventRecord(m_evPredictStop);
+    
+    // ── Этап 2: Neighbor Search ───────────────────────────────────────────────
+    cudaEventRecord(m_evNeighborStart);
     buildNeighborsGridCUDA(
         m_deviceParticles,
         m_neighbors,
@@ -185,7 +208,10 @@ void SimulationBackendCUDA::update(float dt)
         m_gridBounds.yMin, m_gridBounds.yMax,
         m_gridBounds.zMin, m_gridBounds.zMax,
         Config::particleRadius, Config::enableBafflePairFiltering);
-
+    cudaEventRecord(m_evNeighborStop);
+    
+    // ── Этап 3: PBF Solver ───────────────────────────────────────────────────
+    cudaEventRecord(m_evSolverStart);
     for (int iter = 0; iter < iterations; ++iter)
     {   
         launchComputeDensity(
@@ -234,7 +260,10 @@ void SimulationBackendCUDA::update(float dt)
 
         launchProjectToInternalPatches(m_deviceParticles, Config::particleRadius);
     }
+    cudaEventRecord(m_evSolverStop);
 
+    // ── Этап 4: Velocity Correct ─────────────────────────────────────────────
+    cudaEventRecord(m_evVelCorrectStart);
     launchUpdateVelocities(m_deviceParticles, dt, Config::maxSpeed, Config::particleRadius);
 
     if (m_vorticityEpsilon > 0.0f)
@@ -273,6 +302,22 @@ void SimulationBackendCUDA::update(float dt)
             m_vesselAngularVelocity.x, m_vesselAngularVelocity.y, m_vesselAngularVelocity.z,
             pivot.x, pivot.y, pivot.z);
     }
+    cudaEventRecord(m_evVelCorrectStop);
+
+    // ── Снять тайминги ───────────────────────────────────────────────────────
+    cudaEventSynchronize(m_evVelCorrectStop);
+
+    auto elapsed = [](cudaEvent_t s, cudaEvent_t e) -> double 
+    {
+        float ms = 0.f;
+        cudaEventElapsedTime(&ms, s, e);
+        return static_cast<double>(ms);
+    };
+    m_lastTiming.predictMs = elapsed(m_evPredictStart, m_evPredictStop);
+    m_lastTiming.neighborMs = elapsed(m_evNeighborStart, m_evNeighborStop);
+    m_lastTiming.solverMs = elapsed(m_evSolverStart, m_evSolverStop);
+    m_lastTiming.velocityCorrectMs = elapsed(m_evVelCorrectStart, m_evVelCorrectStop);
+    m_lastTiming.totalStepMs = m_lastTiming.predictMs + m_lastTiming.neighborMs + m_lastTiming.solverMs + m_lastTiming.velocityCorrectMs;
 
     // ======= CUDA-GL INTEROP: пишем в VBO прямо на GPU =======
     if (m_vboResource) 
@@ -290,9 +335,9 @@ void SimulationBackendCUDA::update(float dt)
     } 
     else 
     {
-        // Fallback: старый путь без interop
         CUDA_CHECK(cudaDeviceSynchronize());
-        syncDeviceToHost();
+        if (!m_benchmarkSkipReadback)
+            syncDeviceToHost();
     }
 }
 

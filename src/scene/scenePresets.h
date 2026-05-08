@@ -2,6 +2,8 @@
 
 #include "scene/SceneDescription.h"
 
+#include <string>
+
 namespace ScenePresets
 {
     SceneDescription defaultFluid();
@@ -13,4 +15,5 @@ namespace ScenePresets
     const char* const* names();
     int count();
     SceneDescription getByIndex(int index);
+    int findByName(std::string name);
 }

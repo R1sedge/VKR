@@ -7,6 +7,14 @@ add_executable(Simulation
     app/appState.h
     app/sceneRuntimeState.h
 
+    bench/BenchmarkConfig.h
+    bench/BenchmarkResult.h
+    bench/BenchmarkRunner.h
+    bench/BenchmarkRunner.cpp
+    bench/CsvWriter.h
+    bench/CsvWriter.cpp
+    bench/FrameTiming.h
+
     common/Config.h
 
     data/particleData.h
@@ -20,6 +28,8 @@ add_executable(Simulation
     scene/sceneFiller.cpp
     scene/scenePresets.h
     scene/scenePresets.cpp
+    scene/benchmarkScenes.h
+    scene/benchmarkScenes.cpp
 
     scene/boundary/boundaryPlane.h
     scene/boundary/vesselBoundary.h

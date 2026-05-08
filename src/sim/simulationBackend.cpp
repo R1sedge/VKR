@@ -91,3 +91,18 @@ void SimulationBackend::setVesselOrientation(const glm::quat& orientation)
 {
     m_impl->setVesselOrientation(orientation);
 }
+
+void SimulationBackend::setIterations(int iter)
+{
+    m_impl->setIterations(iter);
+}
+
+void SimulationBackend::setBenchmarkSkipReadback(bool enabled)
+{
+    m_impl->setBenchmarkSkipReadback(enabled);
+}
+
+FrameTiming SimulationBackend::getLastFrameTiming() const 
+{
+    return m_impl->getLastFrameTiming();
+}

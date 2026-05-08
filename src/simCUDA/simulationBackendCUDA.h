@@ -13,6 +13,8 @@
 #include "simCUDA/utils/cudaInternalBoundaryStorage.cuh"
 #include "simCUDA/neighborSearch/neighborsGrid.cuh"
 
+#include "bench/FrameTiming.h"
+
 class SimulationBackendCUDA final : public ISimulationBackendImpl
 {
 public:
@@ -39,20 +41,25 @@ public:
     void loadScene(const SceneDescription& desc) override;
     void setVesselOrientation(const glm::quat& orientation) override;
 
+    void setIterations(int iter) override { iterations = iter; }
+    void setBenchmarkSkipReadback(bool enabled) override { m_benchmarkSkipReadback = enabled; }
+
+    FrameTiming getLastFrameTiming() const override { return m_lastTiming; }
+
 private:
     void syncDeviceToHost();
 
     void setVesselPlanes(const std::vector<BoundaryPlane>& planes);
     void releaseVesselPlanes();
-    
     void uploadInternalPatches(const std::vector<InternalBoundaryPatch>& patches);
-
     void computeAngularVelocity(float dt);
 
     void refreshCachedKernelConstants();
 
 private:
     int iterations = Config::iterations;
+
+    bool m_benchmarkSkipReadback = false;
 
     Particles3D m_particles;
     DeviceParticles3D m_deviceParticles;
@@ -82,4 +89,11 @@ private:
 
     float m_vorticityEpsilon = Config::vorticityEpsilon;
     float m_xsphViscosity = Config::xsphViscosity;
+
+    // Benchmark
+    cudaEvent_t m_evPredictStart, m_evPredictStop;
+    cudaEvent_t m_evNeighborStart, m_evNeighborStop;
+    cudaEvent_t m_evSolverStart, m_evSolverStop;
+    cudaEvent_t m_evVelCorrectStart, m_evVelCorrectStop;
+    FrameTiming m_lastTiming;
 };

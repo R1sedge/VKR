@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -16,6 +17,15 @@
 #include "simCPU/pbf/cpuVorticity.h"
 #include "simCPU/pbf/cpuXSPH.h"
 #include "simCPU/utils/cpuSphKernels.h"
+
+namespace 
+{
+    using Clock = std::chrono::high_resolution_clock;
+    inline double msNow(Clock::time_point t0) 
+    {
+        return std::chrono::duration<double, std::milli>(Clock::now() - t0).count();
+    }
+}
 
 SimulationBackendCPU::SimulationBackendCPU()
 {
@@ -85,11 +95,19 @@ void SimulationBackendCPU::update(float dt)
 
     beginStep();
 
+    // ── Этап 1: Predict ──────────────────────────────────────────────────────
+    auto t0 = Clock::now();
     predictPositions(dt);
+    m_lastTiming.predictMs = msNow(t0);
 
-    buildBroadphase();
+    // ── Этап 2: Neighbor Search ───────────────────────────────────────────────
+    t0 = Clock::now();
+    buildBroadphase(); //TODO Заменить на 1 вызов
     buildNeighbors();
+    m_lastTiming.neighborMs = msNow(t0);
 
+    // ── Этап 3: PBF Solver ───────────────────────────────────────────────────
+    t0 = Clock::now();
     for (int iter = 0; iter < iterations; ++iter)
     {
         CpuPBF::computeDensity(
@@ -119,13 +137,19 @@ void SimulationBackendCPU::update(float dt)
 
         projectConstraints();
     }
+    m_lastTiming.solverMs = msNow(t0);
 
+    // ── Этап 4: Velocity Correct ─────────────────────────────────────────────
+    t0 = Clock::now();
     finalizeVelocities(dt);
 
     applyVorticity(dt);
     applyXsph();
 
     applyVelocityResponse();
+    m_lastTiming.velocityCorrectMs = msNow(t0);
+
+    m_lastTiming.totalStepMs = m_lastTiming.predictMs + m_lastTiming.neighborMs + m_lastTiming.solverMs + m_lastTiming.velocityCorrectMs;
 }
 
 void SimulationBackendCPU::beginStep()

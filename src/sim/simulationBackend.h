@@ -6,6 +6,8 @@
 #include "sim/simulationBackendType.h"
 #include "scene/sceneDescription.h"
 
+#include "bench/FrameTiming.h" 
+
 class ISimulationBackendImpl
 {
 public:
@@ -29,6 +31,11 @@ public:
     virtual void setVesselOrientation(const glm::quat& orientation) {}
 
     virtual void loadScene(const SceneDescription& desc) = 0;
+
+    virtual void setIterations(int iter) {}
+    virtual void setBenchmarkSkipReadback(bool enabled) {}
+
+    virtual FrameTiming getLastFrameTiming() const { return {}; }
 };
 
 class SimulationBackend
@@ -58,6 +65,11 @@ public:
     void setVesselOrientation(const glm::quat& orientation);
 
     void loadScene(const SceneDescription& desc);
+
+    void setIterations(int iter);
+    void setBenchmarkSkipReadback(bool enabled);
+
+    FrameTiming getLastFrameTiming() const;
 
 private:
     void createImplementation();
