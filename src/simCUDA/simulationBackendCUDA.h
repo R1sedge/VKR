@@ -82,7 +82,7 @@ private:
     SceneDescription m_loadedScene;
     bool m_hasLoadedScene = false;
     
-    float m_velocityDamping = 0.0001f;
+    float m_velocityDamping = 0.0000f;
 
     float m_artPressureK = Config::artificialPressureK;
     float m_cachedWDeltaQ = 0.0f;

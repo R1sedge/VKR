@@ -31,7 +31,7 @@ import numpy as np
 warnings.filterwarnings("ignore")
 
 _ROOT = Path(__file__).resolve().parent.parent  # scripts/ -> корень проекта
-RAW_DIR  = _ROOT / "results" / "raw"
+RAW_DIR  = _ROOT / "results" / "RTX4080" / "raw"
 PLOTS_DIR = _ROOT / "results" / "plots"
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -186,7 +186,7 @@ def plot_stages_stacked():
         sub = df[df["backend"] == backend].sort_values("actualparticles")
         if sub.empty: continue
 
-        x      = np.arange(len(sub))
+        x = np.arange(len(sub))
         xlabs  = [f"{int(v):,}" for v in sub["actualparticles"]]
         totals = sub[stage_cols].sum(axis=1).to_numpy()  # сумма по строке
         bottom = np.zeros(len(sub))
@@ -200,7 +200,7 @@ def plot_stages_stacked():
                 if v >= 5:   # не рисуем подпись если сегмент < 5%
                     ax.text(xi, b + v / 2, f"{v:.1f}%",
                             ha="center", va="center",
-                            fontsize=6.5, color="white", fontweight="bold")
+                            fontsize=8, color="black", fontweight="bold")
             bottom += vals
 
         ax.set_ylim(0, 100)

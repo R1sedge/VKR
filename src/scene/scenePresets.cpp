@@ -23,9 +23,9 @@ namespace ScenePresets
         const float spacing = Config::particleRadius * 2.5f;
 
         return SceneBuilder::create("Dam Break")
-            .setBoxVessel(3.2f, 2.3f, 1.6f)
-            .addFluidBox(-2.0f, 0.00f, 0.0f,
-                          0.5f, 2.0f, 1.4f)
+            .setBoxVessel(3.0f, 3.0f, 0.4f)
+            .addFluidBox(-2.5f, -1.00f, 0.0f,
+                          0.5f, 1.8f, 0.4f)
                 .withSpacing(spacing)
                 .withPhase(0)
                 .withFilterByBoundary(true)
@@ -77,8 +77,8 @@ namespace ScenePresets
                 glm::vec3(-2/3.f, 0.f, -2/3.f),   // центр перегородки
                 glm::vec3(1.f, 0.f, 0.f),   // нормаль (перегородка перпендикулярна X)
                 glm::vec3(0.f, 1.f, 0.f),   // upHint
-                4/3.0f,                        // halfWidth 
-                1.f,                       // halfHeight
+                4/3.0f,                     // halfWidth 
+                1.f,                        // halfHeight
                 0.00f,                      // thickness
                 glm::vec2(0.f, 0.f),        // отверстие по центру
                 0.35f)                      // радиус отверстия

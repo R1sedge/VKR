@@ -391,7 +391,7 @@ bool App::createWindow()
 	}
 
     glfwMakeContextCurrent(m_window);
-	glfwSwapInterval(0); // v-sync
+	glfwSwapInterval(1); // Вертикальная синхронизация
 
     return true;
 }
@@ -563,7 +563,7 @@ void App::switchBackend(SimulationBackendType type)
 
     // Сцену перезагружаем, но runtime-состояние сосуда сохраняем:
     // это удобно для сравнения CPU/CUDA на одной ориентации.
-    reloadActiveScene(false);
+    reloadActiveScene(true);
 }
 
 void App::parseBenchmarkArgs(int argc, char** argv) 
